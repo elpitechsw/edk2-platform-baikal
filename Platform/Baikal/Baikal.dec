@@ -53,3 +53,4 @@
 [PcdsDynamic]
   gBaikalTokenSpaceGuid.PcdVduBase|0|UINT32|0x00000004
   gBaikalTokenSpaceGuid.PcdVduLcruId|0|UINT32|0x0000000A
+  gBaikalTokenSpaceGuid.PcdPs2MuxI2cBaseAddr|0|UINT32|0x0000000C

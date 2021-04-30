@@ -225,6 +225,7 @@
   Platform/Baikal/Drivers/BaikalI2cDxe/BaikalI2cDxe.inf
   Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.inf
   Platform/Baikal/Drivers/Pcf2127RtcDxe/Pcf2127RtcDxe.inf
+  Platform/Baikal/Drivers/Ps2MuxDxe/Ps2MuxDxe.inf
 
   # GPT/MBR partitioning + filesystems
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
