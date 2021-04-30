@@ -544,6 +544,30 @@ StartRequest (
   return Status;
 }
 
+#if defined (BE_MITX) && BOARD_VER == 1
+STATIC
+EFI_STATUS
+I2cArbLockBus(
+  IN UINT64                 BaseAddr
+  )
+{
+  EFI_STATUS                RetVal;
+  UINT8                     pca_data[] = {1, 5};
+  I2C_REGS                  *I2cRegs = (I2C_REGS *)BaseAddr;
+
+  MmioWrite32 ((UINTN)&I2cRegs->IcTar, 0x30);
+  I2cEnable (I2cRegs);
+  RetVal = WaitForBusReady (I2cRegs);
+  if (!EFI_ERROR (RetVal)) {
+    RetVal = I2cDataWrite (I2cRegs, sizeof(pca_data), pca_data, TRUE);
+  }
+  RetVal |= I2cXferFinish (I2cRegs);
+  I2cDisable(I2cRegs);
+
+  return RetVal;
+}
+#endif
+
 EFI_STATUS
 BaikalI2cInit (
   IN EFI_HANDLE             DriverBindingHandle,
@@ -588,6 +612,10 @@ BaikalI2cInit (
   SetDevicePathEndNode (&I2c->DevicePath.End);
 
   I2cInitHw ((I2C_REGS *)(I2c->Dev->Resources[0].AddrRangeMin));
+
+#if defined (BE_MITX) && BOARD_VER == 1
+  I2cArbLockBus(I2c->Dev->Resources[0].AddrRangeMin);
+#endif
 
   RetVal = gBS->InstallMultipleProtocolInterfaces (&ControllerHandle,
                   &gEfiI2cMasterProtocolGuid, (VOID**)&I2c->I2cMaster,
