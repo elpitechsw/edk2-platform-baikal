@@ -422,6 +422,10 @@ Pcf2127RtcGetTime (
   EFI_STATUS                        Status;
   PCF2127_RTC_DEV                   *RtcDev;
 
+  if (EfiAtRuntime()) {
+    return EFI_UNSUPPORTED;
+  }
+
   RtcDev = &gPcf2127RtcDev;
   Status = (Time != NULL) ? EFI_SUCCESS : EFI_INVALID_PARAMETER;
   if (!EFI_ERROR (Status)) {
@@ -460,8 +464,12 @@ Pcf2127RtcSetTime (
   EFI_STATUS                        Status;
   PCF2127_RTC_DEV                   *RtcDev;
 
+  if (EfiAtRuntime()) {
+    return EFI_UNSUPPORTED;
+  }
+
   RtcDev = &gPcf2127RtcDev;
-  if (Pcf2127RtcCheckTime (Time)) {
+  if ((Time != NULL) && Pcf2127RtcCheckTime (Time)) {
     Status = Pcf2127RtcStoreTime (RtcDev, Time);
   } else {
     Status = EFI_INVALID_PARAMETER;

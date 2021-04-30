@@ -21,7 +21,7 @@
   BASE_NAME                      = Pcf2127RtcDxe
   MODULE_UNI_FILE                = Pcf2127RtcDxe.uni
   FILE_GUID                      = 3C163D5D-1C93-4880-A332-1CE4FF0DE040
-  MODULE_TYPE                    = UEFI_DRIVER
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = InitializePcf2127Rtc
 
@@ -38,6 +38,8 @@
   Pcf2127Rtc.c
 
 [Packages]
+  ArmPkg/ArmPkg.dec
+  ArmPlatformPkg/ArmPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.dec
@@ -47,6 +49,7 @@
   UefiBootServicesTableLib
   MemoryAllocationLib
   BaseMemoryLib
+  UefiRuntimeLib
   UefiLib
   UefiDriverEntryPoint
   DebugLib
@@ -70,6 +73,9 @@
 #   #
 #   EVENT_TYPE_PERIODIC_TIMER   ## CONSUMES
 #
+
+[Depex]
+  TRUE
 
 [UserExtensions.TianoCore."ExtraFiles"]
   Pcf2127RtcDxeExtra.uni
