@@ -1,0 +1,35 @@
+## @file
+#  INF file for the Baikal-M PCI Express Controller Driver.
+#  Copyright (c) 2020 Baikal Electronics JSC (www.baikalelectronics.ru)
+##
+
+[Defines]
+  INF_VERSION     = 0x00010005
+  BASE_NAME       = BaikalPciHostBridgeLib
+  FILE_GUID       = a50fddb0-7768-11ea-b5c5-00259020f96e
+  MODULE_TYPE     = DXE_DRIVER
+  VERSION_STRING  = 1.0
+  LIBRARY_CLASS   = PciHostBridgeLib|DXE_DRIVER
+  CONSTRUCTOR     = BaikalPciHostBridgeLibCtor
+
+[Sources]
+  PciHostBridgeLib.c
+  PciHostBridgeLibCtor.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[Protocols]
+  gFdtClientProtocolGuid   ## CONSUMES
+
+[LibraryClasses]
+  ArmLib
+  BaseLib
+  DebugLib
+  UefiBootServicesTableLib
+
+[Depex]
+  TRUE

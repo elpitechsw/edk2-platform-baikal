@@ -1,0 +1,32 @@
+
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BaikalSmcLib
+  FILE_GUID                      = 0cc69cbe-3333-42e3-8f41-26cdbc29acb3
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BaikalSmcLib
+
+
+[Sources]
+  Smc.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  ArmPlatformPkg/ArmPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  SerialPortLib
+  UefiLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeLib
+  DxeServicesTableLib
+  ArmSmcLib

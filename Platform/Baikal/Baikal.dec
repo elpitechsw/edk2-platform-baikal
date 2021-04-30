@@ -1,0 +1,54 @@
+## @file
+#
+#  Copyright (c) 2020, Baikal Electronics, JSC. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION = 0x0001001B
+
+[Includes]
+  Include
+
+[Guids.common]
+  gBaikalTokenSpaceGuid = { 0x0B6F5CA7, 0x4F53, 0x445A, { 0xB7, 0x6E, 0x2E, 0x36, 0x5B, 0x80, 0x63, 0x66 } }
+
+[Protocols]
+  gFdtClientProtocolGuid = { 0xE11FACA0, 0x4710, 0x4C8E, { 0xA7, 0xA2, 0x01, 0xBA, 0xA2, 0x59, 0x1B, 0x4C } }
+
+[PcdsFixedAtBuild, PcdsPatchableInModule]
+
+  #
+  # This is the physical address where the device tree is expected to be stored
+  # upon first entry into UEFI. This needs to be a FixedAtBuild PCD, so that we
+  # can do a first pass over the device tree in the SEC phase to discover the
+  # UART base address.
+  #
+  gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x0|UINT64|0x00000001
+
+  #
+  # Padding in bytes to add to the device tree allocation, so that the DTB can
+  # be modified in place (default: 256 bytes)
+  #
+  gBaikalTokenSpaceGuid.PcdDeviceTreeAllocationPadding|256|UINT32|0x00000002
+
+  #
+  # MaxMode must be one number higher than the actual max mode,
+  # i.e. for actual maximum mode 2, set the value to 3.
+  #
+  # For a list of mode numbers look in LcdArmVExpress.c
+  #
+  gBaikalTokenSpaceGuid.PcdGopPixelFormat|0x00000001|UINT32|0x00000008
+  gBaikalTokenSpaceGuid.PcdHdmiBase|0x30280000|UINT32|0x00000009
+  gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x0000000B
+  gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000006
+  gBaikalTokenSpaceGuid.PcdVduMaxMode|9|UINT32|0x00000005
+
+[PcdsFeatureFlag.common]
+  gArmPlatformTokenSpaceGuid.PcdSystemMemoryInitializeInSec|FALSE|BOOLEAN|0x00000002
+
+[PcdsDynamic]
+  gBaikalTokenSpaceGuid.PcdVduBase|0|UINT32|0x00000004
+  gBaikalTokenSpaceGuid.PcdVduLcruId|0|UINT32|0x0000000A

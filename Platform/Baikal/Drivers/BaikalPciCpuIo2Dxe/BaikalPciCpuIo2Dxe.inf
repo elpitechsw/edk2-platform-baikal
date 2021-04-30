@@ -1,0 +1,34 @@
+## @file
+#  INF file for the Baikal-M PCIe Controller Driver.
+#  Produces the CPU I/O 2 Protocol by using the services of the I/O Library.
+#  Copyright (c) 2020 Baikal Electronics JSC (www.baikalelectronics.ru)
+##
+
+[Defines]
+  INF_VERSION     = 0x00010005
+  BASE_NAME       = BaikalPciCpuIo2Dxe
+  FILE_GUID       = 687b202a-9460-11ea-b5c5-00259020f96e
+  MODULE_TYPE     = DXE_DRIVER
+  VERSION_STRING  = 1.0
+  ENTRY_POINT     = BaikalPciCpuIo2Initialize
+
+[Sources]
+  BaikalPciCpuIo2Dxe.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  IoLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEfiCpuIo2ProtocolGuid                         ## PRODUCES
+
+[Depex]
+  TRUE

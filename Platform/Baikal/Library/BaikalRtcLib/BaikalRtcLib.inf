@@ -1,0 +1,32 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = BaikalRtcLib
+  FILE_GUID                      = EEA977C8-21CD-11EB-86A6-00259020F96E
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = RealTimeClockLib
+
+[Sources]
+  BaikalRtcLib.c
+
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[Protocols]
+  gFdtClientProtocolGuid   ## CONSUMES
+
+[LibraryClasses]
+  I2cLib
+  TimeBaseLib
+
+[Depex]
+  gFdtClientProtocolGuid

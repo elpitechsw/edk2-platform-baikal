@@ -1,0 +1,41 @@
+#/** @file
+#
+#  Component description file for DwSerialPortLib module
+#
+#  Copyright (C) 2015 - 2020, Baikal Electronics. All rights reserved.
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#**/
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = DwSerialPortLib
+  FILE_GUID                      = F0EE1C36-F6A4-11EA-A45C-484D7E9DF524
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SerialPortLib
+
+[Sources.common]
+  DwSerialPortLib.c
+
+[LibraryClasses]
+  DwUartLib
+  PcdLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/Baikal/BM1000/BM1000.dec
+
+[Pcd]
+  gBm1000TokenSpaceGuid.PcdUartRegisterBase
+  gBm1000TokenSpaceGuid.PcdUartBaudRate
+  gBm1000TokenSpaceGuid.PcdUartDataBits
+  gBm1000TokenSpaceGuid.PcdUartParity
+  gBm1000TokenSpaceGuid.PcdUartStopBits

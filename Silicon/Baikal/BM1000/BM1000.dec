@@ -1,0 +1,26 @@
+## @file
+#
+#  Copyright (c) 2020, Baikal Electronics JSC. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION = 0x0001001B
+  PACKAGE_NAME      = Bm1000Pkg
+  PACKAGE_GUID      = EC842B1A-F698-11EA-A45C-484D7E9DF524
+  PACKAGE_VERSION   = 1.0
+
+[Includes]
+  Include
+
+[Guids]
+  gBm1000TokenSpaceGuid = { 0x35E5A568, 0xF699, 0x11EA, { 0xA4, 0x5C, 0x48, 0x4D, 0x7E, 0x9D, 0xF5, 0x24 } }
+
+[PcdsFixedAtBuild.common]
+  gBm1000TokenSpaceGuid.PcdUartRegisterBase|0x0|UINT64|0x00000001
+  gBm1000TokenSpaceGuid.PcdUartBaudRate|115200|UINT64|0x00000002
+  gBm1000TokenSpaceGuid.PcdUartDataBits|8|UINT8|0x00000003
+  gBm1000TokenSpaceGuid.PcdUartParity|1|UINT8|0x00000004
+  gBm1000TokenSpaceGuid.PcdUartStopBits|1|UINT8|0x00000005

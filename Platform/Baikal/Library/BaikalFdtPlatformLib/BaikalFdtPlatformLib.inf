@@ -1,0 +1,47 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ArmXenRelocatablePlatformLib
+  FILE_GUID                      = 16CF847C-F686-11EA-A45C-484D7E9DF524
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ArmPlatformLib|SEC PEIM
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  ArmPlatformPkg/ArmPlatformPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  Platform/Baikal/PrePi/PrePi.dec
+
+[LibraryClasses]
+  ArmLib
+  FdtLib
+  IoLib
+  PrintLib
+
+[Sources.common]
+  FdtBaikalMem.c
+  FdtParser.c
+  RelocatableBaikal.c
+
+[Sources.AArch64]
+  AArch64/RelocatableBaikalHelper.S
+
+[FeaturePcd]
+  gArmPlatformTokenSpaceGuid.PcdSystemMemoryInitializeInSec
+
+[PatchPcd]
+  gArmTokenSpaceGuid.PcdFdBaseAddress
+  gArmTokenSpaceGuid.PcdFvBaseAddress
+  gArmTokenSpaceGuid.PcdSystemMemoryBase
+  gArmTokenSpaceGuid.PcdSystemMemorySize
+  gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress
+
+[FixedPcd]
+  gArmPlatformTokenSpaceGuid.PcdCoreCount
+  gArmTokenSpaceGuid.PcdArmPrimaryCore
+  gArmTokenSpaceGuid.PcdArmPrimaryCoreMask
+  gArmTokenSpaceGuid.PcdFdSize
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuMemorySize

@@ -1,0 +1,31 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SmbiosDxe
+  FILE_GUID                      = 6288FC31-1143-4BCC-B14A-3D6E61B17FE4
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SmbiosDxeInitialize
+
+[Sources]
+  Smbios.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEfiSmbiosProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+
+[Depex]
+  gEfiSmbiosProtocolGuid
