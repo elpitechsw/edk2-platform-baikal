@@ -43,6 +43,7 @@
 [Guids]
   gFdtHobGuid
   gBaikalNonDiscoverableI2cMasterGuid
+  gPcf2127RtcI2cDeviceGuid
 
 [Protocols]
   gFdtClientProtocolGuid                         ## CONSUMES

@@ -34,6 +34,7 @@ typedef enum {
 } I2C_DEVICES_BUS_CONFIG_ID;
 
 typedef enum {
+  I2C_DEVICES_DRIVER_RTC,
   I2C_DEVICES_DRIVER_NUM
 } I2C_DEVICES_DRIVER_ID;
 
@@ -84,6 +85,7 @@ typedef struct {
 
 STATIC CONST I2C_DEVICES_DRIVER_DATA mI2cDrivers[] = {
 /* ID                            CompatibleString                BusConfiguration  HardwareRevision                        Guid */
+  [I2C_DEVICES_DRIVER_RTC]    = {   "nxp,pcf2127", I2C_DEVICES_BUS_CONFIG_DEFAULT,           0x0001,  &gPcf2127RtcI2cDeviceGuid },
 };
 
 STATIC

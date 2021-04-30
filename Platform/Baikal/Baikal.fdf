@@ -128,6 +128,7 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/BaikalI2cDxe/BaikalI2cDxe.inf
   INF Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.inf
   INF MdeModulePkg/Bus/I2c/I2cDxe/I2cDxe.inf
+  INF Platform/Baikal/Drivers/Pcf2127RtcDxe/Pcf2127RtcDxe.inf
 
   # PI DXE Drivers producing Architectural Protocols (EFI Services)
   INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
