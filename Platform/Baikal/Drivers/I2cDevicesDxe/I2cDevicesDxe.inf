@@ -1,0 +1,54 @@
+## @file
+#
+#  Component description file of common I2C devices driver.
+#
+#  Copyright 2020 Baikal Electronics
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = I2cDevicesDxe
+  FILE_GUID                      = F85D1231-1104-419A-8420-3BE9D706728D
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = I2cDevicesDxeEntryPoint
+  UNLOAD                         = I2cDevicesDxeUnload
+
+[Sources]
+  I2cDevicesDxe.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  Platform/Baikal/Baikal.dec
+  Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  MemoryAllocationLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Guids]
+  gFdtHobGuid
+  gBaikalNonDiscoverableI2cMasterGuid
+
+[Protocols]
+  gFdtClientProtocolGuid                         ## CONSUMES
+  gEdkiiNonDiscoverableDeviceProtocolGuid        ## PRODUCES
+  gEfiI2cBusConfigurationManagementProtocolGuid  ## PRODUCES
+  gEfiI2cEnumerateProtocolGuid                   ## PRODUCES
+
+[Depex]
+  TRUE

@@ -220,6 +220,11 @@
   Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
 
+  # I2c
+  MdeModulePkg/Bus/I2c/I2cDxe/I2cDxe.inf
+  Platform/Baikal/Drivers/BaikalI2cDxe/BaikalI2cDxe.inf
+  Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.inf
+
   # GPT/MBR partitioning + filesystems
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf

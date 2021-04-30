@@ -1,0 +1,50 @@
+#  @file
+#
+#  Component description file for I2C controller driver
+#
+#  Copyright 2020 Baikal Electronics
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = BaikalI2cDxe
+  FILE_GUID                      = 37ba03d6-fbb2-4843-85dd-fe6d5dc94dc6
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = BaikalI2cDxeEntryPoint
+  UNLOAD                         = BaikalI2cDxeUnload
+
+[Sources.common]
+  ComponentName.c
+  DriverBinding.c
+  BaikalI2cDxe.h
+  BaikalI2cDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  ArmLib
+  BaseMemoryLib
+  DevicePathLib
+  IoLib
+  MemoryAllocationLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Guids]
+  gBaikalNonDiscoverableI2cMasterGuid
+
+[Protocols]
+  gEdkiiNonDiscoverableDeviceProtocolGuid    ## TO_START
+  gEfiI2cMasterProtocolGuid                  ## BY_START
+
+[Depex]
+  TRUE
