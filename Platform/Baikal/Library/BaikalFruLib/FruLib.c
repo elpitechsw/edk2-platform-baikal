@@ -12,6 +12,8 @@
 #define BOARD_AREA_VERSION  0x01
 #define MR_MAC_REC          0xc0
 #define MR_MAC2_REC         0xc6
+#define MR_MAC3_REC         0xc7
+#define MR_MACN_REC         0xc8
 #define N_MULTIREC          16
 
 typedef struct {
@@ -193,11 +195,22 @@ BaikalFruGetMacAddr (
   MULTIRECORD  Mrec;
   UINTN        MrecAreaOffset;
   UINTN        MrecNum;
+  UINTN        MrecType;
   EFI_STATUS   Status;
 
   Status = FruCommonHeaderCheck (Buf, BufSize);
   if (EFI_ERROR (Status)) {
     return Status;
+  }
+
+  if (MacAddrIdx == 0) {
+    MrecType = MR_MAC_REC;
+  } else if (MacAddrIdx == 1) {
+    MrecType = MR_MAC2_REC;
+  } else if (MacAddrIdx == 2) {
+    MrecType = MR_MAC3_REC;
+  } else {
+    MrecType = MR_MACN_REC;
   }
 
   MrecAreaOffset = Buf[5] * 8;
@@ -212,11 +225,18 @@ BaikalFruGetMacAddr (
 
       if (Checksum) {
         DEBUG ((EFI_D_ERROR, "FRU: invalid multirecord data checksum\n"));
-      } else if ((MacAddrIdx == 0 && Mrec.Type == MR_MAC_REC) ||
-                 (MacAddrIdx == 1 && Mrec.Type == MR_MAC2_REC)) {
+      } else if (Mrec.Type == MrecType) {
         UINTN  Idx;
+        UINT8  *MacData = Mrec.Data;
+	if (MacAddrIdx > 2) {
+           if ((MacAddrIdx - 2) > MacData[0]) {
+             break;
+	   } else {
+             MacData = MacData + 1 + 6 * (MacAddrIdx - 3);
+	   }
+        }
         for (Idx = 0; Idx < 6; ++Idx) {
-          MacAddr->Addr[Idx] = Mrec.Data[Idx];
+          MacAddr->Addr[Idx] = MacData[Idx];
         }
 
         return EFI_SUCCESS;
