@@ -8,9 +8,14 @@
 #include <Library/DevicePathLib.h>
 #include <Library/NetLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/IoLib.h>
 #include <Protocol/FdtClient.h>
 #include <Protocol/I2cIo.h>
 #include "BaikalEthSnp.h"
+
+#define BM1000_GPIO32_BASE           0x20200000
+#define BM1000_GPIO32_DATA           (BM1000_GPIO32_BASE + 0x00)
+#define BM1000_GPIO32_DIR            (BM1000_GPIO32_BASE + 0x04)
 
 typedef struct {
   MAC_ADDR_DEVICE_PATH      MacAddrDevPath;
@@ -214,6 +219,7 @@ BaikalEthDxeDriverEntry (
     EFI_STATUS     FdtStatus;
     CONST UINT64  *Reg;
     UINT32         RegSize;
+    INTN           RstGpio, RstPolarity;
 
     FdtStatus = FdtClient->FindNextCompatibleNode (FdtClient, "be,dwmac", Node, &Node);
 
@@ -338,6 +344,21 @@ BaikalEthDxeDriverEntry (
         EthDevPath->MacAddrDevPath.MacAddress.Addr[4],
         EthDevPath->MacAddrDevPath.MacAddress.Addr[5]
         ));
+
+      FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "snps,reset-gpios", (CONST VOID **) &Reg, &RegSize);
+      if (FdtStatus == EFI_SUCCESS && RegSize == 12) {
+        RstGpio = SwapBytes32 (((CONST UINT32 *)Reg)[1]);
+	RstPolarity = SwapBytes32 (((CONST UINT32 *)Reg)[2]);
+	if (RstPolarity > 1)
+          RstPolarity = -1;
+	if (RstPolarity >= 0 && RstGpio > 0) {
+          MmioOr32 (BM1000_GPIO32_DIR, 1 << RstGpio);
+	  if (RstPolarity)
+            MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << RstGpio));
+	  else
+            MmioOr32 (BM1000_GPIO32_DATA, 1 << RstGpio);
+	}
+      }
 
       Status = BaikalEthSnpInstanceCtor (GmacRegs, &EthDevPath->MacAddrDevPath.MacAddress, &Snp, &Handle);
 

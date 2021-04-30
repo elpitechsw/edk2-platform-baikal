@@ -30,6 +30,7 @@
 [LibraryClasses]
   ArmSmcLib
   BaikalFruLib
+  IoLib
   UefiDriverEntryPoint
   UefiLib
 
