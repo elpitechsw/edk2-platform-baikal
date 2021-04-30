@@ -71,7 +71,9 @@
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
+!if ($(BE_MITX) == FALSE)
   I2cLib|Platform/Baikal/Library/BaikalI2cLib/BaikalI2cLib.inf
+!endif
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LcdHwLib|Platform/Baikal/Library/BaikalVduLib/BaikalVduHwLib.inf
   LcdPlatformLib|Platform/Baikal/Library/BaikalVduLib/BaikalVduLib.inf
@@ -90,7 +92,7 @@
   PrePiHobListPointerLib|ArmPlatformPkg/Library/PrePiHobListPointerLib/PrePiHobListPointerLib.inf
   PrePiLib|EmbeddedPkg/Library/PrePiLib/PrePiLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
-!if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE)
+!if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE) AND ($(BE_MITX) == FALSE)
   RealTimeClockLib|Platform/Baikal/Library/BaikalRtcLib/BaikalRtcLib.inf
 !else
   RealTimeClockLib|EmbeddedPkg/Library/TemplateRealTimeClockLib/TemplateRealTimeClockLib.inf

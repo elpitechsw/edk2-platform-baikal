@@ -4,21 +4,135 @@
 **/
 
 #include <Library/BaikalFruLib.h>
-#include <Library/BaikalI2cLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/NetLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FdtClient.h>
+#include <Protocol/I2cIo.h>
 #include "BaikalEthSnp.h"
-
-#define FRU_EEPROM_I2C_BUS   0
-#define FRU_EEPROM_I2C_ADDR  0x53
 
 typedef struct {
   MAC_ADDR_DEVICE_PATH      MacAddrDevPath;
   EFI_DEVICE_PATH_PROTOCOL  End;
 } BAIKAL_ETH_DEVPATH;
+
+typedef struct {
+  UINTN                           OperationCount;
+  EFI_I2C_OPERATION               Address;
+  EFI_I2C_OPERATION               Data;
+} EEPROM_I2C_READ_REQUEST;
+
+STATIC
+EFI_STATUS
+LocateI2cEepromDevice (
+  OUT EFI_I2C_IO_PROTOCOL     **Instance
+)
+{
+  EFI_I2C_IO_PROTOCOL *Dev;
+  EFI_STATUS          Status;
+  EFI_HANDLE          *HandleBuffer;
+  UINTN               HandleCount;
+  UINTN               Index;
+  BOOLEAN             Found;
+
+  if (Instance == NULL)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Retrieve all I2C device I/O handles in the handle database
+  //
+  Status = gBS->LocateHandleBuffer (ByProtocol,
+                                    &gEfiI2cIoProtocolGuid,
+                                    NULL,
+                                    &HandleCount,
+                                    &HandleBuffer);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  //
+  // Locate protocol instance matching specific device
+  //
+  Found = FALSE;
+  for (Index = 0; (Index < HandleCount) && !Found; Index++) {
+    Status = gBS->OpenProtocol (
+                    HandleBuffer[Index],
+                    &gEfiI2cIoProtocolGuid,
+                    (VOID **) &Dev,
+                    gImageHandle,
+                    HandleBuffer[Index],
+                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                    );
+    if (!EFI_ERROR (Status) &&
+        CompareGuid (Dev->DeviceGuid, &gEepromI2cDeviceGuid)) {
+      Found = TRUE;
+      *Instance = Dev;
+    }
+  }
+
+  //
+  // Free the handle array
+  //
+  gBS->FreePool (HandleBuffer);
+
+  return Found ? EFI_SUCCESS : EFI_NOT_FOUND;
+}
+
+/**
+  Read data from the EEPROM.
+
+  @param  I2cIo                 Pointer to instance of I2C_IO_PROTOCOL.
+  @param  Address               Memory address.
+  @param  Size                  Number of bytes to read.
+  @param  Data                  Pointer to the buffer to store the data in.
+
+  @retval EFI_SUCCESS           The operation completed successfully.
+  @retval EFI_DEVICE_ERROR      The data could not be retrieved from memory
+                                due to hardware error.
+**/
+STATIC
+EFI_STATUS
+I2cEepromReadData (
+  IN  EFI_I2C_IO_PROTOCOL         *I2cIo,
+  IN  UINT16                      Address,
+  IN  UINT16                      Size,
+  OUT UINT8                       *Data
+  )
+{
+  EEPROM_I2C_READ_REQUEST  Request;
+  EFI_STATUS               Status;
+  UINT8                    AddressBuffer[2];
+
+  Status = EFI_DEVICE_ERROR;
+  AddressBuffer[0] = (Address >> 8) & 0xFF;
+  AddressBuffer[1] = Address & 0xFF;
+
+  if (I2cIo != NULL) {
+    Request.OperationCount = 2;
+    Request.Address.Flags = 0;
+    Request.Address.LengthInBytes = sizeof (AddressBuffer);
+    Request.Address.Buffer = AddressBuffer;
+    Request.Data.Flags = I2C_FLAG_READ;
+    Request.Data.LengthInBytes = Size;
+    Request.Data.Buffer = Data;
+    Status = I2cIo->QueueRequest (I2cIo, 0,
+                                  NULL,
+                                  (EFI_I2C_REQUEST_PACKET *)&Request,
+                                  NULL);
+    if (EFI_ERROR (Status)) {
+      if (Status != EFI_TIMEOUT) {
+        DEBUG ((EFI_D_ERROR, "I2cEeprom: read @%04X failed: %r\r\n",
+                Address, Status));
+      }
+      Status = EFI_DEVICE_ERROR;
+    }
+  }
+
+  return Status;
+}
 
 STATIC
 EFI_STATUS
@@ -54,11 +168,11 @@ BaikalEthDxeDriverEntry (
 {
   UINTN                 DevIdx = 0;
   FDT_CLIENT_PROTOCOL  *FdtClient;
+  EFI_I2C_IO_PROTOCOL  *I2cIo;
   UINT8                *FruBuf;
   EFI_MAC_ADDRESS       FruMacAddrs[2];
   CONST UINT16          FruMemAddr = 0;
   BOOLEAN               GmacFound = FALSE;
-  INTN                  I2cRxedSize;
   UINTN                 Idx;
   INT32                 Node;
   EFI_STATUS            Status;
@@ -76,24 +190,22 @@ BaikalEthDxeDriverEntry (
 
   Status = gBS->AllocatePool (EfiBootServicesData, FRU_SIZE, (VOID **) &FruBuf);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "%a: unable to locate FruBuf, Status: %r\n", __FUNCTION__, Status));
+    DEBUG ((EFI_D_ERROR, "%a: unable to allocate FruBuf, Status: %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  I2cRxedSize = I2cTxRx (FRU_EEPROM_I2C_BUS,
-                         FRU_EEPROM_I2C_ADDR,
-                         (UINT8 *)&FruMemAddr,
-                         sizeof FruMemAddr,
-                         FruBuf,
-                         FRU_SIZE
-                         );
-
   gBS->SetMem (FruMacAddrs, sizeof (FruMacAddrs), 0);
 
-  if (I2cRxedSize == FRU_SIZE) {
-    for (Idx = 0; Idx < sizeof FruMacAddrs / sizeof FruMacAddrs[0]; ++Idx) {
-      BaikalFruGetMacAddr(FruBuf, FRU_SIZE, Idx, &FruMacAddrs[Idx]);
+  Status = LocateI2cEepromDevice (&I2cIo);
+  if (!EFI_ERROR (Status)) {
+    Status = I2cEepromReadData (I2cIo, FruMemAddr, FRU_SIZE, FruBuf);
+    if (Status == EFI_SUCCESS) {
+      for (Idx = 0; Idx < sizeof FruMacAddrs / sizeof FruMacAddrs[0]; ++Idx) {
+        BaikalFruGetMacAddr(FruBuf, FRU_SIZE, Idx, &FruMacAddrs[Idx]);
+      }
     }
+  } else {
+    DEBUG ((EFI_D_ERROR, "%a: unable to locate FRU EEPROM device, Status: %r\n", __FUNCTION__, Status));
   }
 
   gBS->FreePool (FruBuf);

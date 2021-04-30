@@ -25,17 +25,21 @@
   MdePkg/MdePkg.dec
   NetworkPkg/NetworkPkg.dec
   Platform/Baikal/Baikal.dec
+  Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.dec
 
 [LibraryClasses]
   ArmSmcLib
   BaikalFruLib
-  I2cLib
   UefiDriverEntryPoint
   UefiLib
 
 [Protocols]
   gEfiSimpleNetworkProtocolGuid
   gFdtClientProtocolGuid
+  gEfiI2cIoProtocolGuid
 
 [Depex]
-  TRUE
+  gEfiI2cIoProtocolGuid
+
+[Guids]
+  gEepromI2cDeviceGuid
