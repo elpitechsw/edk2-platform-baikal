@@ -170,7 +170,7 @@ BaikalEthDxeDriverEntry (
   FDT_CLIENT_PROTOCOL  *FdtClient;
   EFI_I2C_IO_PROTOCOL  *I2cIo;
   UINT8                *FruBuf;
-  EFI_MAC_ADDRESS       FruMacAddrs[2];
+  EFI_MAC_ADDRESS       FruMacAddrs[4];
   CONST UINT16          FruMemAddr = 0;
   BOOLEAN               GmacFound = FALSE;
   UINTN                 Idx;
@@ -227,6 +227,11 @@ BaikalEthDxeDriverEntry (
 
     if (EFI_ERROR (FdtStatus)) {
       break;
+    }
+
+    FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "status", (CONST VOID **) &Reg, &RegSize);
+    if (EFI_ERROR (FdtStatus) || AsciiStrCmp ((CONST CHAR8 *)Reg, "okay") != 0) {
+      continue;
     }
 
     FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "reg", (CONST VOID **) &Reg, &RegSize);
@@ -354,6 +359,122 @@ BaikalEthDxeDriverEntry (
         gBS->FreePool (EthDevPath);
         return Status;
       }
+
+      GmacFound = TRUE;
+      ++DevIdx;
+    }
+  }
+
+  /* Do the same for xgmac */
+  for (Node = 0;;) {
+    EFI_STATUS     FdtStatus;
+    CONST UINT64  *Reg;
+    UINT32         RegSize;
+
+    FdtStatus = FdtClient->FindNextCompatibleNode (FdtClient, "amd,xgbe-seattle-v1a", Node, &Node);
+
+    if (EFI_ERROR (FdtStatus)) {
+      break;
+    }
+
+    FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "status", (CONST VOID **) &Reg, &RegSize);
+    if (EFI_ERROR (FdtStatus) || AsciiStrCmp ((CONST CHAR8 *)Reg, "okay") != 0) {
+      continue;
+    }
+
+    FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "reg", (CONST VOID **) &Reg, &RegSize);
+    if (FdtStatus == EFI_SUCCESS && (RegSize % 16) == 0) {
+      BOOLEAN              DtMacAddrSetRequest = FALSE;
+      VOID * CONST         XGmacRegs = (VOID *) SwapBytes64 (Reg[0]);
+      EFI_MAC_ADDRESS      MacAddr;
+      CONST UINT8         *RegByte;
+
+      DEBUG ((EFI_D_NET, "%a: XGMAC@%p found\n", __FUNCTION__, XGmacRegs));
+
+      FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "mac-address", (CONST VOID **) &Reg, &RegSize);
+      if (FdtStatus == EFI_SUCCESS && RegSize == 6) {
+        RegByte = (UINT8 *) Reg;
+        for (Idx = 0; Idx < RegSize; ++Idx) {
+          MacAddr.Addr[Idx] = RegByte[Idx];
+        }
+
+        FdtStatus = IsValidMacAddr(&MacAddr);
+      }
+
+      if (EFI_ERROR (FdtStatus)) {
+        FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "local-mac-address", (CONST VOID **) &Reg, &RegSize);
+        if (FdtStatus == EFI_SUCCESS && RegSize == 6) {
+          RegByte = (UINT8 *) Reg;
+          for (Idx = 0; Idx < RegSize; ++Idx) {
+            MacAddr.Addr[Idx] = RegByte[Idx];
+          }
+
+          FdtStatus = IsValidMacAddr(&MacAddr);
+          if (EFI_ERROR (FdtStatus)) {
+            DtMacAddrSetRequest = TRUE;
+          }
+        }
+      }
+
+      if (EFI_ERROR (FdtStatus)) {
+        Status = IsValidMacAddr(&FruMacAddrs[DevIdx]);
+        if (Status == EFI_SUCCESS) {
+            gBS->CopyMem (&MacAddr, &FruMacAddrs[DevIdx], sizeof (EFI_MAC_ADDRESS));
+        } else {
+          UINT64  MacAddrRegVal;
+
+          MacAddrRegVal   = (*(UINT32 *)((EFI_PHYSICAL_ADDRESS)XGmacRegs + 0x300) & 0xffff);
+          MacAddrRegVal <<= 32;
+          MacAddrRegVal  |= (*(UINT32 *)((EFI_PHYSICAL_ADDRESS)XGmacRegs + 0x304));
+
+          MacAddr.Addr[0] = (MacAddrRegVal >>  0) & 0xff;
+          MacAddr.Addr[1] = (MacAddrRegVal >>  8) & 0xff;
+          MacAddr.Addr[2] = (MacAddrRegVal >> 16) & 0xff;
+          MacAddr.Addr[3] = (MacAddrRegVal >> 24) & 0xff;
+          MacAddr.Addr[4] = (MacAddrRegVal >> 32) & 0xff;
+          MacAddr.Addr[5] = (MacAddrRegVal >> 40) & 0xff;
+
+          Status = IsValidMacAddr(&MacAddr);
+          if (EFI_ERROR (Status)) {
+            MacAddr.Addr[0] = 0x4c;
+            MacAddr.Addr[1] = 0xa5;
+            MacAddr.Addr[2] = 0x15;
+            MacAddr.Addr[3] = 0x01;
+            MacAddr.Addr[4] = 0x02;
+            MacAddr.Addr[5] = DevIdx;
+          }
+        }
+
+        if (DtMacAddrSetRequest) {
+          UINT32  MacAddrHi, MacAddrLo;
+          FdtStatus = FdtClient->SetNodeProperty (FdtClient, Node, "local-mac-address", MacAddr.Addr, 6);
+          if (EFI_ERROR (FdtStatus)) {
+            DEBUG ((EFI_D_ERROR, "%a: unable to set 'local-mac-address' FDT node property, Status: %r\n", __FUNCTION__, Status));
+          }
+
+          FdtStatus = FdtClient->SetNodeProperty (FdtClient, Node, "mac-address", MacAddr.Addr, 6);
+          if (EFI_ERROR (FdtStatus)) {
+            DEBUG ((EFI_D_ERROR, "%a: unable to set 'mac-address' FDT node property, Status: %r\n", __FUNCTION__, Status));
+          }
+          MacAddrHi = MacAddr.Addr[4] | (MacAddr.Addr[5] << 8);
+          MacAddrLo = MacAddr.Addr[0] | (MacAddr.Addr[1] << 8) | (MacAddr.Addr[2] << 16) | (MacAddr.Addr[3] << 24);
+          *(UINT32 *)((EFI_PHYSICAL_ADDRESS)XGmacRegs + 0x300) = MacAddrHi;
+          *(UINT32 *)((EFI_PHYSICAL_ADDRESS)XGmacRegs + 0x304) = MacAddrLo;
+        }
+      }
+
+      DEBUG ((
+        EFI_D_NET,
+        "%a: XGMAC@%p MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
+        __FUNCTION__,
+        XGmacRegs,
+        MacAddr.Addr[0],
+        MacAddr.Addr[1],
+        MacAddr.Addr[2],
+        MacAddr.Addr[3],
+        MacAddr.Addr[4],
+        MacAddr.Addr[5]
+        ));
 
       GmacFound = TRUE;
       ++DevIdx;
