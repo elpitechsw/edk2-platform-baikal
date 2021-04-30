@@ -1,0 +1,75 @@
+## @file
+# T-Platforms EC Driver.
+#
+# This dirver provides support for T-Platforms EC device.
+#
+# Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution.  The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = TpBmcDxe
+  MODULE_UNI_FILE                = TpBmcDxe.uni
+  FILE_GUID                      = 81E253FB-B93F-40E0-8319-173A17DFDC45
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeTpBmc
+  UNLOAD                         = UnloadTpBmc
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#  DRIVER_BINDING                = gTpBmcDriver;
+#  COMPONENT_NAME                = gTpBmcComponentName;
+#  COMPONENT_NAME2               = gTpBmcComponentName2;
+#
+
+[Sources]
+  ComponentName.c
+  TpBmc.h
+  TpBmc.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Drivers/I2cDevicesDxe/I2cDevicesDxe.dec
+
+[LibraryClasses]
+  ReportStatusCodeLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  UefiLib
+  UefiDriverEntryPoint
+  DebugLib
+  PcdLib
+  IoLib
+  DevicePathLib
+
+[Guids]
+  gTpBmcI2cDeviceGuid
+
+[Protocols]
+  gEfiDevicePathProtocolGuid                    ## TO_START
+  gEfiI2cIoProtocolGuid                         ## TO_START
+
+#
+# [Event]
+#
+#   ##
+#   # Timer event used to check the mouse state at a regular interval.
+#   #
+#   EVENT_TYPE_PERIODIC_TIMER   ## CONSUMES
+#
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  TpBmcDxeExtra.uni
