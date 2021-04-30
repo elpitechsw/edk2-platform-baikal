@@ -37,11 +37,6 @@ BaikalPciHostBridgeLibCfgWindow (
   IN  UINTN                 EnableFlags
   );
 
-BOOLEAN
-BaikalPciHostBridgeLibLink (
-  IN  CONST UINTN  PcieIdx
-  );
-
 STATIC
 UINT64
 PciSegmentLibGetConfigBase (
@@ -54,6 +49,7 @@ PciSegmentLibGetConfigBase (
   CONST UINTN  Function = (PciSegLibAddr >> 12) & 0x7;
   extern EFI_PHYSICAL_ADDRESS mPcieCdmBases[];
   extern EFI_PHYSICAL_ADDRESS mPcieCfgBases[];
+  extern UINTN mPcieLinkStat[];
 
   // Limit each bus to a single device
   if (Device > 0) {
@@ -64,7 +60,7 @@ PciSegmentLibGetConfigBase (
     return mPcieCdmBases[Segment];
   }
 
-  if (!BaikalPciHostBridgeLibLink(Segment)) {
+  if (mPcieLinkStat[Segment] == 0) {
     return MAX_UINT64;
   }
 
