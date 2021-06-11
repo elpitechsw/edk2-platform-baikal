@@ -1,22 +1,19 @@
-/** @file  BaikalVdu.h
+/** @file
+  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
- Copyright (C) 2019-2020 Baikal Electronics JSC
+  Parts of this file were based on sources as follows:
 
- Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
+  Copyright (c) 2011, ARM Ltd. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
 
- Parts of this file were based on sources as follows:
-
- Copyright (c) 2011, ARM Ltd. All rights reserved.<BR>
- SPDX-License-Identifier: BSD-2-Clause-Patent
-
- **/
-
-#ifndef _BAIKAL_VDU_H__
-#define _BAIKAL_VDU_H__
+#ifndef BAIKAL_VDU_H_
+#define BAIKAL_VDU_H_
 
 #define LCRU_LVDS     0x20010000
 #define LCRU_HDMI     0x30010000
-#define VDU_LVDS      0x202d0000
+#define VDU_LVDS      0x202D0000
 #define VDU_HDMI      0x30260000
 
 // Controller Register Offsets
@@ -77,7 +74,7 @@
 #define BAIKAL_VDU_PCTR_PCR               (1 << 10)
 #define BAIKAL_VDU_PCTR_PCI               (1 << 9)
 
-#define BAIKAL_VDU_MRR_DEAR_MRR_MASK      (0xfffffff8)
+#define BAIKAL_VDU_MRR_DEAR_MRR_MASK      (0xFFFFFFF8)
 #define BAIKAL_VDU_MRR_OUTSTND_RQ(x)      ((x >> 1) << 0)
 
 #define BAIKAL_VDU_GPIOR_UHD_SNGL_PORT    (0 << 18)
@@ -94,4 +91,7 @@ BaikalSetVduFrequency(
   UINT32 OscFreq
   );
 
-#endif /* _BAIKAL_VDU_H__ */
+BOOLEAN LvdsEnabled(
+  VOID
+  );
+#endif /* BAIKAL_VDU_H_ */

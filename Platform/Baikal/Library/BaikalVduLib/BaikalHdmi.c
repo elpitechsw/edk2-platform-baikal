@@ -1,11 +1,10 @@
-/** @file BaikalHdmi.c
-
+/** @file
   This file contains Baikal HDMI TX support functions
 
-  Copyright (C) 2020 Baikal Electronics JSC
-
+  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/DebugLib.h>
@@ -13,7 +12,6 @@
 #include <Library/LcdHwLib.h>
 #include <Library/BaikalVduPlatformLib.h>
 #include <Library/TimerLib.h>
-
 #include "BaikalHdmi.h"
 #include "BaikalVdu.h"
 
@@ -55,7 +53,7 @@ HdmiPhyPowerOff(
 {
   UINTN i;
   UINT32 Val;
-  
+
   Val = MmioRead32(BAIKAL_HDMI_PHY_CONF0);
   Val &= ~BAIKAL_HDMI_PHY_CONF0_GEN2_TXPWRON_MASK;
   MmioWrite32(BAIKAL_HDMI_PHY_CONF0, Val);
@@ -63,7 +61,7 @@ HdmiPhyPowerOff(
   /*
    * Wait for TX_PHY_LOCK to be deasserted to indicate that the PHY went
    * to low power mode.
-   */ 
+   */
   for (i = 0; i < 5; ++i) {
     Val = MmioRead32(BAIKAL_HDMI_PHY_STAT0);
     if (!(Val & BAIKAL_HDMI_PHY_TX_PHY_LOCK))
@@ -95,7 +93,7 @@ HdmiPhyPowerOn(
   Val |= BAIKAL_HDMI_PHY_CONF0_GEN2_TXPWRON_MASK;
   Val &= ~BAIKAL_HDMI_PHY_CONF0_GEN2_PDDQ_MASK;
   MmioWrite32(BAIKAL_HDMI_PHY_CONF0, Val);
-  
+
   /* Wait for PHY PLL lock */
   for (i = 0; i < 5; ++i) {
     Val = MmioRead32(BAIKAL_HDMI_PHY_STAT0) & BAIKAL_HDMI_PHY_TX_PHY_LOCK;
@@ -114,13 +112,13 @@ HdmiPhyPowerOn(
   return EFI_SUCCESS;
 }
 
-EFI_STATUS 
+EFI_STATUS
 HdmiPhyConfigure(
   IN HDMI_PHY_SETTINGS *PhySettings
   )
 {
   UINT32 Val;
-	
+
   HdmiPhyPowerOff();
 
   /* Leave low power consumption mode by asserting SVSRET. */
@@ -219,12 +217,12 @@ HdmiPhyInit(
 
   /* HDMI Phy spec says to do the phy initialization sequence twice */
   for (i = 0; i < 2; i++) {
-    
+
     Val = MmioRead32(BAIKAL_HDMI_PHY_CONF0);
     Val |= BAIKAL_HDMI_PHY_CONF0_SELDATAENPOL_MASK;
     Val &= ~BAIKAL_HDMI_PHY_CONF0_SELDIPIF_MASK;
     MmioWrite32(BAIKAL_HDMI_PHY_CONF0, Val);
- 
+
     if ((Ret = HdmiPhyConfigure(PhySettings)) != EFI_SUCCESS)
       return Ret;
   }
@@ -262,5 +260,3 @@ HdmiEnableVideoPath(
      set up VSYNC active edge delay (in lines) */
   MmioWrite32(BAIKAL_HDMI_FC_VSYNCINWIDTH, Sync);
 }
-
-

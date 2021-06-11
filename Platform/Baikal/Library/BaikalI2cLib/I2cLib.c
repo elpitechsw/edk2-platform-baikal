@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -21,14 +21,16 @@
 
 #define IC_DATA_CMD_CMD            (1 << 8)
 
-#define IC_RAW_INTR_STAT_STOP_DET  (1 << 9)
 #define IC_RAW_INTR_STAT_TX_ABRT   (1 << 6)
+#define IC_RAW_INTR_STAT_STOP_DET  (1 << 9)
 
-#define IC_STATUS_MST_ACTIVITY     (1 << 5)
-#define IC_STATUS_RFF              (1 << 4)
-#define IC_STATUS_RFNE             (1 << 3)
-#define IC_STATUS_TFE              (1 << 2)
+#define IC_ENABLE_ENABLE           (1 << 0)
+
 #define IC_STATUS_TFNF             (1 << 1)
+#define IC_STATUS_TFE              (1 << 2)
+#define IC_STATUS_RFNE             (1 << 3)
+#define IC_STATUS_RFF              (1 << 4)
+#define IC_STATUS_MST_ACTIVITY     (1 << 5)
 
 #define I2C_TIMEOUT                1000000
 #define IC_CLK                         166
@@ -65,13 +67,7 @@ typedef struct {
   UINT32  IcClrStopDet;
   UINT32  IcClrStartDet;
   UINT32  IcClrGenCall;
-
-  struct {
-    UINT32  Enable:1;
-    UINT32  Abort:1;
-    UINT32  Reserved:30;
-  } IcEnable;
-
+  UINT32  IcEnable;
   UINT32  IcStatus;
   UINT32  IcTxFlr;
   UINT32  IcRxFlr;
@@ -105,24 +101,24 @@ I2cTxRx (
   EFI_STATUS  Status;
   volatile I2C_CONTROLLER_REGS *CONST  I2cRegs = BAIKAL_I2C_REGS (Bus);
   UINTN  RxedSize = 0;
-  UINT8 *CONST  RxPtr = (UINT8 *)RxBuf;
+  UINT8 *CONST  RxPtr = (UINT8 *) RxBuf;
   UINTN  TxedSize = 0;
-  CONST UINT8 *CONST  TxPtr = (UINT8 *)TxBuf;
+  CONST UINT8 *CONST  TxPtr = (UINT8 *) TxBuf;
 
   ASSERT(Bus <= 1);
   ASSERT(TargetAddr <= 0x7F);
   ASSERT(TxBuf != NULL || !TxBufSize);
   ASSERT(RxBuf != NULL || !RxBufSize);
 
-  I2cRegs->IcEnable.Enable = 0;
-  I2cRegs->IcCon           = IC_CON_IC_SLAVE_DISABLE | IC_CON_SPEED | IC_CON_MASTER_MODE;
-  I2cRegs->IcTar           = TargetAddr;
-  I2cRegs->IcRxTl          = 0;
-  I2cRegs->IcTxTl          = 0;
-  I2cRegs->IcIntrMask      = 0;
-  I2cRegs->IcFsSclHcnt     = (IC_CLK * MIN_FS_SCL_HIGHTIME) / NANO_TO_MICRO;
-  I2cRegs->IcFsSclLcnt     = (IC_CLK * MIN_FS_SCL_LOWTIME)  / NANO_TO_MICRO;
-  I2cRegs->IcEnable.Enable = 1;
+  I2cRegs->IcEnable    = 0;
+  I2cRegs->IcCon       = IC_CON_IC_SLAVE_DISABLE | IC_CON_SPEED | IC_CON_MASTER_MODE;
+  I2cRegs->IcTar       = TargetAddr;
+  I2cRegs->IcRxTl      = 0;
+  I2cRegs->IcTxTl      = 0;
+  I2cRegs->IcIntrMask  = 0;
+  I2cRegs->IcFsSclHcnt = (IC_CLK * MIN_FS_SCL_HIGHTIME) / NANO_TO_MICRO;
+  I2cRegs->IcFsSclLcnt = (IC_CLK * MIN_FS_SCL_LOWTIME)  / NANO_TO_MICRO;
+  I2cRegs->IcEnable    = IC_ENABLE_ENABLE;
 
   for (;;) {
     CONST  UINTN  IcStatus = I2cRegs->IcStatus;
@@ -154,7 +150,7 @@ I2cTxRx (
     }
   }
 
-  I2cRegs->IcEnable.Enable = 0;
+  I2cRegs->IcEnable = 0;
 
   if (EFI_ERROR (Status)) {
     return -1;

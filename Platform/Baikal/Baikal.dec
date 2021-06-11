@@ -1,7 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020, Baikal Electronics, JSC. All rights reserved.<BR>
-#
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -17,6 +16,7 @@
 
 [Protocols]
   gFdtClientProtocolGuid = { 0xE11FACA0, 0x4710, 0x4C8E, { 0xA7, 0xA2, 0x01, 0xBA, 0xA2, 0x59, 0x1B, 0x4C } }
+  gFruClientProtocolGuid = { 0xFD7E02B7, 0x3465, 0x4DDB, { 0xB8, 0xED, 0x19, 0x4C, 0x82, 0xAC, 0xEC, 0xA1 } }
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
 
@@ -40,7 +40,6 @@
   #
   # For a list of mode numbers look in LcdArmVExpress.c
   #
-  gBaikalTokenSpaceGuid.PcdGopPixelFormat|0x00000001|UINT32|0x00000008
   gBaikalTokenSpaceGuid.PcdHdmiBase|0x30280000|UINT32|0x00000009
   gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x0000000B
   gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000006

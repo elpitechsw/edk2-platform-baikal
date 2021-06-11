@@ -1,21 +1,20 @@
 ## @file
 #
-#  Copyright (c) 2020-2021, Baikal Electronics, JSC. All rights reserved.<BR>
-#
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  PLATFORM_NAME           = Baikal
-  PLATFORM_GUID           = 97E4D7C6-F382-11EA-AEE9-484D7E9DF524
+  PLATFORM_NAME           = BM1000Rdb
+  PLATFORM_GUID           = 983E1AB6-1B12-4225-8F73-03F0E83E14A1
   PLATFORM_VERSION        = 1.0
   DSC_SPECIFICATION       = 0x0001001C
   OUTPUT_DIRECTORY        = Build/Baikal
   SUPPORTED_ARCHITECTURES = AARCH64
   BUILD_TARGETS           = DEBUG|RELEASE
   SKUID_IDENTIFIER        = DEFAULT
-  FLASH_DEFINITION        = Platform/Baikal/Baikal.fdf
+  FLASH_DEFINITION        = Platform/Baikal/BM1000Rdb/BM1000Rdb.fdf
 
   # Network definition
   DEFINE NETWORK_HTTP_BOOT_ENABLE = FALSE
@@ -30,6 +29,16 @@
   GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
+!if $(BE_MBM10)
+  *_*_*_CC_FLAGS = -DBE_MBM10
+  *_*_*_ASLPP_FLAGS = -DBE_MBM10
+!elseif $(BE_MBM20)
+  *_*_*_CC_FLAGS = -DBE_MBM20
+  *_*_*_ASLPP_FLAGS = -DBE_MBM20
+!elseif $(BE_DBM)
+  *_*_*_CC_FLAGS = -DBE_DBM
+  *_*_*_ASLPP_FLAGS = -DBE_DBM
+!endif
 
 [BuildOptions.AARCH64.EDKII.DXE_CORE, BuildOptions.AARCH64.EDKII.DXE_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_APPLICATION]
   GCC:*_*_AARCH64_DLINK_FLAGS = -z common-page-size=0x1000
@@ -48,8 +57,9 @@
   ArmPlatformStackLib|ArmPlatformPkg/Library/ArmPlatformStackLib/ArmPlatformStackLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
-  BaikalFruLib|Platform/Baikal/Library/BaikalFruLib/BaikalFruLib.inf
+  BaikalSmbusLib|Platform/Baikal/Library/BaikalSmbusLib/BaikalSmbusLib.inf
   BaikalSmcLib|Platform/Baikal/Library/BaikalSmcLib/BaikalSmcLib.inf
+  BaikalSpdLib|Platform/Baikal/Library/BaikalSpdLib/BaikalSpdLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibOptDxe/BaseMemoryLibOptDxe.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
@@ -85,7 +95,7 @@
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
-  PlatformBootManagerLib|ArmPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+  PlatformBootManagerLib|Platform/Baikal/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
   PlatformPeiLib|Platform/Baikal/Library/PlatformPeiLib/PlatformPeiLib.inf
   PrePiHobListPointerLib|ArmPlatformPkg/Library/PrePiHobListPointerLib/PrePiHobListPointerLib.inf
   PrePiLib|EmbeddedPkg/Library/PrePiLib/PrePiLib.inf
@@ -101,7 +111,6 @@
   SerialPortLib|Silicon/Baikal/BM1000/Library/DwSerialPortLib/DwSerialPortLib.inf
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
-  SpiLib|Platform/Baikal/Library/BaikalSpiLib/BaikalSpiLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   TimeBaseLib|EmbeddedPkg/Library/TimeBaseLib/TimeBaseLib.inf
   TimerLib|ArmPkg/Library/ArmArchTimerLib/ArmArchTimerLib.inf
@@ -218,6 +227,7 @@
   Platform/Baikal/Drivers/BaikalSpiBlockDxe/BaikalSpiBlockDxe.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
+  Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
   Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
 
   # GPT/MBR partitioning + filesystems
@@ -229,13 +239,18 @@
 
   # SMBIOS Support
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-  Platform/Baikal/Drivers/SmbiosDxe/SmbiosDxe.inf
+  Platform/Baikal/Drivers/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
+
+  # ACPI support
+  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+  Platform/Baikal/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # BDS
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+  Platform/Baikal/Logo/LogoDxe.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
     <LibraryClasses>
       NULL|MdeModulePkg/Library/DeviceManagerUiLib/DeviceManagerUiLib.inf
@@ -256,7 +271,7 @@
 
   # Network
 !include NetworkPkg/Network.dsc.inc
-  Platform/Baikal/Drivers/BaikalEthDxe/BaikalEthDxe.inf
+  Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
   Platform/Baikal/Drivers/BaikalPciCpuIo2Dxe/BaikalPciCpuIo2Dxe.inf
@@ -299,11 +314,17 @@
       gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|FALSE
   }
 
+!if $(BUILD_UEFI_APPS) == TRUE
+  Platform/Baikal/Application/SpiFlash/SpiFlash.inf
+  Platform/Baikal/Application/SpiFlashImage/SpiFlashImage.inf
+!endif
+
 [PcdsFeatureFlag.common]
   gArmTokenSpaceGuid.PcdRelocateVectorTable|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGopSupport|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutUgaSupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdHiiOsRuntimeSupport|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdInstallAcpiSdtProtocol|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdDriverDiagnostics2Disable|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdDriverDiagnosticsDisable|TRUE
@@ -323,6 +344,12 @@
   gArmTokenSpaceGuid.PcdGicRedistributorsBase|0x2D100000
   gArmTokenSpaceGuid.PcdVFPEnabled|1
   gBm1000TokenSpaceGuid.PcdUartRegisterBase|0x20230000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|{ 0x42, 0x4B, 0x4C, 0x45 }
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|{ 0x42, 0x41, 0x49, 0x4B, 0x41, 0x4C }
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision|1
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|{ 0x42, 0x4B, 0x4C, 0x45, 0x42, 0x4B, 0x4C, 0x45 }
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiExposedTableVersions|0x20
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xAA, 0x2C, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6E, 0x8A, 0xB6, 0xF4, 0x66, 0x23, 0x31 }
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0xC000000000007FD1
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|$(FIRMWARE_REVISION)
@@ -367,8 +394,12 @@
 [PcdsDynamicDefault.common]
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|80
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|25
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn|100
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow|31
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|1920
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|1080
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|1920
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|1080
-  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|3
+
+[PcdsDynamicHii.common]
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5

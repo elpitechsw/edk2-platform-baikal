@@ -13,12 +13,11 @@
 
 **/
 
-#include <string.h>
-
 #include <PiDxe.h>
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/LcdPlatformLib.h>
 #include <Library/BaikalVduPlatformLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -48,82 +47,92 @@ typedef struct {
 STATIC DISPLAY_MODE mDisplayModes[] = {
   { // Mode 0 : VGA : 640 x 480 x 24 bpp
     VGA, LCD_BITS_PER_PIXEL_24,
-    VGA_OSC_FREQUENCY,
-    {VGA_H_RES_PIXELS, VGA_H_SYNC, VGA_H_BACK_PORCH, VGA_H_FRONT_PORCH},
-    {VGA_V_RES_PIXELS, VGA_V_SYNC, VGA_V_BACK_PORCH, VGA_V_FRONT_PORCH},
-    {VGA_OPMODE, VGA_CURRENT, VGA_GMP, VGA_TXTER, VGA_VLEVCTRL, VGA_CKSYMTXCTRL},
+    BAIKAL_VGA_OSC_FREQUENCY,
+    {VGA_H_RES_PIXELS, BAIKAL_VGA_H_SYNC, BAIKAL_VGA_H_BACK_PORCH, BAIKAL_VGA_H_FRONT_PORCH},
+    {VGA_V_RES_PIXELS, BAIKAL_VGA_V_SYNC, BAIKAL_VGA_V_BACK_PORCH, BAIKAL_VGA_V_FRONT_PORCH},
+    {HDMI_PHY_VGA_OPMODE, HDMI_PHY_VGA_CURRENT, HDMI_PHY_VGA_GMP,
+     HDMI_PHY_VGA_TXTER, HDMI_PHY_VGA_VLEVCTRL, HDMI_PHY_VGA_CKSYMTXCTRL},
     1, 18
   },
   { // Mode 1 : SVGA : 800 x 600 x 24 bpp
     SVGA, LCD_BITS_PER_PIXEL_24,
-    SVGA_OSC_FREQUENCY,
-    {SVGA_H_RES_PIXELS, SVGA_H_SYNC, SVGA_H_BACK_PORCH, SVGA_H_FRONT_PORCH},
-    {SVGA_V_RES_PIXELS, SVGA_V_SYNC, SVGA_V_BACK_PORCH, SVGA_V_FRONT_PORCH},
-    {SVGA_OPMODE, SVGA_CURRENT, SVGA_GMP, SVGA_TXTER, SVGA_VLEVCTRL, SVGA_CKSYMTXCTRL},
+    BAIKAL_SVGA_OSC_FREQUENCY,
+    {SVGA_H_RES_PIXELS, BAIKAL_SVGA_H_SYNC, BAIKAL_SVGA_H_BACK_PORCH, BAIKAL_SVGA_H_FRONT_PORCH},
+    {SVGA_V_RES_PIXELS, BAIKAL_SVGA_V_SYNC, BAIKAL_SVGA_V_BACK_PORCH, BAIKAL_SVGA_V_FRONT_PORCH},
+    {HDMI_PHY_SVGA_OPMODE, HDMI_PHY_SVGA_CURRENT, HDMI_PHY_SVGA_GMP,
+     HDMI_PHY_SVGA_TXTER, HDMI_PHY_SVGA_VLEVCTRL, HDMI_PHY_SVGA_CKSYMTXCTRL},
     1, 18
   },
   { // Mode 2 : XGA : 1024 x 768 x 24 bpp
     XGA, LCD_BITS_PER_PIXEL_24,
-    XGA_OSC_FREQUENCY,
-    {XGA_H_RES_PIXELS, XGA_H_SYNC, XGA_H_BACK_PORCH, XGA_H_FRONT_PORCH},
-    {XGA_V_RES_PIXELS, XGA_V_SYNC, XGA_V_BACK_PORCH, XGA_V_FRONT_PORCH},
-    {XGA_OPMODE, XGA_CURRENT, XGA_GMP, XGA_TXTER, XGA_VLEVCTRL, XGA_CKSYMTXCTRL},
+    BAIKAL_XGA_OSC_FREQUENCY,
+    {XGA_H_RES_PIXELS, BAIKAL_XGA_H_SYNC, BAIKAL_XGA_H_BACK_PORCH, BAIKAL_XGA_H_FRONT_PORCH},
+    {XGA_V_RES_PIXELS, BAIKAL_XGA_V_SYNC, BAIKAL_XGA_V_BACK_PORCH, BAIKAL_XGA_V_FRONT_PORCH},
+    {HDMI_PHY_XGA_OPMODE, HDMI_PHY_XGA_CURRENT, HDMI_PHY_XGA_GMP,
+     HDMI_PHY_XGA_TXTER, HDMI_PHY_XGA_VLEVCTRL, HDMI_PHY_XGA_CKSYMTXCTRL},
     1, 18
   },
   { // Mode 3 : HD720 : 1280 x 720 x 24 bpp
     HD720, LCD_BITS_PER_PIXEL_24,
-    HD720_OSC_FREQUENCY,
-    {HD720_H_RES_PIXELS, HD720_H_SYNC, HD720_H_BACK_PORCH, HD720_H_FRONT_PORCH},
-    {HD720_V_RES_PIXELS, HD720_V_SYNC, HD720_V_BACK_PORCH, HD720_V_FRONT_PORCH},
-    {HD720_OPMODE, HD720_CURRENT, HD720_GMP, HD720_TXTER, HD720_VLEVCTRL, HD720_CKSYMTXCTRL},
+    BAIKAL_HD720_OSC_FREQUENCY,
+    {HD720_H_RES_PIXELS, BAIKAL_HD720_H_SYNC, BAIKAL_HD720_H_BACK_PORCH, BAIKAL_HD720_H_FRONT_PORCH},
+    {HD720_V_RES_PIXELS, BAIKAL_HD720_V_SYNC, BAIKAL_HD720_V_BACK_PORCH, BAIKAL_HD720_V_FRONT_PORCH},
+    {HDMI_PHY_HD720_OPMODE, HDMI_PHY_HD720_CURRENT, HDMI_PHY_HD720_GMP,
+     HDMI_PHY_HD720_TXTER, HDMI_PHY_HD720_VLEVCTRL, HDMI_PHY_HD720_CKSYMTXCTRL},
     1, 18
   },
   { // Mode 4 : WXGA : 1280 x 800 x 24 bpp
     WXGA, LCD_BITS_PER_PIXEL_24,
-    WXGA_OSC_FREQUENCY,
-    {WXGA_H_RES_PIXELS, WXGA_H_SYNC, WXGA_H_BACK_PORCH, WXGA_H_FRONT_PORCH},
-    {WXGA_V_RES_PIXELS, WXGA_V_SYNC, WXGA_V_BACK_PORCH, WXGA_V_FRONT_PORCH},
-    {WXGA_OPMODE, WXGA_CURRENT, WXGA_GMP, WXGA_TXTER, SXGA_VLEVCTRL, SXGA_CKSYMTXCTRL},
+    BAIKAL_WXGA_OSC_FREQUENCY,
+    {WXGA_H_RES_PIXELS, BAIKAL_WXGA_H_SYNC, BAIKAL_WXGA_H_BACK_PORCH, BAIKAL_WXGA_H_FRONT_PORCH},
+    {WXGA_V_RES_PIXELS, BAIKAL_WXGA_V_SYNC, BAIKAL_WXGA_V_BACK_PORCH, BAIKAL_WXGA_V_FRONT_PORCH},
+    {HDMI_PHY_WXGA_OPMODE, HDMI_PHY_WXGA_CURRENT, HDMI_PHY_WXGA_GMP,
+     HDMI_PHY_WXGA_TXTER, HDMI_PHY_SXGA_VLEVCTRL, HDMI_PHY_SXGA_CKSYMTXCTRL},
     1, 18
   },
   { // Mode 5 : SXGA : 1280 x 1024 x 24 bpp
     SXGA, LCD_BITS_PER_PIXEL_24,
-    SXGA_OSC_FREQUENCY,
-    {SXGA_H_RES_PIXELS, SXGA_H_SYNC, SXGA_H_BACK_PORCH, SXGA_H_FRONT_PORCH},
-    {SXGA_V_RES_PIXELS, SXGA_V_SYNC, SXGA_V_BACK_PORCH, SXGA_V_FRONT_PORCH},
-    {SXGA_OPMODE, SXGA_CURRENT, SXGA_GMP, SXGA_TXTER, SXGA_VLEVCTRL, SXGA_CKSYMTXCTRL},
+    BAIKAL_SXGA_OSC_FREQUENCY,
+    {SXGA_H_RES_PIXELS, BAIKAL_SXGA_H_SYNC, BAIKAL_SXGA_H_BACK_PORCH, BAIKAL_SXGA_H_FRONT_PORCH},
+    {SXGA_V_RES_PIXELS, BAIKAL_SXGA_V_SYNC, BAIKAL_SXGA_V_BACK_PORCH, BAIKAL_SXGA_V_FRONT_PORCH},
+    {HDMI_PHY_SXGA_OPMODE, HDMI_PHY_SXGA_CURRENT, HDMI_PHY_SXGA_GMP,
+     HDMI_PHY_SXGA_TXTER, HDMI_PHY_SXGA_VLEVCTRL, HDMI_PHY_SXGA_CKSYMTXCTRL},
     1, 24
   },
   { // Mode 6 : WSXGA : 1680 x 1050 x 24 bpp
     WSXGA, LCD_BITS_PER_PIXEL_24,
-    WSXGA_OSC_FREQUENCY,
-    {WSXGA_H_RES_PIXELS, WSXGA_H_SYNC, WSXGA_H_BACK_PORCH, WSXGA_H_FRONT_PORCH},
-    {WSXGA_V_RES_PIXELS, WSXGA_V_SYNC, WSXGA_V_BACK_PORCH, WSXGA_V_FRONT_PORCH},
-    {WSXGA_OPMODE, WSXGA_CURRENT, WSXGA_GMP, WSXGA_TXTER, WSXGA_VLEVCTRL, WSXGA_CKSYMTXCTRL},
+    BAIKAL_WSXGA_OSC_FREQUENCY,
+    {WSXGA_H_RES_PIXELS, BAIKAL_WSXGA_H_SYNC, BAIKAL_WSXGA_H_BACK_PORCH, BAIKAL_WSXGA_H_FRONT_PORCH},
+    {WSXGA_V_RES_PIXELS, BAIKAL_WSXGA_V_SYNC, BAIKAL_WSXGA_V_BACK_PORCH, BAIKAL_WSXGA_V_FRONT_PORCH},
+    {HDMI_PHY_WSXGA_OPMODE, HDMI_PHY_WSXGA_CURRENT, HDMI_PHY_WSXGA_GMP,
+     HDMI_PHY_WSXGA_TXTER, HDMI_PHY_WSXGA_VLEVCTRL, HDMI_PHY_WSXGA_CKSYMTXCTRL},
     2, 24
   },
   { // Mode 7 : UXGA : 1600 x 1200 x 24 bpp
     UXGA, LCD_BITS_PER_PIXEL_24,
-    UXGA_OSC_FREQUENCY,
-    {UXGA_H_RES_PIXELS, UXGA_H_SYNC, UXGA_H_BACK_PORCH, UXGA_H_FRONT_PORCH},
-    {UXGA_V_RES_PIXELS, UXGA_V_SYNC, UXGA_V_BACK_PORCH, UXGA_V_FRONT_PORCH},
-    {UXGA_OPMODE, UXGA_CURRENT, UXGA_GMP, UXGA_TXTER, UXGA_VLEVCTRL, UXGA_CKSYMTXCTRL},
+    BAIKAL_UXGA_OSC_FREQUENCY,
+    {UXGA_H_RES_PIXELS, BAIKAL_UXGA_H_SYNC, BAIKAL_UXGA_H_BACK_PORCH, BAIKAL_UXGA_H_FRONT_PORCH},
+    {UXGA_V_RES_PIXELS, BAIKAL_UXGA_V_SYNC, BAIKAL_UXGA_V_BACK_PORCH, BAIKAL_UXGA_V_FRONT_PORCH},
+    {HDMI_PHY_UXGA_OPMODE, HDMI_PHY_UXGA_CURRENT, HDMI_PHY_UXGA_GMP,
+     HDMI_PHY_UXGA_TXTER, HDMI_PHY_UXGA_VLEVCTRL, HDMI_PHY_UXGA_CKSYMTXCTRL},
     2, 24
   },
   { // Mode 8 : FullHD : 1920 x 1080 x 24 bpp
     HD, LCD_BITS_PER_PIXEL_24,
-    HD_OSC_FREQUENCY,
-    {HD_H_RES_PIXELS, HD_H_SYNC, HD_H_BACK_PORCH, HD_H_FRONT_PORCH},
-    {HD_V_RES_PIXELS, HD_V_SYNC, HD_V_BACK_PORCH, HD_V_FRONT_PORCH},
-    {HD_OPMODE, HD_CURRENT, HD_GMP, HD_TXTER, HD_VLEVCTRL, HD_CKSYMTXCTRL},
+    BAIKAL_HD_OSC_FREQUENCY,
+    {HD_H_RES_PIXELS, BAIKAL_HD_H_SYNC, BAIKAL_HD_H_BACK_PORCH, BAIKAL_HD_H_FRONT_PORCH},
+    {HD_V_RES_PIXELS, BAIKAL_HD_V_SYNC, BAIKAL_HD_V_BACK_PORCH, BAIKAL_HD_V_FRONT_PORCH},
+    {HDMI_PHY_HD_OPMODE, HDMI_PHY_HD_CURRENT, HDMI_PHY_HD_GMP,
+     HDMI_PHY_HD_TXTER, HDMI_PHY_HD_VLEVCTRL, HDMI_PHY_HD_CKSYMTXCTRL},
     2, 24
   },
   { // Mode 9 : QHD : 2560 x 1440 x 24 bpp
     QHD, LCD_BITS_PER_PIXEL_24,
-    QHD_OSC_FREQUENCY,
-    {QHD_H_RES_PIXELS, QHD_H_SYNC, QHD_H_BACK_PORCH, QHD_H_FRONT_PORCH},
-    {QHD_V_RES_PIXELS, QHD_V_SYNC, QHD_V_BACK_PORCH, QHD_V_FRONT_PORCH},
-    {QHD_OPMODE, QHD_CURRENT, QHD_GMP, QHD_TXTER, QHD_VLEVCTRL, QHD_CKSYMTXCTRL},
+    BAIKAL_QHD_OSC_FREQUENCY,
+    {QHD_H_RES_PIXELS, BAIKAL_QHD_H_SYNC, BAIKAL_QHD_H_BACK_PORCH, BAIKAL_QHD_H_FRONT_PORCH},
+    {QHD_V_RES_PIXELS, BAIKAL_QHD_V_SYNC, BAIKAL_QHD_V_BACK_PORCH, BAIKAL_QHD_V_FRONT_PORCH},
+    {HDMI_PHY_QHD_OPMODE, HDMI_PHY_QHD_CURRENT, HDMI_PHY_QHD_GMP,
+     HDMI_PHY_QHD_TXTER, HDMI_PHY_QHD_VLEVCTRL, HDMI_PHY_QHD_CKSYMTXCTRL},
     4, 24
   },
 };
@@ -140,13 +149,33 @@ EFI_EDID_ACTIVE_PROTOCOL      mEdidActive = {
   NULL
 };
 
-#define FdtGetTimingProperty(PropertyName, PropertyResult) \
-  Status = FdtClient->GetNodeProperty (FdtClient, Node, PropertyName, &Prop, &PropSize); \
-  if (Status == EFI_SUCCESS && PropSize == 4) { \
-    PropertyResult = SwapBytes32 (((CONST UINT32 *)Prop)[0]); \
-  } else { \
-    return EFI_INVALID_PARAMETER; \
-  }
+#define FdtGetTimingProperty(PropertyName, PropertyResult)                                 \
+  do {                                                                                     \
+    Status = FdtClient->GetNodeProperty (FdtClient, Node, PropertyName, &Prop, &PropSize); \
+    if (Status != EFI_SUCCESS)                                                             \
+      return EFI_INVALID_PARAMETER;                                                        \
+    if (PropSize == sizeof(UINT32)) {                                                      \
+      PropertyResult = SwapBytes32 (((CONST UINT32 *)Prop)[0]);                            \
+    } else if (PropSize == 3 * sizeof(UINT32)) {                                           \
+      PropertyResult = SwapBytes32 (((CONST UINT32 *)Prop)[1]);                            \
+    } else {                                                                               \
+      return EFI_INVALID_PARAMETER;                                                        \
+    }                                                                                      \
+  } while (0)
+
+BOOLEAN FdtLvdsEnabled = FALSE;
+
+/** Helper function to tell if LVDS is enabled or disabled.
+  @retval TRUE                   LVDS is enabled in the FDT. 
+  @retval FALSE                  LVDS is disabled in the FDT. 
+**/
+BOOLEAN
+LvdsEnabled(
+  VOID
+  )
+{
+  return FdtLvdsEnabled;
+}
 
 /** Helper function to get LVDS panel timings from FDT.
 
@@ -154,7 +183,7 @@ EFI_EDID_ACTIVE_PROTOCOL      mEdidActive = {
 
   @retval EFI_SUCCESS            There is a valid panel-lvds node in the FDT with valid panel-timings
                                  subnode. Timings have been read and will override hard-coded timings
-								 for a compatible video mode.
+                                 for a compatible video mode.
   @retval !(EFI_SUCCESS)         An error occured.
 **/
 EFI_STATUS
@@ -176,6 +205,8 @@ FdtGetPanelTimings(
   // Valid values are 1, 2 or 4.
   FdtDisplayMode->LvdsPorts = 0;
 
+  FdtLvdsEnabled = FALSE;
+
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: unable to locate FdtClientProtocol, Status: %r\n", __FUNCTION__, Status));
@@ -183,13 +214,22 @@ FdtGetPanelTimings(
   }
 
   Status = FdtClient->FindNextCompatibleNode (FdtClient, "panel-lvds", Node, &NodePanel);
-  if (EFI_ERROR (Status))
+  if (EFI_ERROR (Status)) {
     return Status;
+  }
+  Status = FdtClient->GetNodeProperty (FdtClient, NodePanel, "status", &Prop, &PropSize);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (AsciiStrCmp ((CONST CHAR8 *)Prop, "disabled") == 0)
+    return Status;
+  else
+    FdtLvdsEnabled = TRUE;
 
   Status = FdtClient->GetNodeProperty (FdtClient, NodePanel, "data-mapping", &Prop, &PropSize);
   if (EFI_ERROR (Status) ||
        (AsciiStrCmp ((CONST CHAR8 *)Prop, "jeida-18") != 0 &&
-		AsciiStrCmp ((CONST CHAR8 *)Prop, "vesa-24") != 0)
+        AsciiStrCmp ((CONST CHAR8 *)Prop, "vesa-24")  != 0)
      )
     return Status;
   if (AsciiStrCmp ((CONST CHAR8 *)Prop, "jeida-18") == 0)
@@ -233,7 +273,7 @@ FdtGetPanelTimings(
   Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@3", NodePort, &Node);
   if (EFI_ERROR (Status)) {          // we have three endpoints (@0, @1 and @2)
     FdtDisplayMode->LvdsPorts = 0; // this is illegal
-	return Status;
+    return Status;
   }
   FdtDisplayMode->LvdsPorts = 4;
   return EFI_SUCCESS;
@@ -270,22 +310,29 @@ LcdPlatformInitializeDisplay (
   }
 
   FdtGetPanelTimings(&FdtDisplayMode);
-  for (i = 0; i < LcdPlatformGetMaxMode(); i++) {
-    // Override hard-coded timings by FDT timings
-    // once a compatible video mode is found.
-    if (FdtDisplayMode.LvdsPorts != 0 &&
-        FdtDisplayMode.Horizontal.Resolution == mDisplayModes[i].Horizontal.Resolution &&
-        FdtDisplayMode.Vertical.Resolution == mDisplayModes[i].Vertical.Resolution
-       ) {
-      mDisplayModes[i].OscFreq = FdtDisplayMode.OscFreq;
-      mDisplayModes[i].Horizontal.Sync = FdtDisplayMode.Horizontal.Sync;
-      mDisplayModes[i].Horizontal.FrontPorch = FdtDisplayMode.Horizontal.FrontPorch;
-      mDisplayModes[i].Horizontal.BackPorch = FdtDisplayMode.Horizontal.BackPorch;
-      mDisplayModes[i].Vertical.Sync = FdtDisplayMode.Vertical.Sync;
-      mDisplayModes[i].Vertical.FrontPorch = FdtDisplayMode.Vertical.FrontPorch;
-      mDisplayModes[i].Vertical.BackPorch = FdtDisplayMode.Vertical.BackPorch;
-      mDisplayModes[i].LvdsPorts = FdtDisplayMode.LvdsPorts;
-      mDisplayModes[i].LvdsOutBpp = FdtDisplayMode.LvdsOutBpp;
+  // If a video mode is specified in FDT, find a mode with corresponding resolution
+  // and make this mode the only available.
+  if (FdtDisplayMode.LvdsPorts != 0) {
+    for (i = 0; i < LcdPlatformGetMaxMode(); i++) {
+      // Override hard-coded timings by FDT timings
+      // once a compatible video mode is found.
+      if (FdtDisplayMode.Horizontal.Resolution == mDisplayModes[i].Horizontal.Resolution &&
+          FdtDisplayMode.Vertical.Resolution == mDisplayModes[i].Vertical.Resolution
+         ) {
+        mDisplayModes[0].OscFreq = FdtDisplayMode.OscFreq;
+        mDisplayModes[0].Horizontal.Resolution = FdtDisplayMode.Horizontal.Resolution;
+        mDisplayModes[0].Horizontal.Sync = FdtDisplayMode.Horizontal.Sync;
+        mDisplayModes[0].Horizontal.FrontPorch = FdtDisplayMode.Horizontal.FrontPorch;
+        mDisplayModes[0].Horizontal.BackPorch = FdtDisplayMode.Horizontal.BackPorch;
+        mDisplayModes[0].Vertical.Resolution = FdtDisplayMode.Vertical.Resolution;
+        mDisplayModes[0].Vertical.Sync = FdtDisplayMode.Vertical.Sync;
+        mDisplayModes[0].Vertical.FrontPorch = FdtDisplayMode.Vertical.FrontPorch;
+        mDisplayModes[0].Vertical.BackPorch = FdtDisplayMode.Vertical.BackPorch;
+        mDisplayModes[0].LvdsPorts = mDisplayModes[i].LvdsPorts;   // TODO fix this
+        mDisplayModes[0].LvdsOutBpp = mDisplayModes[i].LvdsOutBpp; // TODO and this
+        gBS->CopyMem (&mDisplayModes[0].PhySettings, &mDisplayModes[i].PhySettings, sizeof(HDMI_PHY_SETTINGS));
+        break;
+      }
     }
   }
 
@@ -327,13 +374,13 @@ LcdPlatformGetVram (
   //ASSERT (VramSize != NULL);
 
   *VramBaseAddress = (EFI_PHYSICAL_ADDRESS) (SIZE_4GB - 1);
-  *VramSize = LCD_VRAM_SIZE;
+  *VramSize = BAIKAL_LCD_VRAM_SIZE;
 
   // Allocate the VRAM from the DRAM so that nobody else uses it.
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
                   EfiBootServicesData,
-                  EFI_SIZE_TO_PAGES (((UINTN)LCD_VRAM_SIZE)),
+                  EFI_SIZE_TO_PAGES (((UINTN)BAIKAL_LCD_VRAM_SIZE)),
                   VramBaseAddress
                   );
   if (EFI_ERROR (Status)) {
@@ -381,8 +428,15 @@ LcdPlatformGetMaxMode (VOID)
 
   // However, on some platforms it is desirable to ignore some graphics modes.
 
-  // Set the maximum mode allowed
-  return (FixedPcdGet32(PcdVduMaxMode));
+  // If a mode is set in FDT enable only that mode to prevent the boot
+  // loader (grub) or the kernel (efifb) from setting an unsupported mode
+  // (and locking up VDU)
+  FdtGetPanelTimings(&FdtDisplayMode);
+  if (FdtDisplayMode.LvdsPorts != 0) {
+      return 1;
+  } else {
+      return (FixedPcdGet32(PcdVduMaxMode));
+  }
 }
 
 EFI_STATUS
@@ -405,7 +459,7 @@ LcdPlatformSetMode (
                         mDisplayModes[ModeNumber].OscFreq
                         );
   BaikalSetVduFrequency(LCRU_LVDS,
-                        FixedPcdGet32 (PcdHdmiRefFrequency),
+                        FixedPcdGet32 (PcdLvdsRefFrequency),
                         mDisplayModes[ModeNumber].OscFreq * 7
                         );
 

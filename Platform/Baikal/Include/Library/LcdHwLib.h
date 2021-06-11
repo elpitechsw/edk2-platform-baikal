@@ -1,11 +1,8 @@
-/** @file LcdHwLib.h
-
+/** @file
   This file contains interface functions for LcdHwLib of ArmPlatformPkg
 
   Copyright (c) 2017, ARM Ltd. All rights reserved.<BR>
-
   SPDX-License-Identifier: BSD-2-Clause-Patent
-
 **/
 
 #ifndef LCD_HW_LIB_H_

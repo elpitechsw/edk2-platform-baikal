@@ -1,15 +1,16 @@
-/** @file  BaikalHdmi.h
+/** @file
+  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
- Copyright (C) 2020 Baikal Electronics JSC
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
 
- Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
+#ifndef BAIKAL_HDMI_H_
+#define BAIKAL_HDMI_H_
 
- **/
+#include <Library/LcdPlatformLib.h>
 
-#ifndef _BAIKAL_HDMI_H__
-#define _BAIKAL_HDMI_H__
-
-#define HDMI_REG_WIDTH	4
+#define HDMI_REG_WIDTH  4
 
 /* Interrupt Registers */
 #define BAIKAL_HDMI_IH_I2CMPHY_STAT0      ((UINTN)PcdGet32 (PcdHdmiBase) + 0x0108 * HDMI_REG_WIDTH)
@@ -66,12 +67,12 @@
 
 #define BAIKAL_HDMI_PHY_I2CM_SLAVE_ADDR_PHY_GEN2       0x69
 
-#define BAIKAL_HDMI_PHY_OPMODE_PLLCFG   0x06    /* Mode of operation and PLL dividers */
-#define BAIKAL_HDMI_PHY_PLLCURRCTRL     0x10    /* PLL current */
-#define BAIKAL_HDMI_PHY_PLLGMPCTRL      0x15    /* PLL Gmp (conductance) */
-#define BAIKAL_HDMI_PHY_TXTERM          0x19    /* Rterm */
-#define BAIKAL_HDMI_PHY_VLEVCTRL        0x0e    /* Voltage levels */
-#define BAIKAL_HDMI_PHY_CKSYMTXCTRL     0x09    /* Tx symbols control and slope boost */
+#define BAIKAL_HDMI_PHY_OPMODE_PLLCFG   0x06  /* Mode of operation and PLL dividers */
+#define BAIKAL_HDMI_PHY_PLLCURRCTRL     0x10  /* PLL current */
+#define BAIKAL_HDMI_PHY_PLLGMPCTRL      0x15  /* PLL Gmp (conductance) */
+#define BAIKAL_HDMI_PHY_TXTERM          0x19  /* Rterm */
+#define BAIKAL_HDMI_PHY_VLEVCTRL        0x0E  /* Voltage levels */
+#define BAIKAL_HDMI_PHY_CKSYMTXCTRL     0x09  /* Tx symbols control and slope boost */
 
 enum {
 
@@ -162,4 +163,4 @@ HdmiEnableVideoPath(
   UINT32 Sync
   );
 
-#endif /* _BAIKAL_HDMI_H__ */
+#endif /* BAIKAL_HDMI_H_ */

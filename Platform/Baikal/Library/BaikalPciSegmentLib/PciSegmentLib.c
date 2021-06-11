@@ -1,5 +1,7 @@
-// Copyright (c) 2020 Baikal Electronics JSC
-// Author: Mikhail Ivanov <michail.ivanov@baikalelectronics.ru>
+/** @file
+  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
 
 #include <Base.h>
 #include <Library/ArmLib.h>
@@ -22,7 +24,7 @@ typedef enum {
   @param  M Additional bits to assert to be zero.
 **/
 #define ASSERT_INVALID_PCI_SEGMENT_ADDRESS(A,M) \
-  ASSERT (((A) & (0xffff0000f0000000ULL | (M))) == 0)
+  ASSERT (((A) & (0xFFFF0000F0000000ULL | (M))) == 0)
 
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0  4
 

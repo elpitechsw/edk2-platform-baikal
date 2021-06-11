@@ -89,7 +89,7 @@ MemoryPeim (
         SystemMemoryTop - MAX_ADDRESS - 1
         );
   } else {
-    DEBUG ((EFI_D_ERROR, "MemBase: 0x%llx\n", PcdGet64 (PcdSystemMemoryBase) ));
+    DEBUG ((EFI_D_WARN, "MemBase: 0x%llx\n", PcdGet64 (PcdSystemMemoryBase)));
     BuildResourceDescriptorHob (
         EFI_RESOURCE_SYSTEM_MEMORY,
         ResourceAttributes,

@@ -1,0 +1,37 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = FruClientDxe
+  FILE_GUID                      = 28C2FF6C-7C0D-11EB-A272-484D7E9DF524
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = FruClientDxeInitialize
+
+[Sources]
+  FruClientDxe.c
+  FruInternals.c
+  FruInternals.h
+
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  I2cLib
+  TimeBaseLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gFdtClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+  gFruClientProtocolGuid                        # PROTOCOL ALWAYS_PRODUCED
+
+[Depex]
+  gFdtClientProtocolGuid

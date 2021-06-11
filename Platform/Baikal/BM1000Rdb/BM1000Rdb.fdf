@@ -122,6 +122,7 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Core/Dxe/DxeMain.inf
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
+  INF Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
   INF Platform/Baikal/Drivers/BaikalSpiFvDxe/BaikalSpiFvDxe.inf
   INF Platform/Baikal/Drivers/BaikalSpiBlockDxe/BaikalSpiBlockDxe.inf
@@ -163,13 +164,18 @@ READ_LOCK_STATUS   = TRUE
 
   # SMBIOS Support
   INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-  INF Platform/Baikal/Drivers/SmbiosDxe/SmbiosDxe.inf
+  INF Platform/Baikal/Drivers/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
+
+  # ACPI support
+  INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+  INF Platform/Baikal/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # BDS
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+  INF Platform/Baikal/Logo/LogoDxe.inf
   INF MdeModulePkg/Application/UiApp/UiApp.inf
 
   # Disk driver
@@ -188,7 +194,7 @@ READ_LOCK_STATUS   = TRUE
   # Network
 !include NetworkPkg/Network.fdf.inc
 !if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE)
-  INF Platform/Baikal/Drivers/BaikalEthDxe/BaikalEthDxe.inf
+  INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 !endif
 
   # PCI

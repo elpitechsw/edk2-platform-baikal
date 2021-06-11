@@ -1,32 +1,24 @@
-
-
+## @file
+#
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
 
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = BaikalSmcLib
-  FILE_GUID                      = 0cc69cbe-3333-42e3-8f41-26cdbc29acb3
+  FILE_GUID                      = 0CC69CBE-3333-42E3-8F41-26CDBC29ACB3
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = BaikalSmcLib
 
-
 [Sources]
-  Smc.c
+  BaikalSmcLib.c
 
 [Packages]
   ArmPkg/ArmPkg.dec
-  ArmPlatformPkg/ArmPlatformPkg.dec
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
-  Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
-  BaseLib
-  DebugLib
-  SerialPortLib
-  UefiLib
-  UefiDriverEntryPoint
-  UefiBootServicesTableLib
-  UefiRuntimeLib
-  DxeServicesTableLib
   ArmSmcLib

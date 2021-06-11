@@ -23,6 +23,7 @@
 
 [Packages]
   ArmPkg/ArmPkg.dec
+  ArmPlatformPkg/ArmPlatformPkg.dec
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
 
@@ -40,7 +41,7 @@
   gBaikalTokenSpaceGuid.PcdVduLcruId
 
 [FixedPcd]
-  gBaikalTokenSpaceGuid.PcdGopPixelFormat
+  gArmPlatformTokenSpaceGuid.PcdGopPixelFormat
   gBaikalTokenSpaceGuid.PcdHdmiRefFrequency
   gBaikalTokenSpaceGuid.PcdLvdsRefFrequency
   gBaikalTokenSpaceGuid.PcdVduMaxMode
