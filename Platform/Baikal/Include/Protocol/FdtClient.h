@@ -28,6 +28,13 @@
 typedef struct _FDT_CLIENT_PROTOCOL FDT_CLIENT_PROTOCOL;
 
 typedef
+BOOLEAN
+(EFIAPI *FDT_CLIENT_IS_NODE_ENABLED) (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  INT32                   Node
+  );
+
+typedef
 EFI_STATUS
 (EFIAPI *FDT_CLIENT_GET_NODE_PROPERTY) (
   IN  FDT_CLIENT_PROTOCOL     *This,
@@ -125,6 +132,7 @@ EFI_STATUS
   );
 
 struct _FDT_CLIENT_PROTOCOL {
+  FDT_CLIENT_IS_NODE_ENABLED               IsNodeEnabled;
   FDT_CLIENT_GET_NODE_PROPERTY             GetNodeProperty;
   FDT_CLIENT_SET_NODE_PROPERTY             SetNodeProperty;
 

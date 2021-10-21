@@ -1,10 +1,10 @@
 /** @file
-  Copyright (c) 2015 - 2020, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2015 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef __DW_UART_H__
-#define __DW_UART_H__
+#ifndef DW_UART_LIB_H_
+#define DW_UART_LIB_H_
 
 #include <Uefi.h>
 #include <Protocol/SerialIo.h>
@@ -17,7 +17,7 @@
 RETURN_STATUS
 EFIAPI
 DwUartInitializePort (
-  IN OUT UINTN               UartBase,
+  IN     UINTN                UartBase,
   IN OUT UINT64              *BaudRate,
   IN OUT UINT32              *ReceiveFifoDepth,
   IN OUT EFI_PARITY_TYPE     *Parity,
@@ -139,4 +139,4 @@ DwUartPoll (
   IN  UINTN  UartBase
   );
 
-#endif /* __DW_UART_H__ */
+#endif // DW_UART_LIB_H_

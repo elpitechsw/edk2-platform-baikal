@@ -99,7 +99,7 @@ gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase|gEfiMdeModulePkgTok
 #NV_FTW_SPARE
 
 [FV.FvMain]
-FvNameGuid         = 64074afe-340a-4be6-94ba-91b5b4d0f71e
+FvNameGuid         = 9D36F822-EBAE-44E3-8C17-7B657DE17DFE
 BlockSize          = 0x40
 NumBlocks          = 0         # This FV gets compressed so make it just big enough
 FvAlignment        = 16        # FV alignment and FV attributes setting.
@@ -151,7 +151,7 @@ READ_LOCK_STATUS   = TRUE
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
 
-!if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE)
+!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
   INF ArmPlatformPkg/Drivers/LcdGraphicsOutputDxe/LcdGraphicsOutputDxe.inf
 !endif
 
@@ -179,7 +179,7 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Application/UiApp/UiApp.inf
 
   # Disk driver
-!if ($(BE_QEMU_S) == FALSE)
+!if ($(BAIKAL_QEMU_S) == FALSE)
   INF Platform/Baikal/Drivers/PciEmulation/PciEmulationAhci.inf
 !endif
   INF MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
@@ -193,7 +193,7 @@ READ_LOCK_STATUS   = TRUE
 
   # Network
 !include NetworkPkg/Network.fdf.inc
-!if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE)
+!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 !endif
 
@@ -206,8 +206,11 @@ READ_LOCK_STATUS   = TRUE
   # NVMe
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
+  # SD
+  INF Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
+
   # USB
-!if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE)
+!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
   INF Platform/Baikal/Drivers/PciEmulation/PciEmulationXhci.inf
 !endif
   INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf

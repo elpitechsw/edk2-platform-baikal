@@ -1,23 +1,14 @@
-#/** @file
+## @file
 #
-#  Component description file for DWSerialPortExtLib module
+#  Copyright (c) 2015 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
-#  Copyright (C) 2015, Baikal Electronics. All rights reserved.
-#
-#  This program and the accompanying materials
-#  are licensed and made available under the terms and conditions of the BSD License
-#  which accompanies this distribution.  The full text of the license may be found at
-#  http://opensource.org/licenses/bsd-license.php
-#
-#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-#
-#**/
+##
 
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = DwSerialPortExtLib
-  FILE_GUID                      = 2be281f1-c506-4558-bd98-d6930e6de9d6
+  FILE_GUID                      = 2BE281F1-C506-4558-BD98-D6930E6DE9D6
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = SerialPortExtLib
@@ -34,8 +25,8 @@
   Silicon/Baikal/BM1000/BM1000.dec
 
 [Pcd]
-  gBm1000TokenSpaceGuid.PcdUartRegisterBase
   gBm1000TokenSpaceGuid.PcdUartBaudRate
   gBm1000TokenSpaceGuid.PcdUartDataBits
   gBm1000TokenSpaceGuid.PcdUartParity
+  gBm1000TokenSpaceGuid.PcdUartRegisterBase
   gBm1000TokenSpaceGuid.PcdUartStopBits

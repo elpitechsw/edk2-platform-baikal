@@ -7,11 +7,12 @@
 
 #include <Library/DebugLib.h>
 #include <Library/DwUartLib.h>
+#include <Library/IoLib.h>
 #include <Library/PcdLib.h>
 
-#define UART_FCR_FIFO_EN      0x01
-#define UART_FCR_RXSR         0x02
-#define UART_FCR_TXSR         0x04
+#define UART_FCR_FIFO_EN      BIT0
+#define UART_FCR_RXSR         BIT1
+#define UART_FCR_TXSR         BIT2
 #define UART_FIFO_LENGTH      16
 
 /*
@@ -22,42 +23,35 @@
 #define UART_LCR_WLS_6        0x01
 #define UART_LCR_WLS_7        0x02
 #define UART_LCR_WLS_8        0x03
-#define UART_LCR_STB          0x04
-#define UART_LCR_PEN          0x08
-#define UART_LCR_EPS          0x10
-#define UART_LCR_STKP         0x20
-#define UART_LCR_DLAB         0x80
+#define UART_LCR_STB          BIT2
+#define UART_LCR_PEN          BIT3
+#define UART_LCR_EPS          BIT4
+#define UART_LCR_STKP         BIT5
+#define UART_LCR_DLAB         BIT7
 
-#define UART_MCR_DTR          0x01
-#define UART_MCR_RTS          0x02
-#define UART_MCR_LOOP         0x10
+#define UART_MCR_DTR          BIT0
+#define UART_MCR_RTS          BIT1
+#define UART_MCR_LOOP         BIT4
 
-#define UART_LSR_DR           0x01
-#define UART_LSR_THRE         0x20
+#define UART_LSR_DR           BIT0
+#define UART_LSR_THRE         BIT5
 
-#define UART_MSR_DCD          0x80
-#define UART_MSR_RI           0x40
-#define UART_MSR_DSR          0x20
-#define UART_MSR_CTS          0x10
+#define UART_MSR_DCD          BIT7
+#define UART_MSR_RI           BIT6
+#define UART_MSR_DSR          BIT5
+#define UART_MSR_CTS          BIT4
 
-#define UART_USR_BUSY         0x01
+#define UART_USR_BUSY         BIT0
 
-#define READ_UART_REG(r)      (*((volatile UINT32 *)(r)))
-#define WRITE_UART_REG(r, v)  (*((volatile UINT32 *)(r)) = v)
-
-// Pass the base address as the function argument
-#define UPORT_OFF             0x10000
-#define UART_PORT(p)          (UartBase + (p) * UPORT_OFF)
-
-#define UART_RBR(p)           (UART_PORT(p) + 0x00)
-#define UART_DLL(p)           (UART_PORT(p) + 0x00)
-#define UART_THR(p)           (UART_PORT(p) + 0x00)
-#define UART_FCR(p)           (UART_PORT(p) + 0x08)
-#define UART_LCR(p)           (UART_PORT(p) + 0x0C)
-#define UART_MCR(p)           (UART_PORT(p) + 0x10)
-#define UART_LSR(p)           (UART_PORT(p) + 0x14)
-#define UART_MSR(p)           (UART_PORT(p) + 0x18)
-#define UART_USR(p)           (UART_PORT(p) + 0x7C)
+#define UART_RBR              (UartBase + 0x00)
+#define UART_DLL              (UartBase + 0x00)
+#define UART_THR              (UartBase + 0x00)
+#define UART_FCR              (UartBase + 0x08)
+#define UART_LCR              (UartBase + 0x0C)
+#define UART_MCR              (UartBase + 0x10)
+#define UART_LSR              (UartBase + 0x14)
+#define UART_MSR              (UartBase + 0x18)
+#define UART_USR              (UartBase + 0x7C)
 
 /*
   Initialise the serial port to the specified settings.
@@ -68,7 +62,7 @@
 RETURN_STATUS
 EFIAPI
 DwUartInitializePort (
-  IN OUT UINTN               UartBase,
+  IN     UINTN                UartBase,
   IN OUT UINT64              *BaudRate,
   IN OUT UINT32              *ReceiveFifoDepth,
   IN OUT EFI_PARITY_TYPE     *Parity,
@@ -143,20 +137,20 @@ DwUartInitializePort (
   }
 
   // DLAB is writeable only when UART is not busy (USR[0] is equal to 0)
-  while (READ_UART_REG(UART_USR(0)) & UART_USR_BUSY) {
-    while (READ_UART_REG(UART_LSR(0)) & UART_LSR_DR) {
-      READ_UART_REG(UART_RBR(0));
+  while (MmioRead32 (UART_USR) & UART_USR_BUSY) {
+    while (MmioRead32 (UART_LSR) & UART_LSR_DR) {
+      MmioRead32 (UART_RBR);
     }
   }
 
-  WRITE_UART_REG(UART_LCR(0), UART_LCR_DLAB); // DLAB -> 1
+  MmioWrite32 (UART_LCR, UART_LCR_DLAB); // DLAB -> 1
 
   // TODO: Specify baudrate
-  WRITE_UART_REG(UART_DLL(0), 0x4); // Divisor 4 115200 divisor = 81, 9600, 12.5 MHz
-  WRITE_UART_REG(UART_LCR(0), LineControl); // DLAB -> 0, 8 data bits
+  MmioWrite32 (UART_DLL, 0x4); // Divisor 4 115200 divisor = 81, 9600, 12.5 MHz
+  MmioWrite32 (UART_LCR, LineControl); // DLAB -> 0, 8 data bits
 
   // Enable Rx/Tx FIFOs
-  WRITE_UART_REG(UART_FCR(0), UART_FCR_FIFO_EN | UART_FCR_RXSR | UART_FCR_TXSR);
+  MmioWrite32 (UART_FCR, UART_FCR_FIFO_EN | UART_FCR_RXSR | UART_FCR_TXSR);
 
   return RETURN_SUCCESS;
 }
@@ -199,7 +193,7 @@ DwUartSetControl (
     return RETURN_UNSUPPORTED;
   }
 
-  McrReg = READ_UART_REG(UART_MCR(0));
+  McrReg = MmioRead32 (UART_MCR);
 
   if (Control & EFI_SERIAL_REQUEST_TO_SEND) {
     McrReg |= UART_MCR_RTS;
@@ -219,7 +213,7 @@ DwUartSetControl (
     McrReg &= ~UART_MCR_LOOP;
   }
 
-  WRITE_UART_REG(UART_MCR(0), McrReg);
+  MmioWrite32 (UART_MCR, McrReg);
 
   return RETURN_SUCCESS;
 }
@@ -262,9 +256,9 @@ DwUartGetControl (
   UINT32  McrReg;
   UINT32  MsrReg;
 
-  MsrReg = READ_UART_REG(UART_MSR(0));
-  McrReg = READ_UART_REG(UART_MCR(0));
-  LsrReg = READ_UART_REG(UART_LSR(0));
+  MsrReg = MmioRead32 (UART_MSR);
+  McrReg = MmioRead32 (UART_MCR);
+  LsrReg = MmioRead32 (UART_LSR);
 
   *Control = 0;
 
@@ -319,9 +313,9 @@ DwUartWrite (
 
   while (Count < NumberOfBytes) {
     // Wait until UART is able to accept another char
-    while (!(READ_UART_REG(UART_LSR(0)) & UART_LSR_THRE));
+    while (!(MmioRead32 (UART_LSR) & UART_LSR_THRE));
 
-    WRITE_UART_REG(UART_THR(0), Buffer[Count++]);
+    MmioWrite32 (UART_THR, Buffer[Count++]);
   }
 
   return Count;
@@ -338,9 +332,9 @@ DwUartRead (
   UINTN  Count = 0;
 
   while (Count < NumberOfBytes) {
-    while (!(READ_UART_REG(UART_LSR(0)) & UART_LSR_DR));
+    while (!(MmioRead32 (UART_LSR) & UART_LSR_DR));
 
-    Buffer[Count++] = READ_UART_REG(UART_RBR(0));
+    Buffer[Count++] = MmioRead32 (UART_RBR);
   }
 
   return Count;
@@ -352,5 +346,5 @@ DwUartPoll (
   IN  UINTN  UartBase
   )
 {
-  return READ_UART_REG(UART_LSR(0)) & UART_LSR_DR;
+  return MmioRead32 (UART_LSR) & UART_LSR_DR;
 }

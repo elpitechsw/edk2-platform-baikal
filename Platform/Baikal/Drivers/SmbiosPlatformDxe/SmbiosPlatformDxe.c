@@ -275,10 +275,10 @@ SmbiosReadFdtModel (
     return Status;
   }
 
-  if (!AsciiStrCmp (Prop, "Baikal Electronics Baikal-M evaluation board")) {
+  if (!AsciiStrCmp (Prop, "Baikal Electronics DBM")) {
     AsciiSPrint (DstBuf, DstSize, "%a", "DBM");
     return EFI_SUCCESS;
-  } else if (!AsciiStrCmp (Prop, "Baikal Electronics Baikal-M mitx board")) {
+  } else if (!AsciiStrCmp (Prop, "Baikal Electronics MBM")) {
     AsciiSPrint (DstBuf, DstSize, "%a", "MBM");
     return EFI_SUCCESS;
   }

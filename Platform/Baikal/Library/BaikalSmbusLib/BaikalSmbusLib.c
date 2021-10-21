@@ -41,30 +41,30 @@ typedef struct {
   UINT32  Cir2;
 } SMBUS_CONTROLLER_REGS;
 
-#define CR1_IRT   (1 << 0)
-#define CR1_TRS   (1 << 1)
-#define CR1_MSS   (1 << 2)
-#define CR1_IEB   (1 << 3)
-#define CR1_SAS   (1 << 4)
-#define CR1_GCA   (1 << 5)
+#define CR1_IRT   BIT0
+#define CR1_TRS   BIT1
+#define CR1_MSS   BIT2
+#define CR1_IEB   BIT3
+#define CR1_SAS   BIT4
+#define CR1_GCA   BIT5
 
-#define CR2_FRT   (1 << 0)
-#define CR2_FTE   (1 << 1)
-#define CR2_HBD   (1 << 2)
-#define CR2_RSE   (1 << 3)
-#define CR2_RSF   (1 << 4)
+#define CR2_FRT   BIT0
+#define CR2_FTE   BIT1
+#define CR2_HBD   BIT2
+#define CR2_RSE   BIT3
+#define CR2_RSF   BIT4
 
-#define SCD2_SHT  (1 << 7)
+#define SCD2_SHT  BIT7
 
-#define ISR1_FUR  (1 << 0)
-#define ISR1_FOR  (1 << 1)
-#define ISR1_FER  (1 << 2)
-#define ISR1_RNK  (1 << 3)
-#define ISR1_ALD  (1 << 4)
-#define ISR1_FFE  (1 << 5)
-#define ISR1_TCS  (1 << 6)
+#define ISR1_FUR  BIT0
+#define ISR1_FOR  BIT1
+#define ISR1_FER  BIT2
+#define ISR1_RNK  BIT3
+#define ISR1_ALD  BIT4
+#define ISR1_FFE  BIT5
+#define ISR1_TCS  BIT6
 
-#define ISR2_MSH  (1 << 4)
+#define ISR2_MSH  BIT4
 
 #define FIFO_SIZE  16
 

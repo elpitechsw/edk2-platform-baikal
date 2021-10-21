@@ -1,10 +1,17 @@
+## @file
+#
+#  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
 [Defines]
-  INF_VERSION                    = 0x00010005
-  BASE_NAME                      = ArmXenRelocatablePlatformLib
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = PlatformLib
   FILE_GUID                      = 16CF847C-F686-11EA-A45C-484D7E9DF524
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = ArmPlatformLib|SEC PEIM
+  LIBRARY_CLASS                  = ArmPlatformLib
 
 [Packages]
   ArmPkg/ArmPkg.dec
@@ -14,6 +21,7 @@
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
   Platform/Baikal/PrePi/PrePi.dec
+  Silicon/Baikal/BM1000/BM1000.dec
 
 [LibraryClasses]
   ArmLib
@@ -44,4 +52,3 @@
   gArmTokenSpaceGuid.PcdArmPrimaryCore
   gArmTokenSpaceGuid.PcdArmPrimaryCoreMask
   gArmTokenSpaceGuid.PcdFdSize
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuMemorySize

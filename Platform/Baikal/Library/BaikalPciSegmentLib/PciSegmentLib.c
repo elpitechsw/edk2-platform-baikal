@@ -27,6 +27,7 @@ typedef enum {
   ASSERT (((A) & (0xFFFF0000F0000000ULL | (M))) == 0)
 
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0  4
+#define BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1  5
 
 VOID
 BaikalPciHostBridgeLibCfgWindow (
@@ -57,28 +58,47 @@ PciSegmentLibGetConfigBase (
   extern EFI_PHYSICAL_ADDRESS mPcieCdmBases[];
   extern EFI_PHYSICAL_ADDRESS mPcieCfgBases[];
 
-  // Limit each bus to a single device
-  if (Device > 0) {
-    return MAX_UINT64;
+  if (!Bus) {
+    if (!Device) {
+      return mPcieCdmBases[Segment];
+    } else {
+      return MAX_UINT64;
+    }
   }
 
-  if (Bus == 0 && Device == 0) {
-    return mPcieCdmBases[Segment];
-  }
+  if (Bus == 1) {
+    if (!Device) {
+      if (!BaikalPciHostBridgeLibLink(Segment)) {
+        return MAX_UINT64;
+      }
 
-  if (!BaikalPciHostBridgeLibLink(Segment)) {
-    return MAX_UINT64;
-  }
+      BaikalPciHostBridgeLibCfgWindow (
+        mPcieCdmBases[Segment],
+        1,
+        mPcieCfgBases[Segment],
+        (Bus << 24) | (Device << 19) | (Function << 16),
+        SIZE_64KB,
+        BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
+        0
+        );
+    } else {
+      return MAX_UINT64;
+    }
+  } else {
+    if (!BaikalPciHostBridgeLibLink(Segment)) {
+      return MAX_UINT64;
+    }
 
-  BaikalPciHostBridgeLibCfgWindow (
-    mPcieCdmBases[Segment],
-    1,
-    mPcieCfgBases[Segment],
-    (Bus << 24) | (Device << 19) | (Function << 16),
-    SIZE_64KB,
-    BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
-    0
-    );
+    BaikalPciHostBridgeLibCfgWindow (
+      mPcieCdmBases[Segment],
+      1,
+      mPcieCfgBases[Segment],
+      (Bus << 24) | (Device << 19) | (Function << 16),
+      SIZE_64KB,
+      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1,
+      0
+      );
+  }
 
   return mPcieCfgBases[Segment];
 }

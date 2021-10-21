@@ -59,10 +59,10 @@ GtdtInit (
   EFI_ACPI_DESCRIPTION_HEADER  **Table
   )
 {
-  Gtdt.SecurePL1TimerGSIV    = PcdGet32 (PcdArmArchTimerSecIntrNum);
-  Gtdt.NonSecurePL1TimerGSIV = PcdGet32 (PcdArmArchTimerIntrNum);
-  Gtdt.VirtualTimerGSIV      = PcdGet32 (PcdArmArchTimerVirtIntrNum);
-  Gtdt.NonSecurePL2TimerGSIV = PcdGet32 (PcdArmArchTimerHypIntrNum);
+  Gtdt.SecurePL1TimerGSIV    = FixedPcdGet32 (PcdArmArchTimerSecIntrNum);
+  Gtdt.NonSecurePL1TimerGSIV = FixedPcdGet32 (PcdArmArchTimerIntrNum);
+  Gtdt.VirtualTimerGSIV      = FixedPcdGet32 (PcdArmArchTimerVirtIntrNum);
+  Gtdt.NonSecurePL2TimerGSIV = FixedPcdGet32 (PcdArmArchTimerHypIntrNum);
 
   *Table = (EFI_ACPI_DESCRIPTION_HEADER *)&Gtdt;
   return EFI_SUCCESS;

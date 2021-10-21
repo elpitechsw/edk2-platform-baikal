@@ -1,16 +1,13 @@
 /** @file
-
   This file contains Baikal VDU driver functions
 
-  Copyright (C) 2019-2020 Baikal Electronics JSC
-
+  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
   Parts of this file were based on sources as follows:
 
   Copyright (c) 2011-2018, ARM Ltd. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
-
 **/
 
 #include <PiDxe.h>
@@ -166,8 +163,8 @@ EFI_EDID_ACTIVE_PROTOCOL      mEdidActive = {
 BOOLEAN FdtLvdsEnabled = FALSE;
 
 /** Helper function to tell if LVDS is enabled or disabled.
-  @retval TRUE                   LVDS is enabled in the FDT. 
-  @retval FALSE                  LVDS is disabled in the FDT. 
+  @retval TRUE                   LVDS is enabled in the FDT.
+  @retval FALSE                  LVDS is disabled in the FDT.
 **/
 BOOLEAN
 LvdsEnabled(
@@ -191,13 +188,13 @@ FdtGetPanelTimings(
   OUT DISPLAY_MODE *FdtDisplayMode
   )
 {
-  EFI_STATUS Status;
   FDT_CLIENT_PROTOCOL *FdtClient;
   INT32                Node;
   INT32                NodePanel;
   INT32                NodePort;
   CONST VOID          *Prop;
   UINT32               PropSize;
+  EFI_STATUS           Status;
 
   // This field acts as return value.
   // 0 ports on return means that either there is no "panel-lvds" in FDT
@@ -217,14 +214,12 @@ FdtGetPanelTimings(
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  Status = FdtClient->GetNodeProperty (FdtClient, NodePanel, "status", &Prop, &PropSize);
-  if (EFI_ERROR (Status)) {
-    return Status;
+
+  if (!FdtClient->IsNodeEnabled (FdtClient, NodePanel)) {
+    return EFI_NOT_FOUND;
   }
-  if (AsciiStrCmp ((CONST CHAR8 *)Prop, "disabled") == 0)
-    return Status;
-  else
-    FdtLvdsEnabled = TRUE;
+
+  FdtLvdsEnabled = TRUE;
 
   Status = FdtClient->GetNodeProperty (FdtClient, NodePanel, "data-mapping", &Prop, &PropSize);
   if (EFI_ERROR (Status) ||

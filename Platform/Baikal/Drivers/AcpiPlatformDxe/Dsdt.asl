@@ -1,3 +1,5 @@
+#include "AcpiPlatformDxe.h"
+
 DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
   Scope(_SB_) {
     Device(PKG) {
@@ -77,329 +79,239 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       }
     }
 
-/**********************************
- * PCIe (all) via generic driver  *
- * (disabled due to ECAM problem) *
- **********************************/
-#if 0
-    // PCIe x4 #0
-    Device(PCI0) {
-      Name(_HID, EISAID("PNP0A08"))
-      Name(_CID, EISAID("PNP0A03"))
-      Name(_UID, 0x02200000)
-      Name(_ADR, 0x02200000)
-      Name(_CCA, One)
-      Name(_SEG, Zero)
-      Name(_BBN, Zero)
-
-      Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x02200000, 0x1000)
-        Memory32Fixed(ReadWrite, 0x40100000, 0x100000)
-        WordBusNumber(ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
-        QWordMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x3C0000000, 0x40000000)
-        QWordIo(ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, Zero, 0x000FFFFF, 0x40200000, 0x00100000, ,,, TypeTranslation)
-      })
-
-      Name(SUPP, Zero) // PCI _OSC Support Field value
-      Name(CTRL, Zero) // PCI _OSC Control Field value
-
-      Method(_OSC, 4) {
-        // Check for proper UUID
-        If(LEqual(Arg0, ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
-          // Create DWord-adressable fields from the Capabilities Buffer
-          CreateDWordField(Arg3, Zero, CDW1)
-          CreateDWordField(Arg3, 4, CDW2)
-          CreateDWordField(Arg3, 8, CDW3)
-
-          // Save Capabilities DWord2 & 3
-          Store(CDW2, SUPP)
-          Store(CDW3, CTRL)
-
-          // Only allow native hot plug control if OS supports:
-          // * ASPM
-          // * Clock PM
-          // * MSI/MSI-X
-          If(LNotEqual(And(SUPP, 0x16), 0x16)) {
-            And(CTRL, 0x1E, CTRL) // Mask bit 0 (and undefined bits)
-          }
-
-          // Always allow native PME, AER (no dependencies)
-
-          // Never allow SHPC (no SHPC controller in this system)
-          And(CTRL, 0x1D, CTRL)
-
-          // Unknown revision
-          If(LNotEqual(Arg1, One)) {
-            Or(CDW1, 0x08, CDW1)
-          }
-
-          // Capabilities bits were masked
-          If(LNotEqual(CDW3, CTRL)) {
-            Or(CDW1, 0x10, CDW1)
-          }
-
-          // Update DWORD3 in the buffer
-          Store(CTRL, CDW3)
-          Return(Arg3)
-        } Else {
-          // Unrecognized UUID
-          Or(CDW1, 4, CDW1)
-          Return(Arg3)
-        }
-      }
-    }
-
-#ifdef BE_DBM
-    // PCIe x4 #1
-    Device(PCI1) {
-      Name(_HID, EISAID("PNP0A08"))
-      Name(_CID, EISAID("PNP0A03"))
-      Name(_UID, 0x02210000)
-      Name(_ADR, 0x02210000)
-      Name(_CCA, One)
-      Name(_SEG, One)
-      Name(_BBN, Zero)
-
-      Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x02210000, 0x1000)
-        Memory32Fixed(ReadWrite, 0x50100000, 0x100000)
-        WordBusNumber(ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
-        QWordMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x4C0000000, 0x40000000)
-        QWordIo(ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00100000, 0x001FFFFF, 0x4FF00000, 0x00100000, ,,, TypeTranslation)
-      })
-
-      Name(SUPP, Zero) // PCI _OSC Support Field value
-      Name(CTRL, Zero) // PCI _OSC Control Field value
-
-      Method(_OSC, 4) {
-        // Check for proper UUID
-        If(LEqual(Arg0, ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
-          // Create DWord-adressable fields from the Capabilities Buffer
-          CreateDWordField(Arg3, Zero, CDW1)
-          CreateDWordField(Arg3, 4, CDW2)
-          CreateDWordField(Arg3, 8, CDW3)
-
-          // Save Capabilities DWord2 & 3
-          Store(CDW2, SUPP)
-          Store(CDW3, CTRL)
-
-          // Only allow native hot plug control if OS supports:
-          // * ASPM
-          // * Clock PM
-          // * MSI/MSI-X
-          If(LNotEqual(And(SUPP, 0x16), 0x16)) {
-            And(CTRL, 0x1E, CTRL) // Mask bit 0 (and undefined bits)
-          }
-
-          // Always allow native PME, AER (no dependencies)
-
-          // Never allow SHPC (no SHPC controller in this system)
-          And(CTRL, 0x1D, CTRL)
-
-          // Unknown revision
-          If(LNotEqual(Arg1, One)) {
-            Or(CDW1, 0x08, CDW1)
-          }
-
-          // Capabilities bits were masked
-          If(LNotEqual(CDW3, CTRL)) {
-            Or(CDW1, 0x10, CDW1)
-          }
-
-          // Update DWORD3 in the buffer
-          Store(CTRL, CDW3)
-          Return(Arg3)
-        } Else {
-          // Unrecognized UUID
-          Or(CDW1, 4, CDW1)
-          Return(Arg3)
-        }
-      }
-    }
-#endif
-
-    // PCIe x8
-    Device(PCI2) {
-      Name(_HID, EISAID("PNP0A08"))
-      Name(_CID, EISAID("PNP0A03"))
-      Name(_UID, 0x02220000)
-      Name(_ADR, 0x02220000)
-      Name(_CCA, One)
-      Name(_SEG, 2)
-      Name(_BBN, Zero)
-
-      Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x02220000, 0x1000)
-        Memory32Fixed(ReadWrite, 0x60000000, 0x100000)
-        WordBusNumber(ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
-        QWordMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x80000000, 0xFFFFFFFF, 0x580000000, 0x80000000)
-        QWordIo(ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00200000, 0x002FFFFF, 0x5FF00000, 0x00100000, ,,, TypeTranslation)
-      })
-
-      Name(SUPP, Zero) // PCI _OSC Support Field value
-      Name(CTRL, Zero) // PCI _OSC Control Field value
-
-      Method(_OSC, 4) {
-        // Check for proper UUID
-        If(LEqual(Arg0, ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
-          // Create DWord-adressable fields from the Capabilities Buffer
-          CreateDWordField(Arg3, Zero, CDW1)
-          CreateDWordField(Arg3, 4, CDW2)
-          CreateDWordField(Arg3, 8, CDW3)
-
-          // Save Capabilities DWord2 & 3
-          Store(CDW2, SUPP)
-          Store(CDW3, CTRL)
-
-          // Only allow native hot plug control if OS supports:
-          // * ASPM
-          // * Clock PM
-          // * MSI/MSI-X
-          If(LNotEqual(And(SUPP, 0x16), 0x16)) {
-            And(CTRL, 0x1E, CTRL) // Mask bit 0 (and undefined bits)
-          }
-
-          // Always allow native PME, AER (no dependencies)
-
-          // Never allow SHPC (no SHPC controller in this system)
-          And(CTRL, 0x1D, CTRL)
-
-          // Unknown revision
-          If(LNotEqual(Arg1, One)) {
-            Or(CDW1, 0x08, CDW1)
-          }
-
-          // Capabilities bits were masked
-          If(LNotEqual(CDW3, CTRL)) {
-            Or(CDW1, 0x10, CDW1)
-          }
-
-          // Update DWORD3 in the buffer
-          Store(CTRL, CDW3)
-          Return(Arg3)
-        } Else {
-          // Unrecognized UUID
-          Or(CDW1, 4, CDW1)
-          Return(Arg3)
-        }
-      }
-    }
-#endif
-
-/*************************
- * DT-only driver device *
- *************************/
     // PCIe LCRU
     Device(LCRU) {
-      Name(_HID, "PRP0001")
-      Name(_UID, 0x02000000)
       Name(_ADR, 0x02000000)
+      Name(_UID, 0x02000000)
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x02000000, 0x80000)
       })
-      Name(_DSD, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "compatible", "syscon" }
-        }
-      })
     }
 
-/**********************************************
- * Missing baikal driver (and maybe need fix) *
- **********************************************/
     // PCIe x4 #0
     Device(PCI0) {
-      Name(_HID, "PRP0001")
+      Name(_HID, EISAID("PNP0A08"))
+      Name(_CID, EISAID("PNP0A03"))
       Name(_UID, 0x02200000)
       Name(_ADR, 0x02200000)
-      Name(_CCA, One)
+      Name(_CCA, Zero)
+      Name(_SEG, BAIKAL_ACPI_PCIE_X4_0_SEGMENT)
+      Name(_BBN, Zero)
+
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x02200000, 0x1000)
-        Memory32Fixed(ReadWrite, 0x40100000, 0x100000)
+        Memory32Fixed(ReadWrite, 0x40000000, 0x10000000)
+        Memory32Fixed(ReadWrite, 0x02200000, 0x00001000)
+        QWordMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x3C0000000, 0x40000000)
+        QWordIo(ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, Zero, 0x000FFFFF, 0x70000000, 0x00100000, ,,, TypeTranslation)
+        WordBusNumber(ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 458, 461 }
-        QWordMemory(ResourceConsumer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x3C0000000, 0x40000000)
-        QWordIo(ResourceConsumer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, Zero, 0x000FFFFF, 0x40200000, 0x00100000, ,,, TypeTranslation)
-      })
-      Name(_DSD, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "compatible", Package() { "baikal,pcie-m", "snps,dw-pcie" } },
-          Package() { "baikal,pcie-lcru", Package() { ^LCRU, Zero } },
-#if defined (BE_MBM10) || defined (BE_MBM20)
-          Package() { "reset-gpios", Package() { ^GPIO.GPIP, 6, One } },
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
+        GpioIo(Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 6 }
 #endif
-          Package() { "num-lanes", 4 },
-          Package() { "num-viewport", 4 },
-          Package() { "bus-range", Package() { Zero, 0xff } }
-        }
       })
+
+      Name(NUML, 4)
+      Name(NUMV, 4)
+      Name(LCRU, Package() { ^LCRU, 0 })
+
+      Name(SUPP, Zero) // PCI _OSC Support Field value
+      Name(CTRL, Zero) // PCI _OSC Control Field value
+
+      Method(_OSC, 4) {
+        // Check for proper UUID
+        If(LEqual(Arg0, ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
+          // Create DWord-adressable fields from the Capabilities Buffer
+          CreateDWordField(Arg3, Zero, CDW1)
+          CreateDWordField(Arg3, 4, CDW2)
+          CreateDWordField(Arg3, 8, CDW3)
+
+          // Save Capabilities DWord2 & 3
+          Store(CDW2, SUPP)
+          Store(CDW3, CTRL)
+
+          // Only allow native hot plug control if OS supports:
+          // * ASPM
+          // * Clock PM
+          // * MSI/MSI-X
+          If(LNotEqual(And(SUPP, 0x16), 0x16)) {
+            And(CTRL, 0x1E, CTRL) // Mask bit 0 (and undefined bits)
+          }
+
+          // Always allow native PME, AER (no dependencies)
+
+          // Never allow SHPC (no SHPC controller in this system)
+          And(CTRL, 0x1D, CTRL)
+
+          // Unknown revision
+          If(LNotEqual(Arg1, One)) {
+            Or(CDW1, 0x08, CDW1)
+          }
+
+          // Capabilities bits were masked
+          If(LNotEqual(CDW3, CTRL)) {
+            Or(CDW1, 0x10, CDW1)
+          }
+
+          // Update DWORD3 in the buffer
+          Store(CTRL, CDW3)
+          Return(Arg3)
+        } Else {
+          // Unrecognized UUID
+          Or(CDW1, 4, CDW1)
+          Return(Arg3)
+        }
+      }
     }
 
-#ifdef BE_DBM
-/**********************************************
- * Missing baikal driver (and maybe need fix) *
- **********************************************/
+#ifdef BAIKAL_DBM
     // PCIe x4 #1
     Device(PCI1) {
-      Name(_HID, "PRP0001")
+      Name(_HID, EISAID("PNP0A08"))
+      Name(_CID, EISAID("PNP0A03"))
       Name(_UID, 0x02210000)
       Name(_ADR, 0x02210000)
-      Name(_CCA, One)
+      Name(_CCA, Zero)
+      Name(_SEG, BAIKAL_ACPI_PCIE_X4_1_SEGMENT)
+      Name(_BBN, Zero)
+
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x02210000, 0x1000)
-        Memory32Fixed(ReadWrite, 0x50100000, 0x100000)
+        Memory32Fixed(ReadWrite, 0x50000000, 0x10000000)
+        Memory32Fixed(ReadWrite, 0x02210000, 0x00001000)
+        QWordMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x4C0000000, 0x40000000)
+        QWordIo(ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00100000, 0x001FFFFF, 0x70000000, 0x00100000, ,,, TypeTranslation)
+        WordBusNumber(ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
-        QWordMemory(ResourceConsumer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x4C0000000, 0x40000000)
-        QWordIo(ResourceConsumer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00100000, 0x001FFFFF, 0x4FF00000, 0x00100000, ,,, TypeTranslation)
       })
-      Name(_DSD, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "compatible", Package() { "baikal,pcie-m", "snps,dw-pcie" } },
-          Package() { "baikal,pcie-lcru", Package() { ^LCRU, One } },
-          Package() { "num-lanes", 4 },
-          Package() { "num-viewport", 4 },
-          Package() { "bus-range", Package() { Zero, 0xff } }
+
+      Name(NUML, 4)
+      Name(NUMV, 4)
+      Name(LCRU, Package() { ^LCRU, One })
+
+      Name(SUPP, Zero) // PCI _OSC Support Field value
+      Name(CTRL, Zero) // PCI _OSC Control Field value
+
+      Method(_OSC, 4) {
+        // Check for proper UUID
+        If(LEqual(Arg0, ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
+          // Create DWord-adressable fields from the Capabilities Buffer
+          CreateDWordField(Arg3, Zero, CDW1)
+          CreateDWordField(Arg3, 4, CDW2)
+          CreateDWordField(Arg3, 8, CDW3)
+
+          // Save Capabilities DWord2 & 3
+          Store(CDW2, SUPP)
+          Store(CDW3, CTRL)
+
+          // Only allow native hot plug control if OS supports:
+          // * ASPM
+          // * Clock PM
+          // * MSI/MSI-X
+          If(LNotEqual(And(SUPP, 0x16), 0x16)) {
+            And(CTRL, 0x1E, CTRL) // Mask bit 0 (and undefined bits)
+          }
+
+          // Always allow native PME, AER (no dependencies)
+
+          // Never allow SHPC (no SHPC controller in this system)
+          And(CTRL, 0x1D, CTRL)
+
+          // Unknown revision
+          If(LNotEqual(Arg1, One)) {
+            Or(CDW1, 0x08, CDW1)
+          }
+
+          // Capabilities bits were masked
+          If(LNotEqual(CDW3, CTRL)) {
+            Or(CDW1, 0x10, CDW1)
+          }
+
+          // Update DWORD3 in the buffer
+          Store(CTRL, CDW3)
+          Return(Arg3)
+        } Else {
+          // Unrecognized UUID
+          Or(CDW1, 4, CDW1)
+          Return(Arg3)
         }
-      })
+      }
     }
 #endif
 
-/**********************************************
- * Missing baikal driver (and maybe need fix) *
- **********************************************/
     // PCIe x8
     Device(PCI2) {
-      Name(_HID, "PRP0001")
+      Name(_HID, EISAID("PNP0A08"))
+      Name(_CID, EISAID("PNP0A03"))
       Name(_UID, 0x02220000)
       Name(_ADR, 0x02220000)
-      Name(_CCA, One)
+      Name(_CCA, Zero)
+      Name(_SEG, BAIKAL_ACPI_PCIE_X8_SEGMENT)
+      Name(_BBN, Zero)
+
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x02220000, 0x1000)
-        Memory32Fixed(ReadWrite, 0x60000000, 0x100000)
+        Memory32Fixed(ReadWrite, 0x60000000, 0x10000000)
+        Memory32Fixed(ReadWrite, 0x02220000, 0x00001000)
+        QWordMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x80000000, 0xFFFFFFFF, 0x580000000, 0x80000000)
+        QWordIo(ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00200000, 0x002FFFFF, 0x70000000, 0x00100000, ,,, TypeTranslation)
+        WordBusNumber(ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
-        QWordMemory(ResourceConsumer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x80000000, 0xFFFFFFFF, 0x580000000, 0x80000000)
-        QWordIo(ResourceConsumer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00200000, 0x002FFFFF, 0x5FF00000, 0x00100000, ,,, TypeTranslation)
-      })
-      Name(_DSD, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "compatible", Package() { "baikal,pcie-m", "snps,dw-pcie" } },
-          Package() { "baikal,pcie-lcru", Package() { ^LCRU, 2 } },
-#if defined (BE_MBM10) || defined (BE_MBM20)
-          Package() { "reset-gpios", Package() { ^GPIO.GPIP, 3, One } },
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
+        GpioIo(Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
 #endif
-          Package() { "num-lanes", 8 },
-          Package() { "num-viewport", 4 },
-          Package() { "bus-range", Package() { Zero, 0xff } }
-        }
       })
+
+      Name(NUML, 8)
+      Name(NUMV, 4)
+      Name(LCRU, Package() { ^LCRU, 2 })
+
+      Name(SUPP, Zero) // PCI _OSC Support Field value
+      Name(CTRL, Zero) // PCI _OSC Control Field value
+
+      Method(_OSC, 4) {
+        // Check for proper UUID
+        If(LEqual(Arg0, ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
+          // Create DWord-adressable fields from the Capabilities Buffer
+          CreateDWordField(Arg3, Zero, CDW1)
+          CreateDWordField(Arg3, 4, CDW2)
+          CreateDWordField(Arg3, 8, CDW3)
+
+          // Save Capabilities DWord2 & 3
+          Store(CDW2, SUPP)
+          Store(CDW3, CTRL)
+
+          // Only allow native hot plug control if OS supports:
+          // * ASPM
+          // * Clock PM
+          // * MSI/MSI-X
+          If(LNotEqual(And(SUPP, 0x16), 0x16)) {
+            And(CTRL, 0x1E, CTRL) // Mask bit 0 (and undefined bits)
+          }
+
+          // Always allow native PME, AER (no dependencies)
+
+          // Never allow SHPC (no SHPC controller in this system)
+          And(CTRL, 0x1D, CTRL)
+
+          // Unknown revision
+          If(LNotEqual(Arg1, One)) {
+            Or(CDW1, 0x08, CDW1)
+          }
+
+          // Capabilities bits were masked
+          If(LNotEqual(CDW3, CTRL)) {
+            Or(CDW1, 0x10, CDW1)
+          }
+
+          // Update DWORD3 in the buffer
+          Store(CTRL, CDW3)
+          Return(Arg3)
+        } Else {
+          // Unrecognized UUID
+          Or(CDW1, 4, CDW1)
+          Return(Arg3)
+        }
+      }
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // PVT2
     Device(PVT2) {
       Name(_HID, "PRP0001")
@@ -418,9 +330,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // PVT1
     Device(PVT1) {
       Name(_HID, "PRP0001")
@@ -480,7 +389,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           Package() {
             Package() { "reg", Zero },
             Package() { "snps,nr-gpios", 32 },
-#if defined (BE_MBM10) || defined (BE_MBM20)
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
             Package() { "line-name", "pcie-x8-clock" },
             Package() { "gpio-hog", One },
             Package() { "gpios", Package() { One, One } },
@@ -499,17 +408,18 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x20210000, 0x10000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 132 }
+        GpioIo(Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 24, 25, 26, 27 }
       })
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "num-cs", 4 },
-#ifdef BE_DBM
+#ifdef BAIKAL_DBM
           Package() { "cs-gpios", Package() {
-            ^GPIO.GPIP, 24, One,
-            ^GPIO.GPIP, 25, One,
-            ^GPIO.GPIP, 26, One,
-            ^GPIO.GPIP, 27, One
+            ^SPI0, Zero, Zero, One,
+            ^SPI0, Zero, One, One,
+            ^SPI0, Zero, 2, One,
+            ^SPI0, Zero, 3, One
           }}
         }
       })
@@ -529,7 +439,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           }
         })
       }
-#elif defined (BE_MBM10) || defined (BE_MBM20)
+#elif defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
           Package() { "cs-gpios", Zero }
         }
       })
@@ -539,6 +449,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
 #endif
     }
 
+#if 0
     // I2S
     Device(I2S0) {
       Name(_HID, "PRP0001")
@@ -551,16 +462,11 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
-          Package() { "compatible", "snps,designware-i2s" },
-          Package() { "system-clock-frequency", 12000000 },
-#if defined (BE_MBM10) || defined (BE_MBM20)
-          Package() { "#sound-dai-cells", Zero }
-#elif defined(BE_DBM)
-          Package() { "sound-dai", ^I2C0.PR18 }
-#endif
+          Package() { "compatible", "snps,designware-i2s" }
         }
       })
     }
+#endif
 
     // UART1
     Device(COM0) {
@@ -617,7 +523,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
 
-#if defined (BE_MBM10) || defined (BE_MBM20)
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
       Device(PR08) {
         Name(_HID, "PRP0001")
         Name(_UID, 0x20250008)
@@ -628,8 +534,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", Package() { "tp,mitx2-bmc", "t-platforms,mitx2-bmc" } },
-            Package() { "reg", 0x08 }
+            Package() { "compatible", Package() { "tp,mitx2-bmc", "t-platforms,mitx2-bmc" } }
           }
         })
       }
@@ -644,9 +549,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", "nuvoton,nau8822" },
-            Package() { "reg", 0x1A },
-            Package() { "#sound-dai-cells", One }
+            Package() { "compatible", "nuvoton,nau8822" }
           }
         })
       }
@@ -661,10 +564,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", "nxp,pca9670" },
-            Package() { "reg", 0x50 },
-            Package() { "#gpio-cells", 2 },
-            Package() { "gpio-controller", One }
+            Package() { "compatible", "nxp,pca9670" }
           }
         })
       }
@@ -679,12 +579,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", Package() { "nxp,pcf2129", "nxp,pcf2127" } },
-            Package() { "reg", 0x51 }
+            Package() { "compatible", Package() { "nxp,pcf2129", "nxp,pcf2127" } }
           }
         })
       }
 
+#if 0
       Device(PR52) {
         Name(_HID, "PRP0001")
         Name(_UID, 0x20250052)
@@ -695,11 +595,11 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", "tp,bm_mitx_hwmon" },
-            Package() { "reg", 0x52 }
+            Package() { "compatible", "tp,bm_mitx_hwmon" }
           }
         })
       }
+#endif
 
       Device(PR53) {
         Name(_HID, "PRP0001")
@@ -712,12 +612,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
             Package() { "compatible", "atmel,24c32" },
-            Package() { "reg", 0x53 },
             Package() { "pagesize", 32 }
           }
         })
       }
 
+#if 0
       Device(PR54) {
         Name(_HID, "PRP0001")
         Name(_UID, 0x20250054)
@@ -728,14 +628,13 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", "tp,tp_serio" },
-            Package() { "reg", 0x54 },
-            Package() { "interrupt-parent", ^^GPIO.GPIP },
-            Package() { "interrupts", Package() { 14, 8 } }
+            Package() { "compatible", "tp,tp_serio" }
           }
         })
       }
-#elif defined(BE_DBM)
+#endif
+#elif defined(BAIKAL_DBM)
+#if 0
       Device(PR18) {
         Name(_HID, "PRP0001")
         Name(_UID, 0x20250018)
@@ -746,14 +645,11 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", "ti,tlv320aic3x" },
-            Package() { "reg", 0x18 },
-            Package() { "#sound-dai-cells", Zero },
-            Package() { "gpio-reset", Package() { ^^GPIO.GPIP, 4, One }},
-            Package() { "ai31xx-micbias-vg", One }
+            Package() { "compatible", "ti,tlv320aic3x" }
           }
         })
       }
+#endif
 
       Device(PR56) {
         Name(_HID, "PRP0001")
@@ -765,8 +661,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package() {
-            Package() { "compatible", "abracon,abeoz9" },
-            Package() { "reg", 0x56 }
+            Package() { "compatible", "abracon,abeoz9" }
           }
         })
       }
@@ -791,9 +686,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // SMBUS1
     Device(SMB0) {
       Name(_HID, "PRP0001")
@@ -814,9 +706,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(CLK, 50000000)
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // SMBUS2
     Device(SMB1) {
       Name(_HID, "PRP0001")
@@ -840,6 +729,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
 /*************************
  * DT-only driver device *
  *************************/
+#if 0
     // Timer1
     Device(TMR1) {
       Name(_HID, "PRP0001")
@@ -857,10 +747,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
 /*************************
  * DT-only driver device *
  *************************/
+#if 0
     // Timer2
     Device(TMR2) {
       Name(_HID, "PRP0001")
@@ -878,10 +770,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
 /*************************
  * DT-only driver device *
  *************************/
+#if 0
     // Timer3
     Device(TMR3) {
       Name(_HID, "PRP0001")
@@ -899,10 +793,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
 /*************************
  * DT-only driver device *
  *************************/
+#if 0
     // Timer4
     Device(TMR4) {
       Name(_HID, "PRP0001")
@@ -920,11 +816,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
 /**************************
  * Baikal driver need fix *
  **************************/
-#ifdef BE_DBM
+#ifdef BAIKAL_DBM
     // ESPI
     Device(ESPI) {
       Name(_HID, "PRP0001")
@@ -933,12 +830,13 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x202A0000, 0x10000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 135 }
+        GpioIo(Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 28 }
       })
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "compatible", "be,espi" },
-          Package() { "cs-gpio", Package() { ^GPIO.GPIP, 28, One } } // as in dts todo: get real gpio
+          Package() { "cs-gpio", Package() { ^ESPI, Zero, Zero, One } } // as in dts todo: get real gpio
         }
       })
 
@@ -976,17 +874,37 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     }
 #endif
 
-#if defined(BE_DBM)
-/**************************
- * Baikal driver need fix *
- **************************/
+#ifdef BAIKAL_DBM
+#if 0
+    // AVLSP HDA
+    Device(HDA0) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x202C0000)
+      Name(_ADR, 0x202C0000)
+      Name(_CCA, Zero)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x202C0000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 86 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "be,cw-hda" }
+        }
+      })
+    }
+#endif
+#endif
+
+#if defined(BAIKAL_DBM) || defined(BAIKAL_MBM20) // remove MBM20 before release
     // VDU_LVDS
     Device(VDU0) {
       Name(_HID, "PRP0001")
       Name(_UID, 0x202D0000)
       Name(_ADR, 0x202D0000)
+      Name(_CCA, Zero)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x202D0000, 0x10000)
+        Memory32Fixed(ReadWrite, 0x202D0000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 144, 145 }
       })
       Name(_DSD, Package() {
@@ -1003,7 +921,8 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(PRT0, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
-          Package() { "reg", Zero }
+          Package() { "reg", Zero },
+          Package() { "port", Zero }
         },
         ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
         Package() {
@@ -1015,14 +934,16 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "reg", Zero },
-          Package() { "remote-endpoint", Package() { "\\_SB.PNL0", "port@0", "endpoint@0" } }
+          Package() { "endpoint", Zero },
+          Package() { "remote-endpoint", Package() { ^PNL0, 0, 0 } }
         }
       })
       Name(EP01, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "reg", One },
-          Package() { "remote-endpoint", Package() { "\\_SB.PNL0", "port@0", "endpoint@1" } }
+          Package() { "endpoint", One },
+          Package() { "remote-endpoint", Package() { ^PNL0, 0, 1 } }
         }
       })
     }
@@ -1030,19 +951,30 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
 
     // SD/eMMC
     Device(MMC0) {
-      Name(_HID, "PNP0D40")
+      Name(_HID, "PRP0001")
+      Name(_CID, "PNP0D40")
       Name(_UID, 0x202E0000)
       Name(_ADR, 0x202E0000)
-      Name(_CCA, One)
+      Name(_CCA, Zero)
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x202E0000, 0x10000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 83, 84 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "snps,dwcmshc-sdhci" },
+          Package() { "disable-wp", 1 },
+          Package() { "bus-width", 4 },
+          Package() { "max-clock", 25000000 }
+        }
       })
     }
 
 /**********************************************
  * Missing baikal driver (and maybe need fix) *
  **********************************************/
+#if 0
     // DDR2
     Device(DDR1) {
       Name(_HID, "PRP0001")
@@ -1059,10 +991,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
 /**********************************************
  * Missing baikal driver (and maybe need fix) *
  **********************************************/
+#if 0
     // VDEC
     Device(VDEC) {
       Name(_HID, "PRP0001")
@@ -1079,10 +1013,8 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // PVT3
     Device(PVT3) {
       Name(_HID, "PRP0001")
@@ -1101,9 +1033,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // PVT0
     Device(PVT0) {
       Name(_HID, "PRP0001")
@@ -1122,9 +1051,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // PVT_MALI
     Device(PVTM) {
       Name(_HID, "PRP0001")
@@ -1329,7 +1255,8 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     }
 #endif
 
-#ifdef BE_DBM
+#ifdef BAIKAL_DBM
+#if 0
     // XGMAC0
     Device(XGM0) {
       Name(_HID, "AMDI8001")
@@ -1392,11 +1319,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 #endif
+#endif
 
-#if defined (BE_MBM10) || defined (BE_MBM20)
-/*************************
- * DT-only driver device *
- *************************/
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
     // GMAC0
     Device(GMC0) {
       Name(_HID, "PRP0001")
@@ -1417,10 +1342,10 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           Package() { "local-mac-address", Package() { Zero, Zero, Zero, Zero, Zero, Zero } },
           Package() { "phy-mode", "rgmii-id" },
           Package() { "phy-handle", MDIO.GPHY },
-#ifdef BE_MBM10
+#ifdef BAIKAL_MBM10
           Package() { "snps,reset-gp-out", One },
           Package() { "snps,reset-active-low", One },
-#elif defined (BE_MBM20)
+#elif defined (BAIKAL_MBM20)
           Package() { "snps,reset-gpios", Package() { ^GPIO.GPIP, 19, One } },
 #endif
           Package() { "snps,reset-delays-us", Package() { Zero, 10200, 1000 } }
@@ -1456,9 +1381,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       }
     }
 
-/*************************
- * DT-only driver device *
- *************************/
     // GMAC1
     Device(GMC1) {
       Name(_HID, "PRP0001")
@@ -1479,10 +1401,10 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           Package() { "local-mac-address", Package() { Zero, Zero, Zero, Zero, Zero, Zero } },
           Package() { "phy-mode", "rgmii-id" },
           Package() { "phy-handle", MDIO.GPHY },
-#ifdef BE_MBM10
+#ifdef BAIKAL_MBM10
           Package() { "snps,reset-gp-out", One },
           Package() { "snps,reset-active-low", One },
-#elif defined (BE_MBM20)
+#elif defined (BAIKAL_MBM20)
           Package() { "snps,reset-gpios", Package() { ^GPIO.GPIP, 20, One } },
 #endif
           Package() { "snps,reset-delays-us", Package() { Zero, 10200, 1000 } }
@@ -1519,16 +1441,14 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     }
 #endif
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // VDU_HDMI
     Device(VDU1) {
       Name(_HID, "PRP0001")
       Name(_UID, 0x30260000)
       Name(_ADR, 0x30260000)
+      Name(_CCA, Zero)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x30260000, 0x10000)
+        Memory32Fixed(ReadWrite, 0x30260000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 361, 362 }
       })
       Name(_DSD, Package() {
@@ -1544,7 +1464,8 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(PRT0, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
-          Package() { "reg", Zero }
+          Package() { "reg", Zero },
+          Package() { "port", Zero }
         },
         ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
         Package() {
@@ -1555,21 +1476,20 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "reg", Zero },
-          Package() { "remote-endpoint", Package() { "\\_SB.HDMI", "port@0", "endpoint@0" } }
+          Package() { "endpoint", Zero },
+          Package() { "remote-endpoint", Package() { ^HDMI, 0, 0 } }
         }
       })
     }
 
-/**************************
- * Baikal driver need fix *
- **************************/
     // HDMI
     Device(HDMI) {
       Name(_HID, "PRP0001")
       Name(_UID, 0x30280000)
       Name(_ADR, 0x30280000)
+      Name(_CCA, One)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x30280000, 0x10000)
+        Memory32Fixed(ReadWrite, 0x30280000, 0x20000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 363 }
       })
       Name(_DSD, Package() {
@@ -1580,14 +1500,14 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         },
         ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
         Package() {
-          Package() { "port@0", "PRT0" },
-          Package() { "port@1", "PRT1" }
+          Package() { "port@0", "PRT0" }
         }
       })
       Name(PRT0, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
-          Package() { "reg", Zero }
+          Package() { "reg", Zero },
+          Package() { "port", Zero }
         },
         ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
         Package() {
@@ -1598,24 +1518,8 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "reg", Zero },
-          Package() { "remote-endpoint", Package() { "\\_SB.VDU1", "port@0", "endpoint@0" } }
-        }
-      })
-      Name(PRT1, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "reg", One }
-        },
-        ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
-        Package() {
-          Package() { "endpoint@0", "EP10" }
-        }
-      })
-      Name(EP10, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "reg", Zero },
-          Package() { "remote-endpoint", Package() { "\\_SB.HOUT", "port@0", "endpoint@0" } }
+          Package() { "endpoint", Zero },
+          Package() { "remote-endpoint", Package() { ^VDU1, 0, 0 } }
         }
       })
     }
@@ -1623,6 +1527,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
 /************************
  * !!!Missing Driver!!! *
  ************************/
+#if 0
     // HDMI-OUT
     Device(HOUT) {
       Name(_HID, "PRP0001")
@@ -1657,11 +1562,13 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
 
-#ifdef BE_DBM
+#ifdef BAIKAL_DBM
 /**************************
  * Baikal driver need fix *
  **************************/
+#if 0
     // Internal MDIO
     Device(MDIO) {
       Name(_HID, "PRP0001")
@@ -1709,10 +1616,12 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         })
       }
     }
+#endif
 
 /**************************
  * Baikal driver need fix *
  **************************/
+#if 0
     // Sound
     Device(SND0) {
       Name(_HID, "PRP0001")
@@ -1726,10 +1635,10 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
+#endif
+#endif
 
-/*************************
- * DT-only driver device *
- *************************/
+#if defined (BAIKAL_DBM) || defined (BAIKAL_MBM20)
     // Panel
     Device(PNL0) {
       Name(_HID, "PRP0001")
@@ -1737,21 +1646,31 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
-          Package() { "compatible", "panel-lvds" },
+          Package() { "compatible", "baikal,panel-lvds" },
           Package() { "width-mm", 223 },
           Package() { "height-mm", 125 },
-          Package() { "data-mapping", "vesa-24" }
+          Package() { "data-mapping", "vesa-24" },
+          /* 1920x1080 @ 60 Hz */
+          Package() { "clock-frequency", 148500000 },
+          Package() { "hactive", 1920 },
+          Package() { "vactive", 1080 },
+          Package() { "hsync-len", 44 },
+          Package() { "hfront-porch", 88 },
+          Package() { "hback-porch", 148 },
+          Package() { "vsync-len", 5 },
+          Package() { "vfront-porch", 4 },
+          Package() { "vback-porch", 36 }
         },
         ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
         Package() {
-          Package() { "port@0", "PRT0" },
-          Package() { "panel-timing", "PNLT" }
+          Package() { "port@0", "PRT0" }
         }
       })
       Name(PRT0, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
-          Package() { "reg", Zero }
+          Package() { "reg", Zero },
+          Package() { "port", Zero }
         },
         ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
         Package() {
@@ -1763,41 +1682,26 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "reg", Zero },
-          Package() { "remote-endpoint", Package() { "\\_SB.VDU0", "port@0", "endpoint@0" } }
+          Package() { "endpoint", Zero },
+          Package() { "remote-endpoint", Package() { ^VDU0, 0, 0 } }
         }
       })
       Name(EP01, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package() {
           Package() { "reg", One },
-          Package() { "remote-endpoint", Package() { "\\_SB.VDU0", "port@0", "endpoint@1" } }
-        }
-      })
-      Name(PNLT, Package() {
-        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package() {
-          Package() { "reg", Zero }
-        },
-        ToUUID("dbb8e3e6-5886-4ba6-8795-1319f52a966b"),
-        Package() {
-          Package() { "clock-frequency", 148500000 },
-          Package() { "hactive", 1920 },
-          Package() { "vactive", 1080 },
-          Package() { "hsync-len", 44 },
-          Package() { "hfront-porch", 88 },
-          Package() { "hback-porch", 148 },
-          Package() { "vsync-len", 5 },
-          Package() { "vfront-porch", 4 },
-          Package() { "vback-porch", 36 }
+          Package() { "endpoint", One },
+          Package() { "remote-endpoint", Package() { ^VDU0, 0, 1 } }
         }
       })
     }
 #endif
 
-#if defined (BE_MBM10) || defined (BE_MBM20)
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
 /*************************
  * DT-only driver device *
  *************************/
+#if 0
     // Generic sound device
     Device(SND0) {
       Name(_HID, "PRP0001")
@@ -1818,9 +1722,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
             "LAUX", "Line In", "RAUX", "Line In"
           }},
           Package() { "simple-audio-card,hp-det-gpio", Package() {
-#ifdef BE_MBM10
+#ifdef BAIKAL_MBM10
             ^GPIO.GPIP, 27, Zero
-#elif defined (BE_MBM20)
+#elif defined (BAIKAL_MBM20)
             ^GPIO.GPIP, 29, Zero
 #endif
           }},
@@ -1847,6 +1751,35 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           Package() { "sound-dai", ^I2S0 }
         }
       })
+    }
+#endif
+#endif
+
+#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
+    Device(LEDS) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 600)
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "gpio-leds" }
+        }
+      })
+
+      Device(LED0) {
+        Name(_ADR, Zero)
+        Name(_CRS, ResourceTemplate() {
+          GpioIo(Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 8 }
+        })
+        Name(_DSD, Package() {
+          ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+          Package() {
+            Package() { "default-state", "keep" },
+            Package() { "label", "led0" },
+            Package() { "gpios", Package() { ^LED0, Zero, Zero, Zero } }
+          }
+        })
+      }
     }
 #endif
   }

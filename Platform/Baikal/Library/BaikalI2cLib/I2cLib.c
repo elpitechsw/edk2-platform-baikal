@@ -15,22 +15,22 @@
 #define IC_SPEED_MODE_FAST         2
 #define IC_SPEED_MODE_MAX          3
 
-#define IC_CON_MASTER_MODE         (1 << 0)
+#define IC_CON_MASTER_MODE         BIT0
 #define IC_CON_SPEED               (IC_SPEED_MODE_FAST << 1)
-#define IC_CON_IC_SLAVE_DISABLE    (1 << 6)
+#define IC_CON_IC_SLAVE_DISABLE    BIT6
 
-#define IC_DATA_CMD_CMD            (1 << 8)
+#define IC_DATA_CMD_CMD            BIT8
 
-#define IC_RAW_INTR_STAT_TX_ABRT   (1 << 6)
-#define IC_RAW_INTR_STAT_STOP_DET  (1 << 9)
+#define IC_RAW_INTR_STAT_TX_ABRT   BIT6
+#define IC_RAW_INTR_STAT_STOP_DET  BIT9
 
-#define IC_ENABLE_ENABLE           (1 << 0)
+#define IC_ENABLE_ENABLE           BIT0
 
-#define IC_STATUS_TFNF             (1 << 1)
-#define IC_STATUS_TFE              (1 << 2)
-#define IC_STATUS_RFNE             (1 << 3)
-#define IC_STATUS_RFF              (1 << 4)
-#define IC_STATUS_MST_ACTIVITY     (1 << 5)
+#define IC_STATUS_TFNF             BIT1
+#define IC_STATUS_TFE              BIT2
+#define IC_STATUS_RFNE             BIT3
+#define IC_STATUS_RFF              BIT4
+#define IC_STATUS_MST_ACTIVITY     BIT5
 
 #define I2C_TIMEOUT                1000000
 #define IC_CLK                         166

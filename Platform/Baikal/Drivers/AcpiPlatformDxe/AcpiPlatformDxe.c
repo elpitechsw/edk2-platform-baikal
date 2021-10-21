@@ -28,10 +28,14 @@ EFI_STATUS
   EFI_ACPI_DESCRIPTION_HEADER **
   );
 
+extern EFI_STATUS CsrtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS Dbg2Init (EFI_ACPI_DESCRIPTION_HEADER  **Table);
+extern EFI_STATUS FacsInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS FadtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS GtdtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
+extern EFI_STATUS IortInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS MadtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
+extern EFI_STATUS McfgInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS PpttInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 
 STATIC BAIKAL_ACPI_INIT_FUNCTION  AcpiTableInit[] = {
@@ -40,6 +44,10 @@ STATIC BAIKAL_ACPI_INIT_FUNCTION  AcpiTableInit[] = {
   &PpttInit,
   &GtdtInit,
   &Dbg2Init,
+  &CsrtInit,
+  &FacsInit,
+  &IortInit,
+  &McfgInit,
   &DsdtInit
 };
 

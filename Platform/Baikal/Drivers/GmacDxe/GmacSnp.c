@@ -83,40 +83,40 @@ typedef struct {
   UINT32  DmaHwFeature;
 } GMAC_REGS;
 
-#define MAC_CONFIG_RE               (1 <<  2)
-#define MAC_CONFIG_TE               (1 <<  3)
-#define MAC_CONFIG_ACS              (1 <<  7)
-#define MAC_CONFIG_IPC              (1 << 10)
-#define MAC_CONFIG_DM               (1 << 11)
-#define MAC_CONFIG_DO               (1 << 13)
-#define MAC_CONFIG_FES              (1 << 14)
-#define MAC_CONFIG_PS               (1 << 15)
-#define MAC_CONFIG_DCRS             (1 << 16)
+#define MAC_CONFIG_RE               BIT2
+#define MAC_CONFIG_TE               BIT3
+#define MAC_CONFIG_ACS              BIT7
+#define MAC_CONFIG_IPC              BIT10
+#define MAC_CONFIG_DM               BIT11
+#define MAC_CONFIG_DO               BIT13
+#define MAC_CONFIG_FES              BIT14
+#define MAC_CONFIG_PS               BIT15
+#define MAC_CONFIG_DCRS             BIT16
 #define MAC_CONFIG_SARC_POS         28
 
-#define MAC_FRAMEFILTER_PR          (1 <<  0)
-#define MAC_FRAMEFILTER_PM          (1 <<  4)
-#define MAC_FRAMEFILTER_DBF         (1 <<  5)
+#define MAC_FRAMEFILTER_PR          BIT0
+#define MAC_FRAMEFILTER_PM          BIT4
+#define MAC_FRAMEFILTER_DBF         BIT5
 
-#define MAC_MIISTATUS_LNKSPEED_POS   1
-#define MAC_MIISTATUS_LNKSTS        (1 <<  3)
+#define MAC_MIISTATUS_LNKSPEED_POS  1
+#define MAC_MIISTATUS_LNKSTS        BIT3
 
-#define MAC_GPIO_GPO                (1 <<  8)
+#define MAC_GPIO_GPO                BIT8
 
-#define DMA_BUSMODE_SWR             (1 <<  0)
-#define DMA_BUSMODE_ATDS            (1 <<  7)
+#define DMA_BUSMODE_SWR             BIT0
+#define DMA_BUSMODE_ATDS            BIT7
 
-#define DMA_STATUS_TI               (1 <<  0)
-#define DMA_STATUS_RI               (1 <<  6)
-#define DMA_STATUS_RU               (1 <<  7)
+#define DMA_STATUS_TI               BIT0
+#define DMA_STATUS_RI               BIT6
+#define DMA_STATUS_RU               BIT7
 
-#define DMA_OPERATIONMODE_SR        (1 <<  1)
-#define DMA_OPERATIONMODE_ST        (1 << 13)
-#define DMA_OPERATIONMODE_TSF       (1 << 21)
-#define DMA_OPERATIONMODE_RSF       (1 << 25)
+#define DMA_OPERATIONMODE_SR        BIT1
+#define DMA_OPERATIONMODE_ST        BIT13
+#define DMA_OPERATIONMODE_TSF       BIT21
+#define DMA_OPERATIONMODE_RSF       BIT25
 
-#define DMA_AXISTATUS_AXIWHSTS      (1 <<  0)
-#define DMA_AXISTATUS_AXIRDSTS      (1 <<  1)
+#define DMA_AXISTATUS_AXIWHSTS      BIT0
+#define DMA_AXISTATUS_AXIRDSTS      BIT1
 
 typedef struct {
   UINT32  Rdes0;
@@ -129,14 +129,14 @@ typedef struct {
   UINT32  Rdes7;
 } GMAC_RDESC;
 
-#define RDES0_LS        (1 <<  8)
-#define RDES0_FS        (1 <<  9)
+#define RDES0_LS        BIT8
+#define RDES0_FS        BIT9
 #define RDES0_FL_POS    16
 #define RDES0_FL_MSK    0x3FFF
-#define RDES0_OWN       (1 << 31)
+#define RDES0_OWN       BIT31
 
 #define RDES1_RBS1_POS  0
-#define RDES1_RCH       (1 << 14)
+#define RDES1_RCH       BIT14
 
 typedef struct {
   UINT32  Tdes0;
@@ -149,121 +149,124 @@ typedef struct {
   UINT32  Tdes7;
 } GMAC_TDESC;
 
-#define TDES0_TCH       (1 << 20)
-#define TDES0_FS        (1 << 28)
-#define TDES0_LS        (1 << 29)
-#define TDES0_IC        (1 << 30)
-#define TDES0_OWN       (1 << 31)
+#define TDES0_TCH       BIT20
+#define TDES0_FS        BIT28
+#define TDES0_LS        BIT29
+#define TDES0_IC        BIT30
+#define TDES0_OWN       BIT31
 
 #define TDES1_TBS1_POS  0
 
 #define RX_BUF_SIZE  2048
 #define RX_DESC_NUM  64
+#define TX_BUF_SIZE  2048
 #define TX_DESC_NUM  64
 
 typedef struct {
-  EFI_HANDLE                    Handle;
-  EFI_EVENT                     ExitBootServicesEvent;
-  EFI_SIMPLE_NETWORK_PROTOCOL   Snp;
-  EFI_SIMPLE_NETWORK_MODE       SnpMode;
-  volatile GMAC_REGS           *Regs;
-  UINTN                         Tx2ClkFreq;
-  INTN                          ResetGpioPin;
-  INTN                          ResetPolarity;
-  volatile UINT8                RxBufs[RX_DESC_NUM][RX_BUF_SIZE] __attribute__((aligned(16)));
-  volatile GMAC_RDESC           RxDescs[RX_DESC_NUM] __attribute__((aligned(sizeof (GMAC_RDESC))));
-  volatile GMAC_TDESC           TxDescs[TX_DESC_NUM] __attribute__((aligned(sizeof (GMAC_TDESC))));
-  UINTN                         RxDescReadIdx;
-  UINTN                         TxDescWriteIdx;
-  UINTN                         TxDescReleaseIdx;
+  EFI_HANDLE                   Handle;
+  EFI_EVENT                    ExitBootServicesEvent;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  EFI_SIMPLE_NETWORK_MODE      SnpMode;
+  volatile GMAC_REGS          *Regs;
+  UINTN                        Tx2ClkFreq;
+  INTN                         ResetGpioPin;
+  INTN                         ResetPolarity;
+  volatile UINT8               RxBufs[RX_DESC_NUM][RX_BUF_SIZE] __attribute__((aligned(16)));
+  volatile GMAC_RDESC          RxDescs[RX_DESC_NUM] __attribute__((aligned(sizeof (GMAC_RDESC))));
+  volatile UINT8               TxBufs[TX_DESC_NUM][TX_BUF_SIZE] __attribute__((aligned(16)));
+  volatile GMAC_TDESC          TxDescs[TX_DESC_NUM] __attribute__((aligned(sizeof (GMAC_TDESC))));
+  EFI_PHYSICAL_ADDRESS         TxBufPtrs[TX_DESC_NUM];
+  UINTN                        RxDescReadIdx;
+  UINTN                        TxDescWriteIdx;
+  UINTN                        TxDescReleaseIdx;
 } GMAC_INSTANCE;
 
 STATIC
 VOID
 EFIAPI
 GmacSnpExitBootServices (
-  IN  EFI_EVENT   Event,
-  IN  VOID       *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID      *Context
   );
 
 STATIC
 UINT32
 EFIAPI
 GmacSnpGetReceiveFilterSetting (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpGetStatus (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  OUT    UINT32                       *InterruptStatus,  OPTIONAL
-  OUT    VOID                        **TxBuf             OPTIONAL
+  IN   EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  OUT  UINT32                       *InterruptStatus,  OPTIONAL
+  OUT  VOID                        **TxBuf             OPTIONAL
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpInitialize (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     UINTN                         ExtraRxBufSize,  OPTIONAL
-  IN     UINTN                         ExtraTxBufSize   OPTIONAL
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN  UINTN                         ExtraRxBufSize,  OPTIONAL
+  IN  UINTN                         ExtraTxBufSize   OPTIONAL
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpMCastIpToMac (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     BOOLEAN                       Ipv6,
-  IN     EFI_IP_ADDRESS               *Ip,
-  OUT    EFI_MAC_ADDRESS              *McastMacAddr
+  IN   EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN   BOOLEAN                       Ipv6,
+  IN   EFI_IP_ADDRESS               *Ip,
+  OUT  EFI_MAC_ADDRESS              *McastMacAddr
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpNvData (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     BOOLEAN                       ReadWrite,
-  IN     UINTN                         Offset,
-  IN     UINTN                         BufSize,
-  IN OUT VOID                         *Buf
+  IN      EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN      BOOLEAN                       ReadWrite,
+  IN      UINTN                         Offset,
+  IN      UINTN                         BufSize,
+  IN OUT  VOID                         *Buf
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpReset (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     BOOLEAN                       ExtendedVerification
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN  BOOLEAN                       ExtendedVerification
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpReceiveFilters (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     UINT32                        Enable,
-  IN     UINT32                        Disable,
-  IN     BOOLEAN                       ResetMCastFilter,
-  IN     UINTN                         MCastFilterCnt,   OPTIONAL
-  IN     EFI_MAC_ADDRESS              *MCastFilter       OPTIONAL
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN  UINT32                        Enable,
+  IN  UINT32                        Disable,
+  IN  BOOLEAN                       ResetMCastFilter,
+  IN  UINTN                         MCastFilterCnt,   OPTIONAL
+  IN  EFI_MAC_ADDRESS              *MCastFilter       OPTIONAL
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpShutdown (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpStart (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   );
 
 STATIC
@@ -279,43 +282,43 @@ STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpStatistics (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     BOOLEAN                       Reset,
-  IN OUT UINTN                        *StatisticsSize,  OPTIONAL
-  OUT    EFI_NETWORK_STATISTICS       *StatisticsTable  OPTIONAL
+  IN      EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN      BOOLEAN                       Reset,
+  IN OUT  UINTN                        *StatisticsSize,  OPTIONAL
+  OUT     EFI_NETWORK_STATISTICS       *StatisticsTable  OPTIONAL
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpStop (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpReceive (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  OUT    UINTN                        *HdrSize,  OPTIONAL
-  IN OUT UINTN                        *BufSize,
-  OUT    VOID                         *Buf,
-  OUT    EFI_MAC_ADDRESS              *SrcAddr,  OPTIONAL
-  OUT    EFI_MAC_ADDRESS              *DstAddr,  OPTIONAL
-  OUT    UINT16                       *Protocol  OPTIONAL
+  IN      EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  OUT     UINTN                        *HdrSize,  OPTIONAL
+  IN OUT  UINTN                        *BufSize,
+  OUT     VOID                         *Buf,
+  OUT     EFI_MAC_ADDRESS              *SrcAddr,  OPTIONAL
+  OUT     EFI_MAC_ADDRESS              *DstAddr,  OPTIONAL
+  OUT     UINT16                       *Protocol  OPTIONAL
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpTransmit (
-  IN     EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
-  IN     UINTN                         HdrSize,
-  IN     UINTN                         BufSize,
-  IN     VOID                         *Buf,
-  IN     EFI_MAC_ADDRESS              *SrcAddr,  OPTIONAL
-  IN     EFI_MAC_ADDRESS              *DstAddr,  OPTIONAL
-  IN     UINT16                       *Protocol  OPTIONAL
+  IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  IN  UINTN                         HdrSize,
+  IN  UINTN                         BufSize,
+  IN  VOID                         *Buf,
+  IN  EFI_MAC_ADDRESS              *SrcAddr,  OPTIONAL
+  IN  EFI_MAC_ADDRESS              *DstAddr,  OPTIONAL
+  IN  UINT16                       *Protocol  OPTIONAL
   );
 
 STATIC
@@ -346,14 +349,13 @@ STATIC
 EFI_STATUS
 EFIAPI
 GmacSnpGetStatus (
-  IN   EFI_SIMPLE_NETWORK_PROTOCOL   *Snp,
-  OUT  UINT32                        *InterruptStatus,  OPTIONAL
-  OUT  VOID                         **TxBuf             OPTIONAL
+  IN   EFI_SIMPLE_NETWORK_PROTOCOL  *Snp,
+  OUT  UINT32                       *InterruptStatus,  OPTIONAL
+  OUT  VOID                        **TxBuf             OPTIONAL
   )
 {
   GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
   UINTN                 MacMiiStatus;
-  BOOLEAN               MediaPresent;
   EFI_TPL               SavedTpl;
 
   ASSERT (Snp != NULL);
@@ -363,13 +365,16 @@ GmacSnpGetStatus (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStarted:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpGetStatus: SNP not initialized\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpGetStatus: SNP invalid state = %u\n", GmacInst->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
@@ -377,13 +382,9 @@ GmacSnpGetStatus (
   }
 
   MacMiiStatus = GmacInst->Regs->MacMiiStatus;
-  MediaPresent = MacMiiStatus & MAC_MIISTATUS_LNKSTS;
+  Snp->Mode->MediaPresent = MacMiiStatus & MAC_MIISTATUS_LNKSTS;
 
-  if (Snp->Mode->MediaPresent != MediaPresent) {
-    Snp->Mode->MediaPresent    = MediaPresent;
-  }
-
-  if (MediaPresent) {
+  if (Snp->Mode->MediaPresent) {
     ARM_SMC_ARGS  ArmSmcArgs;
     CONST UINTN   LnkSpeed = (MacMiiStatus >> MAC_MIISTATUS_LNKSPEED_POS) & 0x3;
 
@@ -397,7 +398,7 @@ GmacSnpGetStatus (
 
       ArmSmcArgs.Arg2 = BAIKAL_SMC_PLAT_CMU_CLKCH_GET_RATE;
       ArmSmcArgs.Arg4 = BM1000_MMXGBE_BASE;
-      ArmCallSmc(&ArmSmcArgs);
+      ArmCallSmc (&ArmSmcArgs);
       GmacInst->Tx2ClkFreq = ArmSmcArgs.Arg0;
     }
 
@@ -422,21 +423,25 @@ GmacSnpGetStatus (
       ArmSmcArgs.Arg2 = BAIKAL_SMC_PLAT_CMU_CLKCH_SET_RATE;
       ArmSmcArgs.Arg3 = GmacInst->Tx2ClkFreq;
       ArmSmcArgs.Arg4 = BM1000_MMXGBE_BASE;
-      ArmCallSmc(&ArmSmcArgs);
+      ArmCallSmc (&ArmSmcArgs);
     }
 
     if (!LnkSpeed) {
       GmacInst->Regs->MacConfig = (GmacInst->Regs->MacConfig & ~MAC_CONFIG_FES) | MAC_CONFIG_PS;
     } else if (LnkSpeed == 1) {
-      GmacInst->Regs->MacConfig |= MAC_CONFIG_PS | MAC_CONFIG_FES;
+      GmacInst->Regs->MacConfig |=   MAC_CONFIG_PS | MAC_CONFIG_FES;
     } else if (LnkSpeed == 2) {
       GmacInst->Regs->MacConfig &= ~(MAC_CONFIG_PS | MAC_CONFIG_FES);
     }
   }
 
-  if (TxBuf != NULL && GmacInst->TxDescReleaseIdx != GmacInst->TxDescWriteIdx) {
-    *((UINT32 *) TxBuf) = GmacInst->TxDescs[GmacInst->TxDescReleaseIdx].Tdes2;
-    GmacInst->TxDescReleaseIdx = (GmacInst->TxDescReleaseIdx + 1) % TX_DESC_NUM;
+  if (TxBuf != NULL) {
+    if (GmacInst->TxDescReleaseIdx != GmacInst->TxDescWriteIdx) {
+      *((UINT32 *) TxBuf) = GmacInst->TxBufPtrs[GmacInst->TxDescReleaseIdx];
+      GmacInst->TxDescReleaseIdx = (GmacInst->TxDescReleaseIdx + 1) % TX_DESC_NUM;
+    } else {
+      *TxBuf = NULL;
+    }
   }
 
   if (InterruptStatus) {
@@ -467,7 +472,7 @@ GmacSnpInstanceCtor (
   EFI_PHYSICAL_ADDRESS   PhysicalAddr;
   EFI_STATUS             Status;
 
-  PhysicalAddr = (EFI_PHYSICAL_ADDRESS) (SIZE_4GB - 1);
+  PhysicalAddr = (EFI_PHYSICAL_ADDRESS) (BASE_4GB - 1);
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
                   EfiBootServicesData,
@@ -515,9 +520,9 @@ GmacSnpInstanceCtor (
   GmacInst->SnpMode.NvRamSize             = 0;
   GmacInst->SnpMode.NvRamAccessSize       = 0;
   GmacInst->SnpMode.ReceiveFilterMask     = EFI_SIMPLE_NETWORK_RECEIVE_UNICAST     |
-                                           EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST   |
-                                           EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS |
-                                           EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS_MULTICAST;
+                                            EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST   |
+                                            EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS |
+                                            EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS_MULTICAST;
 
   GmacInst->SnpMode.ReceiveFilterSetting  = GmacSnpGetReceiveFilterSetting (&GmacInst->Snp);
   GmacInst->SnpMode.MaxMCastFilterCount   = MAX_MCAST_FILTER_CNT;
@@ -585,14 +590,17 @@ GmacSnpInitialize (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkStarted:
     break;
+
   case EfiSimpleNetworkInitialized:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpInitialize: SNP already initialized\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_SUCCESS;
+
   case EfiSimpleNetworkStopped:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpInitialize: SNP not started\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpInitialize: SNP invalid state = %u\n", GmacInst->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
@@ -602,12 +610,13 @@ GmacSnpInitialize (
   if (GmacInst->ResetGpioPin >= 0  &&
       GmacInst->ResetGpioPin <= 31 &&
       GmacInst->ResetPolarity >= 0) {
-    MmioOr32 (BM1000_GPIO32_DIR, 1 << GmacInst->ResetGpioPin);
     if (GmacInst->ResetPolarity) {
       MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << GmacInst->ResetGpioPin));
     } else {
       MmioOr32 (BM1000_GPIO32_DATA, 1 << GmacInst->ResetGpioPin);
     }
+
+    MmioOr32 (BM1000_GPIO32_DIR, 1 << GmacInst->ResetGpioPin);
   }
 
   GmacInst->Regs->DmaBusMode = DMA_BUSMODE_SWR;
@@ -616,7 +625,6 @@ GmacSnpInitialize (
   if (GmacInst->ResetGpioPin >= 0  &&
       GmacInst->ResetGpioPin <= 31 &&
       GmacInst->ResetPolarity >= 0) {
-    MmioOr32 (BM1000_GPIO32_DIR, 1 << GmacInst->ResetGpioPin);
     if (GmacInst->ResetPolarity) {
       MmioOr32 (BM1000_GPIO32_DATA, 1 << GmacInst->ResetGpioPin);
     } else {
@@ -660,8 +668,8 @@ GmacSnpInitialize (
     Snp->Mode->CurrentAddress.Addr[3] << 24;
 
   GmacInst->Regs->DmaBusMode        |= DMA_BUSMODE_ATDS;
-  GmacInst->Regs->DmaRxDescBaseAddr  = (UINTN) GmacInst->RxDescs;
-  GmacInst->Regs->DmaTxDescBaseAddr  = (UINTN) GmacInst->TxDescs;
+  GmacInst->Regs->DmaRxDescBaseAddr  = (EFI_PHYSICAL_ADDRESS) GmacInst->RxDescs;
+  GmacInst->Regs->DmaTxDescBaseAddr  = (EFI_PHYSICAL_ADDRESS) GmacInst->TxDescs;
 
   GmacInst->RxDescReadIdx    = 0;
   GmacInst->TxDescWriteIdx   = 0;
@@ -670,27 +678,44 @@ GmacSnpInitialize (
   for (DescIdx = 0; DescIdx < RX_DESC_NUM; ++DescIdx) {
     GmacInst->RxDescs[DescIdx].Rdes0 = RDES0_OWN;
     GmacInst->RxDescs[DescIdx].Rdes1 = RDES1_RCH | (RX_BUF_SIZE << RDES1_RBS1_POS);
-    GmacInst->RxDescs[DescIdx].Rdes2 = (UINTN) GmacInst->RxBufs[DescIdx];
-    GmacInst->RxDescs[DescIdx].Rdes3 = (UINTN) &GmacInst->RxDescs[(DescIdx + 1) % RX_DESC_NUM];
+    GmacInst->RxDescs[DescIdx].Rdes2 = (EFI_PHYSICAL_ADDRESS) GmacInst->RxBufs[DescIdx];
+    GmacInst->RxDescs[DescIdx].Rdes3 = (EFI_PHYSICAL_ADDRESS) &GmacInst->RxDescs[(DescIdx + 1) % RX_DESC_NUM];
   }
 
   for (DescIdx = 0; DescIdx < TX_DESC_NUM; ++DescIdx) {
     GmacInst->TxDescs[DescIdx].Tdes0 = 0;
-    GmacInst->TxDescs[DescIdx].Tdes3 = (UINTN) &GmacInst->TxDescs[(DescIdx + 1) % TX_DESC_NUM];
+    GmacInst->TxDescs[DescIdx].Tdes3 = (EFI_PHYSICAL_ADDRESS) &GmacInst->TxDescs[(DescIdx + 1) % TX_DESC_NUM];
   }
 
   GmacInst->Regs->DmaStatus = 0xFFFFFFFF;
   GmacInst->Regs->MacConfig = (3 << MAC_CONFIG_SARC_POS) |
-                                 MAC_CONFIG_DCRS |
-                                 MAC_CONFIG_DO   |
-                                 MAC_CONFIG_DM   |
-                                 MAC_CONFIG_IPC  |
-                                 MAC_CONFIG_ACS;
+                                    MAC_CONFIG_DCRS      |
+                                    MAC_CONFIG_DO        |
+                                    MAC_CONFIG_DM        |
+                                    MAC_CONFIG_IPC       |
+                                    MAC_CONFIG_ACS;
+
+  // Wait for linkup if the link has already been established
+  if (Snp->Mode->MediaPresent) {
+    UINTN  Limit;
+
+    // TODO: it may require to adjust Tx2ClkFreq, so the flow from SnpGetStatus() should be re-used
+    for (Limit = 4000; ; --Limit) {
+      if (GmacInst->Regs->MacMiiStatus & MAC_MIISTATUS_LNKSTS) {
+        break;
+      } else if (!Limit) {
+        Snp->Mode->MediaPresent = FALSE;
+        break;
+      }
+
+      gBS->Stall (1000);
+    }
+  }
 
   GmacInst->Regs->DmaOperationMode = DMA_OPERATIONMODE_TSF |
-                                        DMA_OPERATIONMODE_RSF |
-                                        DMA_OPERATIONMODE_ST  |
-                                        DMA_OPERATIONMODE_SR;
+                                     DMA_OPERATIONMODE_RSF |
+                                     DMA_OPERATIONMODE_ST  |
+                                     DMA_OPERATIONMODE_SR;
 
   GmacInst->Regs->MacConfig       |= MAC_CONFIG_TE | MAC_CONFIG_RE;
   GmacInst->Regs->DmaRxPollDemand  = 0;
@@ -723,9 +748,11 @@ GmacSnpMCastIpToMac (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -739,12 +766,19 @@ STATIC
 VOID
 EFIAPI
 GmacSnpExitBootServices (
-  IN  EFI_EVENT   Event,
-  IN  VOID       *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID      *Context
   )
 {
   GMAC_INSTANCE *CONST  GmacInst = Context;
   GmacInst->Regs->DmaBusMode = DMA_BUSMODE_SWR;
+
+  if (GmacInst->ResetGpioPin >= 0  &&
+      GmacInst->ResetGpioPin <= 31) {
+    MmioAnd32 (BM1000_GPIO32_DIR, ~(1 << GmacInst->ResetGpioPin));
+  }
+
+  GmacInst->Snp.Mode->MediaPresent = FALSE;
 }
 
 STATIC
@@ -767,9 +801,11 @@ GmacSnpNvData (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -796,9 +832,11 @@ GmacSnpReset (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -831,14 +869,17 @@ GmacSnpReceiveFilters (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStarted:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceiveFilters: SNP not initialized\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
+
   case EfiSimpleNetworkStopped:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceiveFilters: SNP not started\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceiveFilters: SNP invalid state = %u\n", GmacInst->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
@@ -885,9 +926,11 @@ GmacSnpShutdown (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -913,10 +956,12 @@ GmacSnpStart (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkStopped:
     break;
+
   case EfiSimpleNetworkStarted:
   case EfiSimpleNetworkInitialized:
     gBS->RestoreTPL (SavedTpl);
     return EFI_ALREADY_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -947,14 +992,17 @@ GmacSnpStationAddress (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStarted:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: SNP not initialized\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
+
   case EfiSimpleNetworkStopped:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: SNP not started\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: SNP invalid state = %u\n", GmacInst->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
@@ -1018,9 +1066,11 @@ GmacSnpStatistics (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -1047,9 +1097,11 @@ GmacSnpStop (
   case EfiSimpleNetworkStarted:
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStopped:
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
@@ -1087,14 +1139,17 @@ GmacSnpReceive ( // Receive a packet from a network interface
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStarted:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: SNP not initialized\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
+
   case EfiSimpleNetworkStopped:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: SNP not started\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: SNP invalid state = %u\n", GmacInst->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
@@ -1106,7 +1161,7 @@ GmacSnpReceive ( // Receive a packet from a network interface
   while (!(GmacInst->RxDescs[GmacInst->RxDescReadIdx].Rdes0 & RDES0_OWN) && (Status == EFI_NOT_READY)) {
     if (((RDES0_FS | RDES0_LS) & GmacInst->RxDescs[GmacInst->RxDescReadIdx].Rdes0) ==
          (RDES0_FS | RDES0_LS)) {
-      CONST UINTN FrameLen = (GmacInst->RxDescs[GmacInst->RxDescReadIdx].Rdes0 >> RDES0_FL_POS) & RDES0_FL_MSK;
+      CONST UINTN  FrameLen = (GmacInst->RxDescs[GmacInst->RxDescReadIdx].Rdes0 >> RDES0_FL_POS) & RDES0_FL_MSK;
 
       if (*BufSize < FrameLen) {
         DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: receive BufSize(%u) < FrameLen(%u)\n", GmacInst->Regs, *BufSize, FrameLen));
@@ -1127,11 +1182,11 @@ GmacSnpReceive ( // Receive a packet from a network interface
         }
 
         if (SrcAddr != NULL) {
-          gBS->CopyMem (SrcAddr, (UINT8*) Buf + 6, NET_ETHER_ADDR_LEN);
+          gBS->CopyMem (SrcAddr, (UINT8 *) Buf + 6, NET_ETHER_ADDR_LEN);
         }
 
         if (Protocol != NULL) {
-          *Protocol = NTOHS (*(UINT16*)((UINT8*) Buf + 12));
+          *Protocol = NTOHS (*(UINT16 *)((UINT8 *) Buf + 12));
         }
 
         Status = EFI_SUCCESS;
@@ -1179,14 +1234,17 @@ GmacSnpTransmit (
   switch (Snp->Mode->State) {
   case EfiSimpleNetworkInitialized:
     break;
+
   case EfiSimpleNetworkStarted:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP not initialized\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
+
   case EfiSimpleNetworkStopped:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP not started\n", GmacInst->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
+
   default:
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP invalid state = %u\n", GmacInst->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
@@ -1213,7 +1271,7 @@ GmacSnpTransmit (
   }
 
   if (HdrSize != 0) {
-    UINT16 EtherType = HTONS (*Protocol);
+    UINT16  EtherType = HTONS (*Protocol);
 
     gBS->CopyMem (Buf, DstAddr, NET_ETHER_ADDR_LEN);
 
@@ -1228,7 +1286,11 @@ GmacSnpTransmit (
 
   if (!(GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes0 & TDES0_OWN) &&
       ((GmacInst->TxDescWriteIdx + 1) % TX_DESC_NUM) != GmacInst->TxDescWriteIdx) {
-    GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes2 = (UINTN) Buf;
+    // Store the Buf address in order to release it later
+    GmacInst->TxBufPtrs[GmacInst->TxDescWriteIdx] = (EFI_PHYSICAL_ADDRESS) Buf;
+    // Buf address could be higher than BASE_4GB, so copy the Buf data to GmacInst->TxBuf
+    gBS->CopyMem ((UINT8 *) GmacInst->TxBufs[GmacInst->TxDescWriteIdx], Buf, BufSize);
+    GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes2 = (EFI_PHYSICAL_ADDRESS) GmacInst->TxBufs[GmacInst->TxDescWriteIdx];
     GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes1 = BufSize << TDES1_TBS1_POS;
     GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes0 = TDES0_OWN | TDES0_IC | TDES0_LS | TDES0_FS | TDES0_TCH;
     GmacInst->TxDescWriteIdx = (GmacInst->TxDescWriteIdx + 1) % TX_DESC_NUM;

@@ -1,16 +1,8 @@
 /** @file
   Serial I/O Port library functions with no library constructor/destructor
 
-  Copyright (C) 2015, Baikal Electronics. All rights reserved.
-
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
+  Copyright (c) 2015 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Base.h>
@@ -53,16 +45,16 @@ SerialPortSetAttributes (
   )
 {
   return DwUartInitializePort (
-        (UINTN)PcdGet64 (PcdUartRegisterBase),
-        BaudRate,
-        ReceiveFifoDepth,
-        Parity,
-        DataBits,
-        StopBits);
+           (UINTN)FixedPcdGet64 (PcdUartRegisterBase),
+           BaudRate,
+           ReceiveFifoDepth,
+           Parity,
+           DataBits,
+           StopBits
+           );
 }
 
 /**
-
   Assert or deassert the control signals on a serial port.
   The following control signals are set according their bit settings :
   . Request to Send
@@ -93,11 +85,10 @@ SerialPortSetControl (
   IN UINT32  Control
   )
 {
-  return DwUartSetControl ((UINTN)PcdGet64 (PcdUartRegisterBase), Control);
+  return DwUartSetControl ((UINTN)FixedPcdGet64 (PcdUartRegisterBase), Control);
 }
 
 /**
-
   Retrieve the status of the control bits on a serial device.
 
   @param[out]  Control  Status of the control bits on a serial device :
@@ -130,5 +121,5 @@ SerialPortGetControl (
   OUT UINT32  *Control
   )
 {
-  return DwUartGetControl ((UINTN)PcdGet64 (PcdUartRegisterBase), Control);
+  return DwUartGetControl ((UINTN)FixedPcdGet64 (PcdUartRegisterBase), Control);
 }

@@ -19,3 +19,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   Silicon/Baikal/BM1000/BM1000.dec
+
+[LibraryClasses]
+  IoLib

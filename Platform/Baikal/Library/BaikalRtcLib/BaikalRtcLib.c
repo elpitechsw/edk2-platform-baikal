@@ -123,12 +123,12 @@ LibGetTime (
   Time->Minute = Bcd2Bin (TimeDateBcds[1] & BCD_MASK_MINUTES);
 
   /* Handle 12/24-hour modes */
-  if ((RtcType == RTC_TYPE_ABEOZ9  && (TimeDateBcds[2] & (1 << 6))) ||
-      (RtcType == RTC_TYPE_PCF212X && (Buf[0] & (1 << 2)))) {
+  if ((RtcType == RTC_TYPE_ABEOZ9  && (TimeDateBcds[2] & BIT6)) ||
+      (RtcType == RTC_TYPE_PCF212X && (Buf[0] & BIT2))) {
     /* 12-hour mode */
     Time->Hour = Bcd2Bin (TimeDateBcds[2] & BCD_MASK_HOURS12);
     /* Handle AM/PM bit */
-    if ((TimeDateBcds[2] & (1 << 5)) && Time->Hour != 12) {
+    if ((TimeDateBcds[2] & BIT5) && Time->Hour != 12) {
       Time->Hour += 12;
     }
   } else {
@@ -320,9 +320,7 @@ LibRtcInitialize (
 
       /* TODO: I2C bus should be identified in some other way... */
       if (I2cBase == 0x20250000) {
-        Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "status", &Prop, &PropSize);
-
-        if (Status == EFI_SUCCESS && AsciiStrCmp ((CONST CHAR8 *)Prop, "okay") == 0) {
+        if (FdtClient->IsNodeEnabled (FdtClient, FdtNode)) {
           break;
         } else {
           return EFI_DEVICE_ERROR;

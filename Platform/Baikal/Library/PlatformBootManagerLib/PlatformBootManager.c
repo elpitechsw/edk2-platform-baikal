@@ -953,6 +953,9 @@ PlatformBootManagerUnableToBoot (
                   LoadOptionTypeBoot
                   );
 
+  //
+  // Deactivate PXE boot options by default
+  //
   for (Idx = 0; Idx < NewBootOptionCount; ++Idx) {
     EFI_DEVICE_PATH_PROTOCOL  *Node;
 

@@ -29,15 +29,15 @@
   GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
-!if $(BE_MBM10)
-  *_*_*_CC_FLAGS = -DBE_MBM10
-  *_*_*_ASLPP_FLAGS = -DBE_MBM10
-!elseif $(BE_MBM20)
-  *_*_*_CC_FLAGS = -DBE_MBM20
-  *_*_*_ASLPP_FLAGS = -DBE_MBM20
-!elseif $(BE_DBM)
-  *_*_*_CC_FLAGS = -DBE_DBM
-  *_*_*_ASLPP_FLAGS = -DBE_DBM
+!if $(BAIKAL_MBM10)
+  *_*_*_CC_FLAGS = -DBAIKAL_MBM10
+  *_*_*_ASLPP_FLAGS = -DBAIKAL_MBM10
+!elseif $(BAIKAL_MBM20)
+  *_*_*_CC_FLAGS = -DBAIKAL_MBM20
+  *_*_*_ASLPP_FLAGS = -DBAIKAL_MBM20
+!elseif $(BAIKAL_DBM)
+  *_*_*_CC_FLAGS = -DBAIKAL_DBM
+  *_*_*_ASLPP_FLAGS = -DBAIKAL_DBM
 !endif
 
 [BuildOptions.AARCH64.EDKII.DXE_CORE, BuildOptions.AARCH64.EDKII.DXE_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_APPLICATION]
@@ -48,12 +48,12 @@
 
 [LibraryClasses.AARCH64.SEC, LibraryClasses.AARCH64.DXE_CORE, LibraryClasses.AARCH64.DXE_DRIVER, LibraryClasses.AARCH64.DXE_RUNTIME_DRIVER, LibraryClasses.AARCH64.UEFI_APPLICATION, LibraryClasses.AARCH64.UEFI_DRIVER]
   ArmDisassemblerLib|ArmPkg/Library/ArmDisassemblerLib/ArmDisassemblerLib.inf
-  ArmGenericTimerCounterLib|ArmPkg/Library/ArmGenericTimerVirtCounterLib/ArmGenericTimerVirtCounterLib.inf
+  ArmGenericTimerCounterLib|ArmPkg/Library/ArmGenericTimerPhyCounterLib/ArmGenericTimerPhyCounterLib.inf
   ArmGicArchLib|ArmPkg/Library/ArmGicArchLib/ArmGicArchLib.inf
   ArmGicLib|ArmPkg/Drivers/ArmGic/ArmGicLib.inf
   ArmLib|ArmPkg/Library/ArmLib/ArmBaseLib.inf
   ArmMmuLib|ArmPkg/Library/ArmMmuLib/ArmMmuBaseLib.inf
-  ArmPlatformLib|Platform/Baikal/Library/BaikalFdtPlatformLib/BaikalFdtPlatformLib.inf
+  ArmPlatformLib|Platform/Baikal/BM1000Rdb/Library/PlatformLib/PlatformLib.inf
   ArmPlatformStackLib|ArmPlatformPkg/Library/ArmPlatformStackLib/ArmPlatformStackLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
@@ -100,7 +100,7 @@
   PrePiHobListPointerLib|ArmPlatformPkg/Library/PrePiHobListPointerLib/PrePiHobListPointerLib.inf
   PrePiLib|EmbeddedPkg/Library/PrePiLib/PrePiLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
-!if ($(BE_QEMU_M) == FALSE) AND ($(BE_QEMU_S) == FALSE)
+!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
   RealTimeClockLib|Platform/Baikal/Library/BaikalRtcLib/BaikalRtcLib.inf
 !else
   RealTimeClockLib|EmbeddedPkg/Library/TemplateRealTimeClockLib/TemplateRealTimeClockLib.inf
@@ -281,6 +281,9 @@
   # NVMe
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
+  # SD
+  Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
+
   # USB
   Platform/Baikal/Drivers/PciEmulation/PciEmulationXhci.inf
   MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
@@ -380,9 +383,7 @@
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiReservedMemoryType|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode|150
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData|300
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|0x00000016
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuMemorySize|40
-
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|22
 !if $(TARGET) == RELEASE
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0

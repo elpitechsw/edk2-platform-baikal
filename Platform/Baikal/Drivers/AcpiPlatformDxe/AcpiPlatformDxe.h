@@ -27,4 +27,14 @@
   1                                                          \
 }
 
+#define BAIKAL_ACPI_PCIE_X4_0_SEGMENT  0
+#ifdef BAIKAL_DBM
+#define BAIKAL_ACPI_PCIE_X4_1_SEGMENT  1
+#define BAIKAL_ACPI_PCIE_X8_SEGMENT    2
+#define BAIKAL_ACPI_PCIE_COUNT         3
+#else
+#define BAIKAL_ACPI_PCIE_X8_SEGMENT    1
+#define BAIKAL_ACPI_PCIE_COUNT         2
+#endif
+
 #endif // BAIKAL_ACPI_H_

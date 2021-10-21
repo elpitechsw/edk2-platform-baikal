@@ -1,16 +1,8 @@
 /** @file
   Serial I/O Port library functions with no library constructor/destructor
 
-  Copyright (c) 2015 - 2020, Baikal Electronics. All rights reserved.
-
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
+  Copyright (c) 2015 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Base.h>
@@ -19,7 +11,6 @@
 #include <Library/SerialPortLib.h>
 
 /**
-
   Programmed hardware of Serial port.
 
   @return    Always return RETURN_UNSUPPORTED.
@@ -37,15 +28,20 @@ SerialPortInitialize (
   UINT8               DataBits;
   EFI_STOP_BITS_TYPE  StopBits;
 
-  BaudRate = (UINTN)PcdGet64 (PcdUartBaudRate);
-  ReceiveFifoDepth = 0; // Use the default value for Fifo depth
-  Parity = (EFI_PARITY_TYPE)PcdGet8 (PcdUartParity);
-  DataBits = PcdGet8 (PcdUartDataBits);
-  StopBits = (EFI_STOP_BITS_TYPE) PcdGet8 (PcdUartStopBits);
+  BaudRate = (UINTN)FixedPcdGet64 (PcdUartBaudRate);
+  ReceiveFifoDepth = 0; // Use the default value for FIFO depth
+  Parity   = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartParity);
+  DataBits = FixedPcdGet8 (PcdUartDataBits);
+  StopBits = (EFI_STOP_BITS_TYPE) FixedPcdGet8 (PcdUartStopBits);
 
   return DwUartInitializePort (
-      (UINTN)PcdGet64 (PcdUartRegisterBase),
-      &BaudRate, &ReceiveFifoDepth, &Parity, &DataBits, &StopBits);
+           (UINTN)FixedPcdGet64 (PcdUartRegisterBase),
+           &BaudRate,
+           &ReceiveFifoDepth,
+           &Parity,
+           &DataBits,
+           &StopBits
+           );
 }
 
 /**
@@ -65,7 +61,7 @@ SerialPortWrite (
   IN UINTN     NumberOfBytes
   )
 {
-  return DwUartWrite ((UINTN)PcdGet64 (PcdUartRegisterBase), Buffer, NumberOfBytes);
+  return DwUartWrite ((UINTN)FixedPcdGet64 (PcdUartRegisterBase), Buffer, NumberOfBytes);
 }
 
 /**
@@ -85,7 +81,7 @@ SerialPortRead (
   IN  UINTN     NumberOfBytes
 )
 {
-  return DwUartRead ((UINTN)PcdGet64 (PcdUartRegisterBase), Buffer, NumberOfBytes);
+  return DwUartRead ((UINTN)FixedPcdGet64 (PcdUartRegisterBase), Buffer, NumberOfBytes);
 }
 
 /**
@@ -102,5 +98,5 @@ SerialPortPoll (
   VOID
   )
 {
-  return DwUartPoll ((UINTN)PcdGet64 (PcdUartRegisterBase));
+  return DwUartPoll ((UINTN)FixedPcdGet64 (PcdUartRegisterBase));
 }

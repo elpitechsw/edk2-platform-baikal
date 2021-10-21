@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020, Baikal Electronics JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2021, Baikal Electronics JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -11,6 +11,7 @@
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PciHostBridgeLib.h>
+#include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Platform/Pcie.h>
 #include <Protocol/FdtClient.h>
@@ -193,8 +194,8 @@ BaikalPciHostBridgeLibLink (
   ASSERT (PcieIdx < ARRAY_SIZE (mEfiPciRootBridgeDevicePaths));
 
   UINT32 RegPcieLcruGpr = MmioRead32 (BM1000_PCIE_LCRU_GPR_STATUS_REG (PcieIdx));
-  return ( (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP) &&
-           (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP));
+  return ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP) &&
+          (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP));
 }
 
 VOID
@@ -297,8 +298,7 @@ BaikalPciHostBridgeLibCtor (
       break;
     }
 
-    Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "status", &Prop, &PropSize);
-    if (EFI_ERROR (Status) || AsciiStrCmp ((CONST CHAR8 *)Prop, "okay") != 0) {
+    if (!FdtClient->IsNodeEnabled (FdtClient, FdtNode)) {
       continue;
     }
 
@@ -345,7 +345,7 @@ BaikalPciHostBridgeLibCtor (
       if (Status == EFI_SUCCESS) {
         Status = FdtClient->FindNextSubnode (FdtClient, "pcieclk", FdtSubnode, &FdtSubnode);
         if (Status == EFI_SUCCESS) {
-          Status = FdtClient->GetNodeProperty (FdtClient, FdtSubnode, "line_name", &Prop, &PropSize);
+          Status = FdtClient->GetNodeProperty (FdtClient, FdtSubnode, "line-name", &Prop, &PropSize);
           if (Status == EFI_SUCCESS && AsciiStrCmp ((CONST CHAR8 *)Prop, "pcie-x8-clock") == 0) {
             Status = FdtClient->GetNodeProperty (FdtClient, FdtSubnode, "gpios", &Prop, &PropSize);
             if (Status == EFI_SUCCESS && PropSize == 8) {
@@ -370,10 +370,9 @@ BaikalPciHostBridgeLibCtor (
 
   // Initialise PCIe RCs
   for (Iter = 0; Iter < mPcieRootBridgesNum; ++Iter, ++lPcieRootBridge) {
-    UINTN   Cnt;
-    UINTN   PciePortLinkCapableLanesVal;
-    UINT32  RegPcieLcruGpr;
-    UINT32  RegPcieLnkStat;
+    BOOLEAN  ComponentExists;
+    UINTN    PciePortLinkCapableLanesVal;
+    UINT64   TimeStart;
 
     PcieIdx = PcieIdxs[Iter];
     lPcieRootBridge->Segment    = PcieIdx;
@@ -406,13 +405,16 @@ BaikalPciHostBridgeLibCtor (
     lPcieRootBridge->DevicePath        = (EFI_DEVICE_PATH_PROTOCOL *)&mEfiPciRootBridgeDevicePaths[PcieIdx];
 
     // Assert PERST pin
-    if (PciePerstGpios[PcieIdx] >= 0 && PciePerstPolarity[PcieIdx] >= 0) {
-      MmioOr32 (BM1000_GPIO32_DIR, 1 << PciePerstGpios[PcieIdx]);
+    if (PciePerstGpios[PcieIdx] >= 0 &&
+        PciePerstGpios[PcieIdx] <= 31 &&
+        PciePerstPolarity[PcieIdx] >= 0) {
       if (PciePerstPolarity[PcieIdx]) {
         MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
       } else {
         MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
       }
+
+      MmioOr32 (BM1000_GPIO32_DIR, 1 << PciePerstGpios[PcieIdx]);
     }
 
     MmioAnd32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
@@ -428,13 +430,16 @@ BaikalPciHostBridgeLibCtor (
         );
 
       // Assert PRSNT pin
-      if (PcieX8PrsntGpio >= 0 && PcieX8PrsntPolarity >= 0) {
-        MmioOr32 (BM1000_GPIO32_DIR, 1 << PcieX8PrsntGpio);
+      if (PcieX8PrsntGpio >= 0 &&
+          PcieX8PrsntGpio <= 31 &&
+          PcieX8PrsntPolarity >= 0) {
         if (PcieX8PrsntPolarity) {
           MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PcieX8PrsntGpio));
         } else {
           MmioOr32 (BM1000_GPIO32_DATA, 1 << PcieX8PrsntGpio);
         }
+
+        MmioOr32 (BM1000_GPIO32_DIR, 1 << PcieX8PrsntGpio);
       }
     } else {
       MmioOr32 (
@@ -445,7 +450,7 @@ BaikalPciHostBridgeLibCtor (
         );
     }
 
-    gBS->Stall (150 * 1000);
+    gBS->Stall (1);  // Delay at least 100 ns
 
     // Deassert PCIe RC resets
     if (PcieIdx == BM1000_PCIE_X8_IDX) {
@@ -465,17 +470,6 @@ BaikalPciHostBridgeLibCtor (
           BM1000_PCIE_LCRU_GPR_RESET_PWR_RST       | BM1000_PCIE_LCRU_GPR_RESET_CORE_RST    |
           BM1000_PCIE_LCRU_GPR_RESET_PIPE0_RESET   | BM1000_PCIE_LCRU_GPR_RESET_PHY_RESET)
         );
-    }
-
-    gBS->Stall (1000);
-
-    // Deassert PERST pin
-    if (PciePerstGpios[PcieIdx] >= 0 && PciePerstPolarity[PcieIdx] >= 0) {
-      if (PciePerstPolarity[PcieIdx]) {
-        MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
-      } else {
-        MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
-      }
     }
 
     if (PcieNumLanes[PcieIdx] == 1) {
@@ -578,32 +572,91 @@ BaikalPciHostBridgeLibCtor (
 
     MmioOr32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
 
-    // Wait for link
-    for (Cnt = 0; Cnt < 3000; ++Cnt) {
-      RegPcieLcruGpr = MmioRead32 (BM1000_PCIE_LCRU_GPR_STATUS_REG (PcieIdx));
-      if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP) &&
-          (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP)) {
-        break;
+    // Deassert PERST pin
+    if (PciePerstGpios[PcieIdx] >= 0 &&
+        PciePerstGpios[PcieIdx] <= 31 &&
+        PciePerstPolarity[PcieIdx] >= 0) {
+      if (PciePerstPolarity[PcieIdx]) {
+        MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+      } else {
+        MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
       }
-
-      gBS->Stall (100);
     }
 
-    RegPcieLnkStat = MmioRead32 (mPcieCdmBases[PcieIdx] + BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG);
+    // Wait for link
+    ComponentExists = FALSE;
+    TimeStart = GetTimeInNanoSecond (GetPerformanceCounter ());
+    for (;;) {
+      CONST UINT32  RegPcieLcruGpr = MmioRead32 (BM1000_PCIE_LCRU_GPR_STATUS_REG (PcieIdx));
 
-    DEBUG ((
-      EFI_D_INFO,
-      "PcieRoot(0x%x): LtssmSt:0x%02x Smlh:%u Rdlh:%u LnkSpeed:%u LnkWidth:%u Delay:%ums\n",
-      PcieIdx,
-      RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK,
-      !!(RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP),
-      !!(RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP),
-      (RegPcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_BITS) >>
-        BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_SHIFT,
-      (RegPcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_BITS) >>
-        BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT,
-      Cnt / 10
-      ));
+      if (!ComponentExists) {
+        if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK) > 0x01) {
+          ComponentExists = TRUE;
+          DEBUG ((
+            EFI_D_INFO,
+            "PcieRoot(0x%x): link partner entered detect state within %u ms\n",
+            PcieIdx,
+            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000
+            ));
+        } else if ((GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) > 50000000) {
+          // According to PCI Express Base Specification device must enter LTSSM detect state within 20 ms of reset
+          break;
+        }
+      } else {
+        if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP) &&
+            (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP)) {
+#if !defined (MDEPKG_NDEBUG)
+          CONST UINT32  RegPcieLnkStat = MmioRead32 (mPcieCdmBases[PcieIdx] +
+                                                      BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG);
+          DEBUG ((
+            EFI_D_INFO,
+            "PcieRoot(0x%x): Ltssm:0x%02x LnkSpeed:%u LnkWidth:%u Delay:%u ms\n",
+            PcieIdx,
+            RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK,
+            (RegPcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_BITS) >>
+              BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_SHIFT,
+            (RegPcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_BITS) >>
+              BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT,
+            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000
+            ));
+#endif
+          break;
+        } else if ((GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) > 100000000) {
+          // Wait up to 100 ms for link up
+          DEBUG ((EFI_D_INFO, "PcieRoot(0x%x): PHY and Data links are not up\n", PcieIdx));
+          break;
+        } else if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK) == 0x03) {
+          DEBUG ((EFI_D_INFO, "PcieRoot(0x%x): LTSSM entered polling compliance state\n", PcieIdx));
+
+          MmioAnd32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
+
+          // Assert PERST pin
+          if (PciePerstGpios[PcieIdx] >= 0 &&
+              PciePerstGpios[PcieIdx] <= 31 &&
+              PciePerstPolarity[PcieIdx] >= 0) {
+            if (PciePerstPolarity[PcieIdx]) {
+              MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
+            } else {
+              MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+            }
+          }
+
+          gBS->Stall (1000);
+          MmioOr32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
+
+          // Deassert PERST pin
+          if (PciePerstGpios[PcieIdx] >= 0 &&
+              PciePerstGpios[PcieIdx] <= 31 &&
+              PciePerstPolarity[PcieIdx] >= 0) {
+            if (PciePerstPolarity[PcieIdx]) {
+              MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+            } else {
+              MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
+            }
+          }
+        }
+      }
+    }
   }
 
   return EFI_SUCCESS;

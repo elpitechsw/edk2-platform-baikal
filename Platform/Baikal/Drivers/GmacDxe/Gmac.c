@@ -83,9 +83,9 @@ GmacDxeDriverEntry (
     if (!EFI_ERROR (FdtStatus)) {
       INTN  BoardType = -1;
 
-      if (!AsciiStrCmp (Prop, "Baikal Electronics Baikal-M evaluation board")) {
+      if (!AsciiStrCmp (Prop, "Baikal Electronics DBM")) {
         BoardType = 0;
-      } else if (!AsciiStrCmp (Prop, "Baikal Electronics Baikal-M mitx board")) {
+      } else if (!AsciiStrCmp (Prop, "Baikal Electronics MBM")) {
         BoardType = 1;
       }
 
@@ -147,8 +147,7 @@ GmacDxeDriverEntry (
       break;
     }
 
-    FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "status", &Prop, &PropSize);
-    if (EFI_ERROR (Status) || AsciiStrCmp ((CONST CHAR8 *) Prop, "okay") != 0) {
+    if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
       ++DevIdx;
       continue;
     }

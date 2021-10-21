@@ -29,6 +29,39 @@
 STATIC VOID  *mDeviceTreeBase;
 
 STATIC
+BOOLEAN
+EFIAPI
+IsNodeEnabled (
+  IN  FDT_CLIENT_PROTOCOL  *This,
+  IN  INT32                 Node
+  )
+{
+  INT32         Len;
+  CONST CHAR8  *Status;
+
+  ASSERT (mDeviceTreeBase != NULL);
+
+  //
+  // A missing status property implies "ok" so ignore any errors that
+  // may occur here. If the status property is present, check whether
+  // it is set to "ok" or "okay", anything else is treated as "disabled".
+  //
+  Status = fdt_getprop (mDeviceTreeBase, Node, "status", &Len);
+  if (Status == NULL) {
+    return TRUE;
+  }
+
+  if (Len > 0) {
+    if (AsciiStrCmp (Status, "ok") == 0 ||
+        AsciiStrCmp (Status, "okay") == 0) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+STATIC
 EFI_STATUS
 EFIAPI
 GetNodeProperty (
@@ -234,7 +267,6 @@ FindNextMemoryNodeReg (
 {
   INT32          Prev, Next;
   CONST CHAR8    *DeviceType;
-  CONST CHAR8    *NodeStatus;
   INT32          Len;
   EFI_STATUS     Status;
 
@@ -247,10 +279,8 @@ FindNextMemoryNodeReg (
       break;
     }
 
-    NodeStatus = fdt_getprop (mDeviceTreeBase, Next, "status", &Len);
-    if (NodeStatus != NULL && AsciiStrCmp (NodeStatus, "okay") != 0) {
-      DEBUG ((DEBUG_WARN, "%a: ignoring memory node with status \"%a\"\n",
-        __FUNCTION__, NodeStatus));
+    if (!IsNodeEnabled (This, Next)) {
+      DEBUG ((DEBUG_WARN, "%a: ignoring disabled node\n", __FUNCTION__));
       continue;
     }
 
@@ -328,6 +358,7 @@ GetOrInsertChosenNode (
 }
 
 STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
+  IsNodeEnabled,
   GetNodeProperty,
   SetNodeProperty,
   FindCompatibleNode,
@@ -337,7 +368,7 @@ STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
   FindCompatibleNodeReg,
   FindMemoryNodeReg,
   FindNextMemoryNodeReg,
-  GetOrInsertChosenNode,
+  GetOrInsertChosenNode
 };
 
 STATIC

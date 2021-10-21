@@ -15,11 +15,15 @@
 
 [Sources]
   AcpiPlatformDxe.c
+  Csrt.c
   Dbg2.c
   Dsdt.asl
+  Facs.c
   Fadt.c
   Gtdt.c
+  Iort.c
   Madt.c
+  Mcfg.c
   Pptt.c
 
 [Packages]
