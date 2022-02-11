@@ -17,10 +17,13 @@
 #include <Protocol/FdtClient.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 #include <IndustryStandard/Sd.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Protocol/Cpu.h>
 
 #define IS_READ   TRUE
 #define IS_WRITE  FALSE
 #define SDHCI_BLOCK_SIZE_DEFAULT  512
+#define SDHCI_PARTSIZE  (4*1024)
 
 typedef struct {
   VENDOR_DEVICE_PATH        Vendor;
@@ -68,7 +71,7 @@ SdPeimIdentification (
   OUT UINT64               *TotalSize
   );
 
-VOID
+EFI_STATUS
 SdPeimRwBlocks (
   IN  EFI_PHYSICAL_ADDRESS  Base,
   IN  UINTN                 Lba,
@@ -99,12 +102,16 @@ ReadBlocks (
   OUT VOID                   *Buffer
   )
 {
+  EFI_STATUS Status;
   UINT8  *Buf = Buffer;
-  UINT32  Size = BufferSize;
+  UINTN  Size = BufferSize;
 
   while (Size) {
-    UINT32  Part = Size > SIZE_1MB ? SIZE_1MB : Size;
-    SdPeimRwBlocks (Base, Lba, (VOID *) PhysicalBuffer, Part, IS_READ);
+    UINTN  Part = Size > SDHCI_PARTSIZE ? SDHCI_PARTSIZE : Size;
+    Status = SdPeimRwBlocks (Base, Lba, (VOID *) PhysicalBuffer, Part, IS_READ);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
     CopyMem ((VOID *) Buf, (VOID *) PhysicalBuffer, Part);
     Size -= Part;
     Buf  += Part;
@@ -125,13 +132,17 @@ WriteBlocks (
   IN  VOID                   *Buffer
   )
 {
+  EFI_STATUS Status;
   UINT8  *Buf = Buffer;
-  UINT32  Size = BufferSize;
+  UINTN  Size = BufferSize;
 
   while (Size) {
-    UINT32  Part = Size > SIZE_1MB ? SIZE_1MB : Size;
+    UINTN  Part = Size > SDHCI_PARTSIZE ? SDHCI_PARTSIZE : Size;
     CopyMem ((VOID *) PhysicalBuffer, (VOID *) Buf, Part);
-    SdPeimRwBlocks (Base, Lba, (VOID *) PhysicalBuffer, Part, IS_WRITE);
+    Status = SdPeimRwBlocks (Base, Lba, (VOID *) PhysicalBuffer, Part, IS_WRITE);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
     Size -= Part;
     Buf  += Part;
     Lba  += Part / SDHCI_BLOCK_SIZE_DEFAULT;
@@ -198,22 +209,38 @@ AllocDmaBuffer (
   IN  UINTN  PhysicalBufferSize
   )
 {
-  EFI_PHYSICAL_ADDRESS  PhysicalBuffer = (EFI_PHYSICAL_ADDRESS) (SIZE_4GB - 1);
-  EFI_STATUS            Status;
+  EFI_STATUS Status;
+  EFI_PHYSICAL_ADDRESS  PhysicalBuffer;
+  EFI_CPU_ARCH_PROTOCOL *Cpu;
 
   if (!PhysicalBufferSize) {
-    return -1;
+    return 0;
   }
 
+  PhysicalBuffer = (EFI_PHYSICAL_ADDRESS) (SIZE_4GB - 1);
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
-                  EfiBootServicesData,
+                  EfiReservedMemoryType,
                   EFI_SIZE_TO_PAGES (PhysicalBufferSize),
                   &PhysicalBuffer
                   );
-
   if (EFI_ERROR (Status)) {
-    return -1;
+    return 0;
+  }
+
+  Status = gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, (VOID **)&Cpu);
+  if (EFI_ERROR (Status)) {
+    return 0;
+  }
+
+  Status = Cpu->SetMemoryAttributes (
+                  Cpu, PhysicalBuffer,
+                  PhysicalBufferSize,
+                  EFI_MEMORY_WC
+                  );
+  if (EFI_ERROR (Status)) {
+    gBS->FreePages (PhysicalBuffer, EFI_SIZE_TO_PAGES (PhysicalBufferSize));
+    return 0;
   }
 
   return PhysicalBuffer;
@@ -247,10 +274,13 @@ InstallBlock (
   mBaikalSd.Media.LogicalPartition = FALSE;
   mBaikalSd.Media.ReadOnly         = FALSE;
   mBaikalSd.Media.WriteCaching     = FALSE;
-  mBaikalSd.Media.BlockSize        = 512;
+  mBaikalSd.Media.BlockSize        = SDHCI_BLOCK_SIZE_DEFAULT;
   mBaikalSd.Media.LastBlock        = mBaikalSd.Size / mBaikalSd.Media.BlockSize - 1;
 
-  PhysicalBuffer = AllocDmaBuffer (SIZE_1MB);
+  PhysicalBuffer = AllocDmaBuffer (SDHCI_PARTSIZE);
+  if (!PhysicalBuffer) {
+    return EFI_DEVICE_ERROR;
+  }
 
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mBaikalSdBlockHandle,

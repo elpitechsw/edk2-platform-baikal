@@ -13,12 +13,15 @@
 #ifndef BAIKAL_VDU_PLATFORM_LIB_H_
 #define BAIKAL_VDU_PLATFORM_LIB_H_
 
+#include <Uefi/UefiBaseType.h>
 #include <Protocol/GraphicsOutput.h>
 
 #define BAIKAL_LCD_VRAM_SIZE              SIZE_16MB
 
+#define BAIKAL_DEFAULT_V_REFRESH_RATE     60
+
 // VGA Mode: 640 x 480 @ 60
-#define BAIKAL_VGA_OSC_FREQUENCY          24250000
+#define BAIKAL_VGA_OSC_FREQUENCY          25175000
 
 #define BAIKAL_VGA_H_SYNC                 96
 #define BAIKAL_VGA_H_FRONT_PORCH          16
@@ -180,6 +183,8 @@
 #define HDMI_PHY_HD_CKSYMTXCTRL           0x8009
 
 // QHD Mode: 2560 x 1440 @ 60
+#define BAIKAL_QHD_H_RES_PIXELS           2560
+#define BAIKAL_QHD_V_RES_PIXELS           1440
 #define BAIKAL_QHD_OSC_FREQUENCY          242000000
 
 #define BAIKAL_QHD_H_SYNC                 32
@@ -206,6 +211,48 @@ typedef struct {
   UINT32  VlevCtrl;
   UINT32  CkSymTxCtrl;
 } HDMI_PHY_SETTINGS;
+
+#pragma pack (push, 1)
+
+// EDID block
+typedef struct {
+  UINT8   Header[8];                        // EDID header "00 FF FF FF FF FF FF 00"
+  UINT16  ManufactureName;                  // EISA 3-character ID
+  UINT16  ProductCode;                      // Vendor assigned code
+  UINT32  SerialNumber;                     // 32-bit serial number
+  UINT8   WeekOfManufacture;                // Week number
+  UINT8   YearOfManufacture;                // Year
+  UINT8   EdidVersion;                      // EDID Structure Version
+  UINT8   EdidRevision;                     // EDID Structure Revision
+  UINT8   VideoInputDefinition;
+  UINT8   MaxHorizontalImageSize;           // cm
+  UINT8   MaxVerticalImageSize;             // cm
+  UINT8   DisplayTransferCharacteristic;
+  UINT8   FeatureSupport;
+  UINT8   RedGreenLowBits;                  // Rx1 Rx0 Ry1 Ry0 Gx1 Gx0 Gy1Gy0
+  UINT8   BlueWhiteLowBits;                 // Bx1 Bx0 By1 By0 Wx1 Wx0 Wy1 Wy0
+  UINT8   RedX;                             // Red-x Bits 9 - 2
+  UINT8   RedY;                             // Red-y Bits 9 - 2
+  UINT8   GreenX;                           // Green-x Bits 9 - 2
+  UINT8   GreenY;                           // Green-y Bits 9 - 2
+  UINT8   BlueX;                            // Blue-x Bits 9 - 2
+  UINT8   BlueY;                            // Blue-y Bits 9 - 2
+  UINT8   WhiteX;                           // White-x Bits 9 - 2
+  UINT8   WhiteY;                           // White-x Bits 9 - 2
+  UINT8   EstablishedTimings[3];
+  UINT8   StandardTimingIdentification[16];
+  UINT8   DetailedTimingDescriptions[72];
+  UINT8   ExtensionFlag;                    // Number of (optional) 128-byte EDID extension blocks to follow
+  UINT8   Checksum;
+} EDID_BLOCK;
+
+#pragma pack (pop)
+
+#define EDID_STANDARD_TIMINGS           8
+#define EDID_STANDARD_TIMING_DESC_SIZE  2
+
+#define EDID_DETAILED_TIMINGS           4
+#define EDID_DETAILED_TIMING_DESC_SIZE  18
 
 /** Return HDMI PHY settings for the requested mode number.
 

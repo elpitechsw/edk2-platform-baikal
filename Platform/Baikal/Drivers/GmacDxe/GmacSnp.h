@@ -8,12 +8,13 @@
 
 EFI_STATUS
 GmacSnpInstanceCtor (
-  IN  VOID              *GmacRegs,
-  IN  CONST INTN         ResetGpioPin,
-  IN  CONST INTN         ResetPolarity,
-  IN  EFI_MAC_ADDRESS   *MacAddr,
-  OUT VOID             **Snp,
-  OUT EFI_HANDLE       **Handle
+  IN   volatile GMAC_REGS           *GmacRegs,
+  IN   CONST EFI_PHYSICAL_ADDRESS    ResetGpioBase,
+  IN   CONST INTN                    ResetGpioPin,
+  IN   CONST INTN                    ResetPolarity,
+  IN   EFI_MAC_ADDRESS              *MacAddr,
+  OUT  VOID                        **Snp,
+  OUT  EFI_HANDLE                  **Handle
   );
 
 EFI_STATUS

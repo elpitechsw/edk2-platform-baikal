@@ -10,6 +10,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FdtClient.h>
 #include <Protocol/FruClient.h>
+#include "GmacRegs.h"
 #include "GmacSnp.h"
 
 typedef struct {
@@ -48,6 +49,7 @@ GmacDxeDriverEntry (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  INTN                  BoardType;
   UINT32                Crc32 = 0;
   UINTN                 DevIdx = 0;
   FDT_CLIENT_PROTOCOL  *FdtClient;
@@ -59,11 +61,6 @@ GmacDxeDriverEntry (
   EFI_STATUS            Status;
   CONST VOID           *Prop;
   UINT32                PropSize;
-
-  if (SystemTable == NULL) {
-    DEBUG ((EFI_D_ERROR, "%a: failed, Status: %r\n", __FUNCTION__, EFI_INVALID_PARAMETER));
-    return EFI_INVALID_PARAMETER;
-  }
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   if (EFI_ERROR (Status)) {
@@ -77,73 +74,47 @@ GmacDxeDriverEntry (
     return Status;
   }
 
-  FdtStatus = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,baikal-m", -1, &Node);
-  if (!EFI_ERROR (FdtStatus)) {
-    FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "model", &Prop, NULL);
-    if (!EFI_ERROR (FdtStatus)) {
-      INTN  BoardType = -1;
+  if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm", -1, &Node) == EFI_SUCCESS) {
+    BoardType = 0;
+  } else if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,mbm10", -1, &Node) == EFI_SUCCESS ||
+             FdtClient->FindNextCompatibleNode (FdtClient, "baikal,mbm20", -1, &Node) == EFI_SUCCESS) {
+    BoardType = 1;
+  } else {
+    BoardType = -1;
+  }
 
-      if (!AsciiStrCmp (Prop, "Baikal Electronics DBM")) {
-        BoardType = 0;
-      } else if (!AsciiStrCmp (Prop, "Baikal Electronics MBM")) {
-        BoardType = 1;
+  if (BoardType != -1) {
+    UINTN  SpdAddr;
+    UINTN  SpdSize = 0;
+
+    // Get unique data from SPD
+    if (!BoardType) {
+      for (Idx = 0; Idx < 4 && !SpdSize; ++Idx) {
+        SpdAddr = 0x50 + Idx;
+        SpdSize = SpdGetSize (SpdAddr);
       }
+    } else {
+      for (Idx = 0; Idx < 2 && !SpdSize; ++Idx) {
+        SpdAddr = 0x50 + Idx * 2;
+        SpdSize = SpdGetSize (SpdAddr);
+      }
+    }
 
-      if (BoardType != -1) {
-        UINTN  SpdAddr;
-        UINTN  SpdSize = 0;
+    if (SpdSize) {
+      UINT8  *Spd;
 
-        // Get unique data from SPD
-        if (!BoardType) {
-          for (Idx = 0; Idx < 4 && !SpdSize; ++Idx) {
-            SpdAddr = 0x50 + Idx;
-            SpdSize = SpdGetSize (0, SpdAddr);
-          }
-        } else {
-          for (Idx = 0; Idx < 2 && !SpdSize; ++Idx) {
-            SpdAddr = 0x50 + Idx * 2;
-            SpdSize = SpdGetSize (1, SpdAddr);
-          }
-        }
-
-        if (SpdSize) {
-          UINT8  *Spd;
-
-          Status = gBS->AllocatePool (EfiBootServicesData, SpdSize, (VOID **) &Spd);
-          if (!EFI_ERROR (Status)) {
-            UINTN  TotalSize = 0;
-
-            if (SpdSize <= 256) {
-              TotalSize = SpdGetBuf (BoardType, SpdAddr, Spd, SpdSize);
-            } else {
-              TotalSize = SpdGetBuf (BoardType, SpdAddr, Spd, 256);
-              SpdSwitchPage (BoardType, 1);
-              TotalSize += SpdGetBuf (BoardType, SpdAddr, Spd + 256, SpdSize - 256);
-              SpdSwitchPage (BoardType, 0);
-            }
-
-            if (TotalSize == SpdSize && SpdIsValid (Spd, SpdSize)) {
-              gBS->CalculateCrc32 (Spd, SpdSize, &Crc32);
-            }
-
-            gBS->FreePool (Spd);
-          }
-        }
+      Status = gBS->AllocatePool (EfiBootServicesData, SpdSize, (VOID **) &Spd);
+      if (!EFI_ERROR (Status)) {
+        SpdGetBuf (SpdAddr, Spd, SpdSize);
+        gBS->CalculateCrc32 (Spd, SpdSize, &Crc32);
+        gBS->FreePool (Spd);
       }
     }
   }
 
   for (Node = 0;;) {
-    FdtStatus = FdtClient->FindNextCompatibleNode (FdtClient, "be,dwmac", Node, &Node);
-    if (EFI_ERROR (FdtStatus)) {
-      FdtStatus = FdtClient->FindNextCompatibleNode (FdtClient, "snps,dwmac", Node, &Node);
-    }
-
-    if (EFI_ERROR (FdtStatus)) {
-      FdtStatus = FdtClient->FindNextCompatibleNode (FdtClient, "snps,dwmac-3.710", Node, &Node);
-    }
-
-    if (EFI_ERROR (FdtStatus)) {
+    if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-gmac", Node, &Node) != EFI_SUCCESS &&
+        FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bs1000-gmac", Node, &Node) != EFI_SUCCESS) {
       break;
     }
 
@@ -153,15 +124,16 @@ GmacDxeDriverEntry (
     }
 
     FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
-    if (FdtStatus == EFI_SUCCESS && (PropSize % 16) == 0) {
-      BOOLEAN            DtMacAddrSetRequest = FALSE;
-      GMAC_ETH_DEVPATH  *EthDevPath;
-      VOID *CONST        GmacRegs = (VOID *) SwapBytes64 (((CONST UINT64 *) Prop)[0]);
-      EFI_HANDLE        *Handle;
-      EFI_MAC_ADDRESS    MacAddr;
-      VOID              *Snp;
-      INTN               SnpsResetGpioPin;
-      INTN               SnpsResetPolarity;
+    if (FdtStatus == EFI_SUCCESS && PropSize == 16) {
+      BOOLEAN                      DtMacAddrSetRequest = FALSE;
+      GMAC_ETH_DEVPATH            *EthDevPath;
+      volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+      EFI_HANDLE                  *Handle;
+      EFI_MAC_ADDRESS              MacAddr;
+      VOID                        *Snp;
+      EFI_PHYSICAL_ADDRESS         ResetGpioBase;
+      INTN                         ResetGpioPin;
+      INTN                         ResetPolarity;
 
       Status = gBS->AllocatePool (EfiBootServicesData, sizeof (GMAC_ETH_DEVPATH), (VOID **) &EthDevPath);
       if (EFI_ERROR (Status)) {
@@ -202,9 +174,9 @@ GmacDxeDriverEntry (
         } else {
           UINT64  MacAddrRegVal;
 
-          MacAddrRegVal   = (*(UINT32 *)((EFI_PHYSICAL_ADDRESS) GmacRegs + 0x40) & 0xFFFF);
+          MacAddrRegVal   = GmacRegs->MacAddr0Hi & 0xFFFF;
           MacAddrRegVal <<= 32;
-          MacAddrRegVal  |= (*(UINT32 *)((EFI_PHYSICAL_ADDRESS) GmacRegs + 0x44));
+          MacAddrRegVal  |= GmacRegs->MacAddr0Lo;
 
           MacAddr.Addr[0] = (MacAddrRegVal >>  0) & 0xFF;
           MacAddr.Addr[1] = (MacAddrRegVal >>  8) & 0xFF;
@@ -236,20 +208,29 @@ GmacDxeDriverEntry (
         }
       }
 
-      SnpsResetGpioPin  = -1;
-      SnpsResetPolarity = -1;
+      ResetGpioBase = 0;
+      ResetGpioPin  = -1;
+      ResetPolarity = -1;
       if (FdtClient->GetNodeProperty (FdtClient, Node, "snps,reset-gpios", &Prop, &PropSize) == EFI_SUCCESS) {
         if (PropSize == 12) {
-          SnpsResetGpioPin  = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
-          SnpsResetPolarity = SwapBytes32 (((CONST UINT32 *) Prop)[2]);
-          if (SnpsResetGpioPin > 31 || SnpsResetPolarity > 1) {
-            SnpsResetGpioPin  = -1;
-            SnpsResetPolarity = -1;
+          INT32  ResetGpioNode;
+
+          ResetGpioPin  = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
+          ResetPolarity = SwapBytes32 (((CONST UINT32 *) Prop)[2]);
+          if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (((CONST UINT32 *) Prop)[0]), &ResetGpioNode) == EFI_SUCCESS &&
+              FdtClient->FindParentNode    (FdtClient, ResetGpioNode, &ResetGpioNode) == EFI_SUCCESS &&
+              FdtClient->GetNodeProperty   (FdtClient, ResetGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 16) {
+            ResetGpioBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+            if (ResetGpioBase == 0 || ResetGpioPin > 31 || ResetPolarity > 1) {
+              ResetGpioBase = 0;
+              ResetGpioPin  = -1;
+              ResetPolarity = -1;
+            }
           }
         }
-      } else if (FdtClient->GetNodeProperty (FdtClient, Node, "snps,reset-gp-out", &Prop, &PropSize) == EFI_SUCCESS) {
-          SnpsResetGpioPin  = 0xE0;
-          SnpsResetPolarity = 0;
+      } else {
+        ResetGpioBase = (EFI_PHYSICAL_ADDRESS) &GmacRegs->MacGpio;
+        ResetGpioPin  = 0;
       }
 
       EthDevPath->MacAddrDevPath.Header.Type    = MESSAGING_DEVICE_PATH;
@@ -259,23 +240,11 @@ GmacDxeDriverEntry (
       SetDevicePathNodeLength (&EthDevPath->MacAddrDevPath, sizeof (MAC_ADDR_DEVICE_PATH));
       SetDevicePathEndNode (&EthDevPath->End);
 
-      DEBUG ((
-        EFI_D_NET,
-        "%a: GMAC@%p MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
-        __FUNCTION__,
-        GmacRegs,
-        EthDevPath->MacAddrDevPath.MacAddress.Addr[0],
-        EthDevPath->MacAddrDevPath.MacAddress.Addr[1],
-        EthDevPath->MacAddrDevPath.MacAddress.Addr[2],
-        EthDevPath->MacAddrDevPath.MacAddress.Addr[3],
-        EthDevPath->MacAddrDevPath.MacAddress.Addr[4],
-        EthDevPath->MacAddrDevPath.MacAddress.Addr[5]
-        ));
-
       Status = GmacSnpInstanceCtor (
                  GmacRegs,
-                 SnpsResetGpioPin,
-                 SnpsResetPolarity,
+                 ResetGpioBase,
+                 ResetGpioPin,
+                 ResetPolarity,
                  &EthDevPath->MacAddrDevPath.MacAddress,
                  &Snp,
                  &Handle

@@ -38,10 +38,10 @@ Ascii6ToAscii8 (
 STATIC
 UINTN
 Ascii6BufToAscii8Buf (
-  IN   CONST UINT8 *CONST  Buf6,
-  IN   CONST UINTN         Buf6Size,
-  OUT        CHAR8 *CONST  Buf8,
-  IN   CONST UINTN         Buf8Size
+  IN   CONST UINT8 * CONST  Buf6,
+  IN   CONST UINTN          Buf6Size,
+  OUT        CHAR8 * CONST  Buf8,
+  IN   CONST UINTN          Buf8Size
   )
 {
   UINTN  Idx6, Idx8;
@@ -87,10 +87,10 @@ BcdPlusToAscii8 (
 STATIC
 UINTN
 BcdPlusBufToAscii8Buf (
-  IN   CONST UINT8 *CONST  BufBcd,
-  IN   CONST UINTN         BufBcdSize,
-  OUT        CHAR8 *CONST  Buf8,
-  IN   CONST UINTN         Buf8Size
+  IN   CONST UINT8 * CONST  BufBcd,
+  IN   CONST UINTN          BufBcdSize,
+  OUT        CHAR8 * CONST  Buf8,
+  IN   CONST UINTN          Buf8Size
   )
 {
   UINTN  Idx8, IdxBcd;
@@ -128,11 +128,11 @@ CalcChecksum (
 STATIC
 EFI_STATUS
 FruInternalsCommonHeaderCheck (
-  IN  CONST VOID *CONST  Buf,
-  IN  CONST UINTN        BufSize
+  IN  CONST VOID * CONST  Buf,
+  IN  CONST UINTN         BufSize
   )
 {
-  CONST COMMON_HEADER *CONST  CommonHeader = (COMMON_HEADER *) Buf;
+  CONST COMMON_HEADER * CONST  CommonHeader = (COMMON_HEADER *) Buf;
 
   ASSERT (Buf != NULL);
   ASSERT (BufSize >= sizeof (COMMON_HEADER_FORMAT_VERSION));
@@ -157,10 +157,10 @@ FruInternalsCommonHeaderCheck (
 
 EFI_STATUS
 FruInternalsBoardAreaLocate (
-  IN   CONST UINT8 *CONST    Buf,
-  IN   CONST UINTN           BufSize,
-  OUT  CONST UINT8         **BoardArea,
-  OUT        UINTN *CONST    BoardAreaSize
+  IN   CONST UINT8 * CONST    Buf,
+  IN   CONST UINTN            BufSize,
+  OUT  CONST UINT8          **BoardArea,
+  OUT        UINTN * CONST    BoardAreaSize
   )
 {
   UINTN       BoardAreaOffset;
@@ -219,9 +219,9 @@ FruInternalsBoardAreaLocate (
 
 EFI_STATUS
 FruInternalsMultirecordAreaLocate (
-  IN   CONST UINT8 *CONST    Buf,
-  IN   CONST UINTN           BufSize,
-  OUT  CONST UINT8         **MultirecordArea
+  IN   CONST UINT8 * CONST    Buf,
+  IN   CONST UINTN            BufSize,
+  OUT  CONST UINT8          **MultirecordArea
   )
 {
   UINTN       MultirecordAreaOffset;
@@ -253,10 +253,10 @@ FruInternalsMultirecordAreaLocate (
 
 EFI_STATUS
 FruInternalsProductAreaLocate (
-  IN   CONST UINT8 *CONST    Buf,
-  IN   CONST UINTN           BufSize,
-  OUT  CONST UINT8         **ProductArea,
-  OUT        UINTN *CONST    ProductAreaSize
+  IN   CONST UINT8 * CONST    Buf,
+  IN   CONST UINTN            BufSize,
+  OUT  CONST UINT8          **ProductArea,
+  OUT        UINTN * CONST    ProductAreaSize
   )
 {
   UINTN       ProductAreaOffset;
@@ -316,9 +316,9 @@ FruInternalsProductAreaLocate (
 
 EFI_STATUS
 FruInternalsMultirecordCheckData (
-  IN  CONST UINT8 *CONST               MrecBuf,
-  IN  CONST UINTN                      MrecBufSize,
-  IN  CONST MULTIRECORD_HEADER *CONST  MrecHdr
+  IN  CONST UINT8 * CONST               MrecBuf,
+  IN  CONST UINTN                       MrecBufSize,
+  IN  CONST MULTIRECORD_HEADER * CONST  MrecHdr
   )
 {
   if ((MrecHdr->Format & 0x07) != MULTIRECORD_FORMAT_VERSION) {
@@ -353,9 +353,9 @@ FruInternalsMultirecordCheckData (
 
 EFI_STATUS
 FruInternalsMultirecordParseHeader (
-  IN   CONST UINT8 *CONST         MrecBuf,
-  IN   CONST UINTN                MrecBufSize,
-  OUT  MULTIRECORD_HEADER *CONST  MrecHdr
+  IN   CONST UINT8 * CONST         MrecBuf,
+  IN   CONST UINTN                 MrecBufSize,
+  OUT  MULTIRECORD_HEADER * CONST  MrecHdr
   )
 {
   ASSERT (MrecBuf != NULL);
@@ -387,9 +387,9 @@ FruInternalsMultirecordParseHeader (
 
 CONST VOID *
 FruInternalsTypLenEncReadData (
-  IN      CONST UINT8 *CONST  EncBuf,
-  OUT           CHAR8 *CONST  DecBuf,
-  IN OUT        UINTN *CONST  DecLen
+  IN      CONST UINT8 * CONST  EncBuf,
+  OUT           CHAR8 * CONST  DecBuf,
+  IN OUT        UINTN * CONST  DecLen
   )
 {
   UINTN  EncLen;

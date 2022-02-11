@@ -18,6 +18,7 @@
 #include <Library/BaikalVduPlatformLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 #include <Protocol/Cpu.h>
 #include <Protocol/EdidDiscovered.h>
@@ -28,15 +29,17 @@
 #include "BaikalVdu.h"
 
 typedef struct {
-  UINT32                     Mode;
-  LCD_BPP                    Bpp;
-  UINT32                     OscFreq;
+  UINT32            Mode;
+  LCD_BPP           Bpp;
+  UINT32            OscFreq;
 
-  SCAN_TIMINGS               Horizontal;
-  SCAN_TIMINGS               Vertical;
-  HDMI_PHY_SETTINGS          PhySettings;
-  UINT32                     LvdsPorts;
-  UINT32                     LvdsOutBpp;
+  SCAN_TIMINGS      Horizontal;
+  SCAN_TIMINGS      Vertical;
+  HDMI_PHY_SETTINGS PhySettings;
+  UINT32            LvdsPorts;
+  UINT32            LvdsOutBpp;
+
+  BOOLEAN           IsActive;
 } DISPLAY_MODE;
 
 /** The display modes supported by the platform.
@@ -126,22 +129,20 @@ STATIC DISPLAY_MODE mDisplayModes[] = {
   { // Mode 9 : QHD : 2560 x 1440 x 24 bpp
     QHD, LCD_BITS_PER_PIXEL_24,
     BAIKAL_QHD_OSC_FREQUENCY,
-    {QHD_H_RES_PIXELS, BAIKAL_QHD_H_SYNC, BAIKAL_QHD_H_BACK_PORCH, BAIKAL_QHD_H_FRONT_PORCH},
-    {QHD_V_RES_PIXELS, BAIKAL_QHD_V_SYNC, BAIKAL_QHD_V_BACK_PORCH, BAIKAL_QHD_V_FRONT_PORCH},
+    {BAIKAL_QHD_H_RES_PIXELS, BAIKAL_QHD_H_SYNC, BAIKAL_QHD_H_BACK_PORCH, BAIKAL_QHD_H_FRONT_PORCH},
+    {BAIKAL_QHD_V_RES_PIXELS, BAIKAL_QHD_V_SYNC, BAIKAL_QHD_V_BACK_PORCH, BAIKAL_QHD_V_FRONT_PORCH},
     {HDMI_PHY_QHD_OPMODE, HDMI_PHY_QHD_CURRENT, HDMI_PHY_QHD_GMP,
      HDMI_PHY_QHD_TXTER, HDMI_PHY_QHD_VLEVCTRL, HDMI_PHY_QHD_CKSYMTXCTRL},
     4, 24
   },
 };
 
-DISPLAY_MODE FdtDisplayMode;
-
-EFI_EDID_DISCOVERED_PROTOCOL  mEdidDiscovered = {
+STATIC EFI_EDID_DISCOVERED_PROTOCOL mEdidDiscovered = {
   0,
   NULL
 };
 
-EFI_EDID_ACTIVE_PROTOCOL      mEdidActive = {
+STATIC EFI_EDID_ACTIVE_PROTOCOL mEdidActive = {
   0,
   NULL
 };
@@ -149,129 +150,511 @@ EFI_EDID_ACTIVE_PROTOCOL      mEdidActive = {
 #define FdtGetTimingProperty(PropertyName, PropertyResult)                                 \
   do {                                                                                     \
     Status = FdtClient->GetNodeProperty (FdtClient, Node, PropertyName, &Prop, &PropSize); \
-    if (Status != EFI_SUCCESS)                                                             \
-      return EFI_INVALID_PARAMETER;                                                        \
-    if (PropSize == sizeof(UINT32)) {                                                      \
+    if (EFI_ERROR (Status)) {                                                              \
+      goto Out;                                                                            \
+    }                                                                                      \
+    if (PropSize == sizeof (UINT32)) {                                                     \
       PropertyResult = SwapBytes32 (((CONST UINT32 *)Prop)[0]);                            \
-    } else if (PropSize == 3 * sizeof(UINT32)) {                                           \
+    } else if (PropSize == 3 * sizeof (UINT32)) {                                          \
       PropertyResult = SwapBytes32 (((CONST UINT32 *)Prop)[1]);                            \
     } else {                                                                               \
-      return EFI_INVALID_PARAMETER;                                                        \
+      Status = EFI_INVALID_PARAMETER;                                                      \
+      goto Out;                                                                            \
     }                                                                                      \
   } while (0)
 
-BOOLEAN FdtLvdsEnabled = FALSE;
+STATIC BOOLEAN  mFdtDisplayModeInitialized = FALSE;
+STATIC EFI_STATUS mFdtGetPanelTimingsStatus = EFI_SUCCESS;
+STATIC DISPLAY_MODE mFdtDisplayMode;
+
+STATIC BOOLEAN  mDisplayInitialized = FALSE;
+STATIC EFI_STATUS mInitializeDisplayStatus = EFI_SUCCESS;
+
+STATIC UINT32 mActiveDisplayModes = 0;
 
 /** Helper function to tell if LVDS is enabled or disabled.
   @retval TRUE                   LVDS is enabled in the FDT.
   @retval FALSE                  LVDS is disabled in the FDT.
 **/
 BOOLEAN
-LvdsEnabled(
-  VOID
+LvdsEnabled (VOID)
+{
+  return (mFdtDisplayModeInitialized &&
+          mFdtDisplayMode.LvdsPorts > 0);
+}
+
+/** Helper function to get the total number of modes supported.
+
+  @note Valid mode numbers are 0 to MaxMode - 1
+        See Section 12.9 of the UEFI Specification 2.7
+
+  @retval UINT32  Mode Number
+**/
+STATIC
+UINT32
+GetMaxSupportedMode (VOID)
+{
+  UINT32  MaxMode;
+
+  // The following line would correctly report the total number
+  // of graphics modes supported by the Baikal VDU.
+  // MaxMode = ARRAY_SIZE (mDisplayModes);
+  //
+  // However, on some platforms it is desirable to ignore some graphics modes.
+  MaxMode = FixedPcdGet32 (PcdVduMaxMode);
+  if (MaxMode == 0) {
+    MaxMode = ARRAY_SIZE (mDisplayModes);
+  }
+
+  return MaxMode;
+}
+
+/** Helper function to find the active display mode.
+
+  @param[in]  ActiveModeNumber    The active mode number
+  @param[out] ActiveDisplayMode   A pointer to a pointer to the active DISPLAY_MODE structure
+
+  @retval EFI_SUCCESS             The active mode found
+  @retval !(EFI_SUCCESS)          An error occured
+**/
+STATIC
+EFI_STATUS
+FindActiveDisplayMode (
+  IN  UINT32        ActiveModeNumber,
+  OUT DISPLAY_MODE  **ActiveDisplayMode
   )
 {
-  return FdtLvdsEnabled;
+  UINT32        Index;
+  UINT32        ActiveIndex;
+  CONST UINT32  MaxMode = GetMaxSupportedMode ();
+
+  if (ActiveDisplayMode != NULL) {
+    *ActiveDisplayMode = NULL;
+  }
+
+  if (ActiveModeNumber >= mActiveDisplayModes) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  for (Index = 0, ActiveIndex = 0; Index < MaxMode; ++Index) {
+    if (!mDisplayModes[Index].IsActive) {
+      continue;
+    }
+
+    if (ActiveIndex == ActiveModeNumber) {
+      if (ActiveDisplayMode != NULL) {
+        *ActiveDisplayMode = &mDisplayModes[Index];
+      }
+      return EFI_SUCCESS;
+    }
+
+    ++ActiveIndex;
+  }
+
+  return EFI_UNSUPPORTED;
 }
 
 /** Helper function to get LVDS panel timings from FDT.
 
-  @param[out] FdtDisplayMode     A DISPLAY_MODE structure to store panel timings to (see below).
+  @param[out] FdtDisplayMode    A pointer to a pointer to the DISPLAY_MODE structure with panel
+                                timings (see below).
 
-  @retval EFI_SUCCESS            There is a valid panel-lvds node in the FDT with valid panel-timings
-                                 subnode. Timings have been read and will override hard-coded timings
-                                 for a compatible video mode.
-  @retval !(EFI_SUCCESS)         An error occured.
+  @retval EFI_SUCCESS           There is a valid panel-lvds node in the FDT with valid panel-timings
+                                subnode. Timings have been read and will override hard-coded timings
+                                for a compatible video mode.
+  @retval !(EFI_SUCCESS)        An error occured.
 **/
+STATIC
 EFI_STATUS
-FdtGetPanelTimings(
-  OUT DISPLAY_MODE *FdtDisplayMode
+FdtGetPanelTimings (
+  OUT CONST DISPLAY_MODE  **FdtDisplayMode
   )
 {
+  EFI_STATUS          Status;
   FDT_CLIENT_PROTOCOL *FdtClient;
-  INT32                Node;
-  INT32                NodePanel;
-  INT32                NodePort;
+  INT32               Node;
+  INT32               NodePanel;
+  INT32               NodePort;
   CONST VOID          *Prop;
-  UINT32               PropSize;
-  EFI_STATUS           Status;
+  UINT32              PropSize;
+
+  if (mFdtDisplayModeInitialized) {
+    Status = mFdtGetPanelTimingsStatus;
+    goto Out;
+  }
 
   // This field acts as return value.
   // 0 ports on return means that either there is no "panel-lvds" in FDT
   // or there is an error in this node or its subnodes.
   // Valid values are 1, 2 or 4.
-  FdtDisplayMode->LvdsPorts = 0;
-
-  FdtLvdsEnabled = FALSE;
+  mFdtDisplayMode.LvdsPorts = 0;
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: unable to locate FdtClientProtocol, Status: %r\n", __FUNCTION__, Status));
-    return Status;
+    goto Out;
   }
 
-  Status = FdtClient->FindNextCompatibleNode (FdtClient, "panel-lvds", Node, &NodePanel);
+  Status = FdtClient->FindNextCompatibleNode (FdtClient, "panel-lvds", -1, &NodePanel);
   if (EFI_ERROR (Status)) {
-    return Status;
+    goto Out;
   }
-
   if (!FdtClient->IsNodeEnabled (FdtClient, NodePanel)) {
-    return EFI_NOT_FOUND;
+    Status = EFI_NOT_FOUND;
+    goto Out;
   }
-
-  FdtLvdsEnabled = TRUE;
 
   Status = FdtClient->GetNodeProperty (FdtClient, NodePanel, "data-mapping", &Prop, &PropSize);
-  if (EFI_ERROR (Status) ||
-       (AsciiStrCmp ((CONST CHAR8 *)Prop, "jeida-18") != 0 &&
-        AsciiStrCmp ((CONST CHAR8 *)Prop, "vesa-24")  != 0)
-     )
-    return Status;
-  if (AsciiStrCmp ((CONST CHAR8 *)Prop, "jeida-18") == 0)
-    FdtDisplayMode->LvdsOutBpp = 18;
-  else // "vesa-24"
-    FdtDisplayMode->LvdsOutBpp = 24;
+  if (EFI_ERROR (Status)) {
+    goto Out;
+  }
+  if (AsciiStrCmp ((CONST CHAR8 *)Prop, "jeida-18") != 0 &&
+      AsciiStrCmp ((CONST CHAR8 *)Prop, "vesa-24")  != 0)
+  {
+    Status = EFI_UNSUPPORTED;
+    goto Out;
+  }
+  if (AsciiStrCmp ((CONST CHAR8 *)Prop, "jeida-18") == 0) {
+    mFdtDisplayMode.LvdsOutBpp = 18;
+  } else { // "vesa-24"
+    mFdtDisplayMode.LvdsOutBpp = 24;
+  }
 
   Status = FdtClient->FindNextSubnode (FdtClient, "panel-timing", NodePanel, &Node);
-  if (EFI_ERROR (Status))
-    return Status;
+  if (EFI_ERROR (Status)) {
+    goto Out;
+  }
 
-  FdtGetTimingProperty("clock-frequency", FdtDisplayMode->OscFreq);
-  FdtGetTimingProperty("hactive", FdtDisplayMode->Horizontal.Resolution);
-  FdtGetTimingProperty("vactive", FdtDisplayMode->Vertical.Resolution);
-  FdtGetTimingProperty("hsync-len", FdtDisplayMode->Horizontal.Sync);
-  FdtGetTimingProperty("hfront-porch", FdtDisplayMode->Horizontal.FrontPorch);
-  FdtGetTimingProperty("hback-porch", FdtDisplayMode->Horizontal.BackPorch);
-  FdtGetTimingProperty("vsync-len", FdtDisplayMode->Vertical.Sync);
-  FdtGetTimingProperty("vfront-porch", FdtDisplayMode->Vertical.FrontPorch);
-  FdtGetTimingProperty("vback-porch", FdtDisplayMode->Vertical.BackPorch);
+  FdtGetTimingProperty ("clock-frequency", mFdtDisplayMode.OscFreq);
+  FdtGetTimingProperty ("hactive", mFdtDisplayMode.Horizontal.Resolution);
+  FdtGetTimingProperty ("vactive", mFdtDisplayMode.Vertical.Resolution);
+  FdtGetTimingProperty ("hsync-len", mFdtDisplayMode.Horizontal.Sync);
+  FdtGetTimingProperty ("hfront-porch", mFdtDisplayMode.Horizontal.FrontPorch);
+  FdtGetTimingProperty ("hback-porch", mFdtDisplayMode.Horizontal.BackPorch);
+  FdtGetTimingProperty ("vsync-len", mFdtDisplayMode.Vertical.Sync);
+  FdtGetTimingProperty ("vfront-porch", mFdtDisplayMode.Vertical.FrontPorch);
+  FdtGetTimingProperty ("vback-porch", mFdtDisplayMode.Vertical.BackPorch);
 
   Status = FdtClient->FindNextSubnode (FdtClient, "port", NodePanel, &NodePort);
-  if (EFI_ERROR (Status))
-    return Status;
+  if (EFI_ERROR (Status)) {
+    goto Out;
+  }
 
   // TODO in order to refactor following code, FdtClient modification is needed
   Status = FdtClient->FindNextSubnode (FdtClient, "endpoint", NodePort, &Node);
   if (EFI_ERROR (Status)) {
     Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@0", NodePort, &Node);
-    if (EFI_ERROR (Status)) // we have not got first endpoint
-      return Status;        // this is illegal
+    if (EFI_ERROR (Status)) { // we have not get first endpoint
+      goto Out;               // this is illegal
+    }
   }
-  FdtDisplayMode->LvdsPorts = 1;
+  mFdtDisplayMode.LvdsPorts = 1;
   Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@1", NodePort, &Node);
-  if (EFI_ERROR (Status)) // we have just one endpoint (endpoint or endpoint@0)
-    return EFI_SUCCESS;   // this is legal
-  FdtDisplayMode->LvdsPorts = 2;
-  Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@2", NodePort, &Node);
-  if (EFI_ERROR (Status)) // we have two endpoints (@0 and @1)
-    return EFI_SUCCESS;   // this is legal
-  Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@3", NodePort, &Node);
-  if (EFI_ERROR (Status)) {          // we have three endpoints (@0, @1 and @2)
-    FdtDisplayMode->LvdsPorts = 0; // this is illegal
-    return Status;
+  if (EFI_ERROR (Status)) { // we have just one endpoint (endpoint or endpoint@0)
+    Status = EFI_SUCCESS;   // this is legal
+    goto Out;
   }
-  FdtDisplayMode->LvdsPorts = 4;
-  return EFI_SUCCESS;
+  mFdtDisplayMode.LvdsPorts = 2;
+  Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@2", NodePort, &Node);
+  if (EFI_ERROR (Status)) { // we have two endpoints (@0 and @1)
+    Status = EFI_SUCCESS;   // this is legal
+    goto Out;
+  }
+  Status = FdtClient->FindNextSubnode (FdtClient, "endpoint@3", NodePort, &Node);
+  if (EFI_ERROR (Status)) { // we have three endpoints (@0, @1 and @2)
+    goto Out;               // this is illegal
+  }
+  mFdtDisplayMode.LvdsPorts = 4;
+
+Out:
+  if (EFI_ERROR (Status)) {
+    mFdtDisplayMode.LvdsPorts = 0;
+  }
+
+  mFdtDisplayModeInitialized = TRUE;
+  mFdtGetPanelTimingsStatus = Status;
+
+  if (FdtDisplayMode != NULL) {
+    *FdtDisplayMode = &mFdtDisplayMode;
+  }
+  return mFdtGetPanelTimingsStatus;
+}
+
+/** Parse the Detailed Timing, Standard Timing and Established Timing
+    in EDID data block.
+
+  @param[in]  EdidBuffer        Pointer to EDID data
+  @param[in]  EdidBufferSize    Size of EDID data
+
+  @retval TRUE                  The EDID data is valid
+  @retval FALSE                 The EDID data is invalid
+**/
+STATIC
+BOOLEAN
+ParseEdidData (
+  IN CONST VOID *EdidBuffer,
+  IN UINTN      EdidBufferSize
+  )
+{
+  CONST EDID_BLOCK  *EdidDataBlock = EdidBuffer;
+  CONST UINT32      MaxMode = GetMaxSupportedMode ();
+  UINTN             Index;
+  CONST UINT8       *Byte;
+  UINTN             Mode;
+  SCAN_TIMINGS      Horizontal;
+  SCAN_TIMINGS      Vertical;
+  UINT32            PixelClock;
+  UINT8             RefreshRate;
+
+  //
+  // Detailed Timings
+  //
+  for (Index = 0; Index < EDID_DETAILED_TIMINGS; ++Index) {
+    Byte = &EdidDataBlock->DetailedTimingDescriptions[Index * EDID_DETAILED_TIMING_DESC_SIZE];
+
+    PixelClock = ((Byte[1] << 8) | Byte[0]) * 10000;
+
+    // Not a Detailed Timing Descriptor
+    if (PixelClock == 0) {
+      continue;
+    }
+
+    Horizontal.Resolution = ((Byte[4] & 0xF0) << 4) | Byte[2];
+    Horizontal.FrontPorch = ((Byte[11] & 0xC0) << 2) | Byte[8];
+    Horizontal.Sync       = ((Byte[11] & 0x30) << 4) | Byte[9];
+    Horizontal.BackPorch  = (((Byte[4] & 0x0F) << 8) | Byte[3]) -
+                            (Horizontal.FrontPorch + Horizontal.Sync);
+
+    Vertical.Resolution = ((Byte[7] & 0xF0) << 4) | Byte[5];
+    Vertical.FrontPorch = ((Byte[11] & 0x0C) << 2) | ((Byte[10] & 0xF0) >> 4);
+    Vertical.Sync       = ((Byte[11] & 0x03) << 4) | (Byte[10] & 0x0F);
+    Vertical.BackPorch  = (((Byte[7] & 0x0F) << 8) | Byte[6]) -
+                          (Vertical.FrontPorch + Vertical.Sync);
+
+    for (Mode = 0; Mode < MaxMode; ++Mode) {
+      if (Vertical.Resolution == mDisplayModes[Mode].Vertical.Resolution &&
+          Horizontal.Resolution == mDisplayModes[Mode].Horizontal.Resolution)
+      {
+        mDisplayModes[Mode].OscFreq = PixelClock;
+        mDisplayModes[Mode].Horizontal = Horizontal;
+        mDisplayModes[Mode].Vertical = Vertical;
+
+        mDisplayModes[Mode].IsActive = TRUE;
+      }
+    }
+  }
+
+  //
+  // Standard Timings
+  //
+  for (Index = 0; Index < EDID_STANDARD_TIMINGS; ++Index) {
+    Byte = &EdidDataBlock->StandardTimingIdentification[Index * EDID_STANDARD_TIMING_DESC_SIZE];
+
+    // Unused Standard Timing data fields shall be set to 01h, 01h
+    if (Byte[0] <= 1 &&
+        Byte[1] == 1)
+    {
+      continue;
+    }
+
+    RefreshRate = (Byte[1] & 0x3F) + 60;
+    if (RefreshRate != BAIKAL_DEFAULT_V_REFRESH_RATE) {
+      continue;
+    }
+
+    Horizontal.Resolution = (Byte[0] + 31) * 8;
+    switch (Byte[1] & 0xC0) {
+    case 0x00:
+      Vertical.Resolution = (Horizontal.Resolution * 10) / 16;
+      break;
+
+    case 0x40:
+      Vertical.Resolution = (Horizontal.Resolution * 3) / 4;
+      break;
+
+    case 0x80:
+      Vertical.Resolution = (Horizontal.Resolution * 4) / 5;
+      break;
+
+    case 0xC0:
+      Vertical.Resolution = (Horizontal.Resolution * 9) / 16;
+      break;
+
+    default:
+      continue;
+    }
+
+    for (Mode = 0; Mode < MaxMode; ++Mode) {
+      if (Vertical.Resolution == mDisplayModes[Mode].Vertical.Resolution &&
+          Horizontal.Resolution == mDisplayModes[Mode].Horizontal.Resolution)
+      {
+        mDisplayModes[Mode].IsActive = TRUE;
+      }
+    }
+  }
+
+  //
+  // Established Timings
+  //
+  for (Mode = 0; Mode < MaxMode; ++Mode) {
+    switch (mDisplayModes[Mode].Mode) {
+    case VGA:
+      if ((EdidDataBlock->EstablishedTimings[0] & 0x20) != 0) {
+        mDisplayModes[Mode].IsActive = TRUE;
+      }
+      break;
+
+    case SVGA:
+      if ((EdidDataBlock->EstablishedTimings[0] & 0x01) != 0) {
+        mDisplayModes[Mode].IsActive = TRUE;
+      }
+      break;
+
+    case XGA:
+      if ((EdidDataBlock->EstablishedTimings[1] & 0x08) != 0) {
+        mDisplayModes[Mode].IsActive = TRUE;
+      }
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  return TRUE;
+}
+
+/** Video mode related PCD setting helper function 
+
+  @param[in]  Width        Width of the screen
+  @param[in]  Height       Height of the screen
+**/
+STATIC
+VOID
+SetVideoModePcds (
+  IN UINT32 Width,
+  IN UINT32 Height
+  )
+{
+  PcdSet32S (PcdSetupVideoHorizontalResolution, Width);
+  PcdSet32S (PcdSetupVideoVerticalResolution, Height);
+  PcdSet32S (PcdSetupConOutColumn, Width / EFI_GLYPH_WIDTH);
+  PcdSet32S (PcdSetupConOutRow, Height / EFI_GLYPH_HEIGHT);
+}
+
+/** Display initialization function.
+
+  @retval EFI_SUCCESS            Display initialized successfully.
+  @retval EFI_UNSUPPORTED        PcdGopPixelFormat must be
+                                 PixelRedGreenBlueReserved8BitPerColor OR
+                                 PixelBlueGreenRedReserved8BitPerColor
+                                 any other format is not supported
+  @retval !(EFI_SUCCESS)         Other errors.
+**/
+STATIC
+EFI_STATUS
+InitializeDisplay (VOID)
+{
+  UINT32                    Index;
+  EFI_GRAPHICS_PIXEL_FORMAT PixelFormat;
+  CONST DISPLAY_MODE        *FdtDisplayMode;
+  CONST UINT32              MaxMode = GetMaxSupportedMode ();
+  UINTN                     EdidDataSize;
+  UINT8                     *EdidDataBlock = NULL;
+
+  if (mDisplayInitialized) {
+    goto Out;
+  }
+
+  mInitializeDisplayStatus = EFI_SUCCESS;
+
+  mActiveDisplayModes = 0;
+
+  // PixelBitMask and PixelBltOnly pixel formats are not supported
+  PixelFormat = FixedPcdGet32 (PcdGopPixelFormat);
+  if (PixelFormat != PixelRedGreenBlueReserved8BitPerColor &&
+      PixelFormat != PixelBlueGreenRedReserved8BitPerColor)
+  {
+    ASSERT (PixelFormat == PixelRedGreenBlueReserved8BitPerColor ||
+            PixelFormat == PixelBlueGreenRedReserved8BitPerColor);
+    mInitializeDisplayStatus = EFI_UNSUPPORTED;
+    goto Out;
+  }
+
+  FdtGetPanelTimings (&FdtDisplayMode);
+  // If a video mode is specified in FDT, find a mode with corresponding resolution
+  // and make this mode the only available.
+  if (FdtDisplayMode->LvdsPorts != 0) {
+    for (Index = 0; Index < MaxMode; ++Index) {
+      // Override hard-coded timings by FDT timings
+      // once a compatible video mode is found.
+      if (FdtDisplayMode->Vertical.Resolution == mDisplayModes[Index].Vertical.Resolution &&
+          FdtDisplayMode->Horizontal.Resolution == mDisplayModes[Index].Horizontal.Resolution)
+      {
+        SetVideoModePcds (FdtDisplayMode->Horizontal.Resolution,
+                          FdtDisplayMode->Vertical.Resolution);
+
+        mDisplayModes[Index].OscFreq = FdtDisplayMode->OscFreq;
+
+        mDisplayModes[Index].Horizontal.Sync = FdtDisplayMode->Horizontal.Sync;
+        mDisplayModes[Index].Horizontal.FrontPorch = FdtDisplayMode->Horizontal.FrontPorch;
+        mDisplayModes[Index].Horizontal.BackPorch = FdtDisplayMode->Horizontal.BackPorch;
+
+        mDisplayModes[Index].Vertical.Sync = FdtDisplayMode->Vertical.Sync;
+        mDisplayModes[Index].Vertical.FrontPorch = FdtDisplayMode->Vertical.FrontPorch;
+        mDisplayModes[Index].Vertical.BackPorch = FdtDisplayMode->Vertical.BackPorch;
+
+        mDisplayModes[Index].LvdsPorts = FdtDisplayMode->LvdsPorts;
+        mDisplayModes[Index].LvdsOutBpp = FdtDisplayMode->LvdsOutBpp;
+
+        mDisplayModes[Index].IsActive = TRUE;
+        break;
+      }
+    }
+  } else {
+    for (Index = 0; Index < MaxMode; ++Index) {
+      if (mDisplayModes[Index].Mode == VGA) {
+        mInitializeDisplayStatus = HdmiReadEdid (
+                                     &mDisplayModes[Index].Horizontal,
+                                     &mDisplayModes[Index].Vertical,
+                                     &mDisplayModes[Index].PhySettings,
+                                     &EdidDataBlock,
+                                     &EdidDataSize
+                                     );
+        if (!EFI_ERROR (mInitializeDisplayStatus)) {
+          if (!ParseEdidData (EdidDataBlock, EdidDataSize)) {
+            FreePool (EdidDataBlock);
+            EdidDataBlock = NULL;
+          } else {
+            mEdidDiscovered.SizeOfEdid = EdidDataSize;
+            mEdidDiscovered.Edid = EdidDataBlock;
+
+            mEdidActive.SizeOfEdid = mEdidDiscovered.SizeOfEdid;
+            mEdidActive.Edid = mEdidDiscovered.Edid;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  // If video mode was not discovered, set 800x600 as the only active mode
+  if (Index >= MaxMode) {
+        SetVideoModePcds (mDisplayModes[SVGA].Horizontal.Resolution,
+                          mDisplayModes[SVGA].Vertical.Resolution);
+        mDisplayModes[SVGA].IsActive = TRUE;
+  }
+
+  for (Index = 0; Index < MaxMode; ++Index) {
+    if (mDisplayModes[Index].IsActive) {
+      ++mActiveDisplayModes;
+    }
+  }
+
+Out:
+  mDisplayInitialized = TRUE;
+
+  return mInitializeDisplayStatus;
 }
 
 /** Baikal VDU Platform specific initialization function.
@@ -287,48 +670,14 @@ FdtGetPanelTimings(
 **/
 EFI_STATUS
 LcdPlatformInitializeDisplay (
-  IN EFI_HANDLE   Handle
+  IN EFI_HANDLE Handle
   )
 {
-  UINT32 i;
   EFI_STATUS  Status;
-  EFI_GRAPHICS_PIXEL_FORMAT PixelFormat;
 
-  // PixelBitMask and PixelBltOnly pixel formats are not supported
-  PixelFormat = FixedPcdGet32 (PcdGopPixelFormat);
-  if (PixelFormat != PixelRedGreenBlueReserved8BitPerColor &&
-      PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
-
-    ASSERT (PixelFormat == PixelRedGreenBlueReserved8BitPerColor ||
-      PixelFormat == PixelBlueGreenRedReserved8BitPerColor);
-    return EFI_UNSUPPORTED;
-  }
-
-  FdtGetPanelTimings(&FdtDisplayMode);
-  // If a video mode is specified in FDT, find a mode with corresponding resolution
-  // and make this mode the only available.
-  if (FdtDisplayMode.LvdsPorts != 0) {
-    for (i = 0; i < LcdPlatformGetMaxMode(); i++) {
-      // Override hard-coded timings by FDT timings
-      // once a compatible video mode is found.
-      if (FdtDisplayMode.Horizontal.Resolution == mDisplayModes[i].Horizontal.Resolution &&
-          FdtDisplayMode.Vertical.Resolution == mDisplayModes[i].Vertical.Resolution
-         ) {
-        mDisplayModes[0].OscFreq = FdtDisplayMode.OscFreq;
-        mDisplayModes[0].Horizontal.Resolution = FdtDisplayMode.Horizontal.Resolution;
-        mDisplayModes[0].Horizontal.Sync = FdtDisplayMode.Horizontal.Sync;
-        mDisplayModes[0].Horizontal.FrontPorch = FdtDisplayMode.Horizontal.FrontPorch;
-        mDisplayModes[0].Horizontal.BackPorch = FdtDisplayMode.Horizontal.BackPorch;
-        mDisplayModes[0].Vertical.Resolution = FdtDisplayMode.Vertical.Resolution;
-        mDisplayModes[0].Vertical.Sync = FdtDisplayMode.Vertical.Sync;
-        mDisplayModes[0].Vertical.FrontPorch = FdtDisplayMode.Vertical.FrontPorch;
-        mDisplayModes[0].Vertical.BackPorch = FdtDisplayMode.Vertical.BackPorch;
-        mDisplayModes[0].LvdsPorts = mDisplayModes[i].LvdsPorts;   // TODO fix this
-        mDisplayModes[0].LvdsOutBpp = mDisplayModes[i].LvdsOutBpp; // TODO and this
-        gBS->CopyMem (&mDisplayModes[0].PhySettings, &mDisplayModes[i].PhySettings, sizeof(HDMI_PHY_SETTINGS));
-        break;
-      }
-    }
+  Status = InitializeDisplay ();
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
   // Install the EDID Protocols
@@ -340,7 +689,6 @@ LcdPlatformInitializeDisplay (
                   &mEdidActive,
                   NULL
                   );
-
   return Status;
 }
 
@@ -358,12 +706,12 @@ LcdPlatformInitializeDisplay (
 **/
 EFI_STATUS
 LcdPlatformGetVram (
-  OUT EFI_PHYSICAL_ADDRESS*  VramBaseAddress,
-  OUT UINTN*                 VramSize
+  OUT EFI_PHYSICAL_ADDRESS  *VramBaseAddress,
+  OUT UINTN                 *VramSize
   )
 {
-  EFI_STATUS              Status;
-  EFI_CPU_ARCH_PROTOCOL   *Cpu;
+  EFI_STATUS            Status;
+  EFI_CPU_ARCH_PROTOCOL *Cpu;
 
   //ASSERT (VramBaseAddress != NULL);
   //ASSERT (VramSize != NULL);
@@ -374,8 +722,8 @@ LcdPlatformGetVram (
   // Allocate the VRAM from the DRAM so that nobody else uses it.
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
-                  EfiBootServicesData,
-                  EFI_SIZE_TO_PAGES (((UINTN)BAIKAL_LCD_VRAM_SIZE)),
+                  EfiReservedMemoryType,
+                  EFI_SIZE_TO_PAGES ((UINTN)BAIKAL_LCD_VRAM_SIZE),
                   VramBaseAddress
                   );
   if (EFI_ERROR (Status)) {
@@ -417,46 +765,35 @@ LcdPlatformGetVram (
 UINT32
 LcdPlatformGetMaxMode (VOID)
 {
-  // The following line would correctly report the total number
-  // of graphics modes supported by the Baikal VDU.
-  // return (sizeof(mResolutions) / sizeof(DISPLAY_MODE)) - 1;
+  InitializeDisplay ();
 
-  // However, on some platforms it is desirable to ignore some graphics modes.
-
-  // If a mode is set in FDT enable only that mode to prevent the boot
-  // loader (grub) or the kernel (efifb) from setting an unsupported mode
-  // (and locking up VDU)
-  FdtGetPanelTimings(&FdtDisplayMode);
-  if (FdtDisplayMode.LvdsPorts != 0) {
-      return 1;
-  } else {
-      return (FixedPcdGet32(PcdVduMaxMode));
-  }
+  return mActiveDisplayModes;
 }
 
 EFI_STATUS
 LcdPlatformSetMode (
-  IN UINT32                         ModeNumber
+  IN UINT32 ModeNumber
   )
 {
-  EFI_STATUS            Status;
+  EFI_STATUS    Status;
+  DISPLAY_MODE  *DisplayMode;
 
-  Status = EFI_SUCCESS;
-
-  if (ModeNumber >= LcdPlatformGetMaxMode ()) {
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
+  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
   // Set the video mode pixel frequency
-  BaikalSetVduFrequency(LCRU_HDMI,
-                        FixedPcdGet32 (PcdHdmiRefFrequency),
-                        mDisplayModes[ModeNumber].OscFreq
-                        );
-  BaikalSetVduFrequency(LCRU_LVDS,
-                        FixedPcdGet32 (PcdLvdsRefFrequency),
-                        mDisplayModes[ModeNumber].OscFreq * 7
-                        );
+  BaikalSetVduFrequency (
+    LCRU_HDMI,
+    FixedPcdGet32 (PcdHdmiRefFrequency),
+    DisplayMode->OscFreq
+    );
+  BaikalSetVduFrequency (
+    LCRU_LVDS,
+    FixedPcdGet32 (PcdLvdsRefFrequency),
+    DisplayMode->OscFreq * 7
+    );
 
   return Status;
 }
@@ -477,17 +814,20 @@ LcdPlatformQueryMode (
   OUT EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  *Info
   )
 {
+  EFI_STATUS    Status;
+  DISPLAY_MODE  *DisplayMode;
+
   ASSERT (Info != NULL);
 
-  if (ModeNumber >= LcdPlatformGetMaxMode ()) {
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
+  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
   Info->Version = 0;
-  Info->HorizontalResolution = mDisplayModes[ModeNumber].Horizontal.Resolution;
-  Info->VerticalResolution = mDisplayModes[ModeNumber].Vertical.Resolution;
-  Info->PixelsPerScanLine = mDisplayModes[ModeNumber].Horizontal.Resolution;
+  Info->HorizontalResolution = DisplayMode->Horizontal.Resolution;
+  Info->VerticalResolution = DisplayMode->Vertical.Resolution;
+  Info->PixelsPerScanLine = DisplayMode->Horizontal.Resolution;
 
   Info->PixelFormat = FixedPcdGet32 (PcdGopPixelFormat);
 
@@ -509,22 +849,25 @@ LcdPlatformQueryMode (
 **/
 EFI_STATUS
 LcdPlatformGetTimings (
-  IN  UINT32                  ModeNumber,
-  OUT SCAN_TIMINGS         ** Horizontal,
-  OUT SCAN_TIMINGS         ** Vertical
+  IN  UINT32        ModeNumber,
+  OUT SCAN_TIMINGS  **Horizontal,
+  OUT SCAN_TIMINGS  **Vertical
   )
 {
+  EFI_STATUS    Status;
+  DISPLAY_MODE  *DisplayMode;
+
   // One of the pointers is NULL
   ASSERT (Horizontal != NULL);
   ASSERT (Vertical != NULL);
 
-  if (ModeNumber >= LcdPlatformGetMaxMode ()) {
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
+  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  *Horizontal = &mDisplayModes[ModeNumber].Horizontal;
-  *Vertical   = &mDisplayModes[ModeNumber].Vertical;
+  *Horizontal = &DisplayMode->Horizontal;
+  *Vertical   = &DisplayMode->Vertical;
 
   return EFI_SUCCESS;
 }
@@ -541,19 +884,21 @@ LcdPlatformGetTimings (
 **/
 EFI_STATUS
 LcdPlatformGetHdmiPhySettings (
-  IN  UINT32                              ModeNumber,
-  OUT HDMI_PHY_SETTINGS                ** PhySettings
+  IN  UINT32            ModeNumber,
+  OUT HDMI_PHY_SETTINGS **PhySettings
   )
 {
+  EFI_STATUS    Status;
+  DISPLAY_MODE  *DisplayMode;
 
   ASSERT (PhySettings != NULL);
 
-  if (ModeNumber >= LcdPlatformGetMaxMode ()) {
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
+  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  *PhySettings = &mDisplayModes[ModeNumber].PhySettings;
+  *PhySettings = &DisplayMode->PhySettings;
 
   return EFI_SUCCESS;
 }
@@ -570,18 +915,21 @@ LcdPlatformGetHdmiPhySettings (
 **/
 EFI_STATUS
 LcdPlatformGetBpp (
-  IN  UINT32                              ModeNumber,
-  OUT LCD_BPP  *                          Bpp
+  IN  UINT32  ModeNumber,
+  OUT LCD_BPP *Bpp
   )
 {
+  EFI_STATUS    Status;
+  DISPLAY_MODE  *DisplayMode;
+
   ASSERT (Bpp != NULL);
 
-  if (ModeNumber >= LcdPlatformGetMaxMode ()) {
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
+  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  *Bpp = mDisplayModes[ModeNumber].Bpp;
+  *Bpp = DisplayMode->Bpp;
 
   return EFI_SUCCESS;
 }
@@ -600,21 +948,24 @@ LcdPlatformGetBpp (
 **/
 EFI_STATUS
 LcdPlatformGetLvdsInfo (
-  IN  UINT32                              ModeNumber,
-  OUT UINT32  *                           LvdsPorts,
-  OUT UINT32  *                           LvdsOutBpp
+  IN  UINT32  ModeNumber,
+  OUT UINT32  *LvdsPorts,
+  OUT UINT32  *LvdsOutBpp
   )
 {
+  EFI_STATUS    Status;
+  DISPLAY_MODE  *DisplayMode;
+
   ASSERT (LvdsPorts != NULL);
   ASSERT (LvdsOutBpp != NULL);
 
-  if (ModeNumber >= LcdPlatformGetMaxMode ()) {
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
+  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  *LvdsPorts = mDisplayModes[ModeNumber].LvdsPorts;
-  *LvdsOutBpp = mDisplayModes[ModeNumber].LvdsOutBpp;
+  *LvdsPorts = DisplayMode->LvdsPorts;
+  *LvdsOutBpp = DisplayMode->LvdsOutBpp;
 
   return EFI_SUCCESS;
 }

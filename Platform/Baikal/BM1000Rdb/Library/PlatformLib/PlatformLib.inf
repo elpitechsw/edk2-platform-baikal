@@ -35,7 +35,7 @@
   RelocatableBaikal.c
 
 [Sources.AArch64]
-  AArch64/RelocatableBaikalHelper.S
+  AArch64/BM1000Helper.S
 
 [FeaturePcd]
   gArmPlatformTokenSpaceGuid.PcdSystemMemoryInitializeInSec

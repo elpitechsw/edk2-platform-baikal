@@ -12,28 +12,20 @@ extern CONST UINT8 SpdDdrAddr[BAIKAL_SPD_DDR_ADDR_LENGTH];
 
 INTN
 SpdGetSize (
-  IN  CONST UINTN  IsSmbus,
   IN  CONST UINTN  TargetAddr
-  );
-
-VOID
-SpdSwitchPage (
-  IN  CONST UINTN  IsSmbus,
-  IN  CONST UINTN  Page
   );
 
 INTN
 SpdGetBuf (
-  IN   CONST UINTN  IsSmbus,
-  IN   CONST UINTN  TargetAddr,
-  OUT  VOID *CONST  RxBuf,
-  IN   CONST UINTN  RxBufSize
+  IN   CONST UINTN   TargetAddr,
+  OUT  VOID * CONST  RxBuf,
+  IN   CONST UINTN   RxBufSize
   );
 
 INTN
 SpdIsValid (
-  IN  CONST VOID *CONST  Buf,
-  IN  CONST UINTN        Size
+  IN  CONST VOID * CONST  Buf,
+  IN  CONST UINTN         Size
   );
 
 typedef struct {
@@ -53,10 +45,10 @@ typedef struct {
 
 INTN
 SpdSetSmbiosInfo (
-  IN      CONST VOID *CONST              Buf,
-  IN      CONST UINT16                   Size,
-  IN      CONST UINT8                    IsHybrid,
-  IN OUT  BAIKAL_SPD_SMBIOS_INFO *CONST  Info
+  IN      CONST VOID * CONST              Buf,
+  IN      CONST UINT16                    Size,
+  IN      CONST UINT8                     IsHybrid,
+  IN OUT  BAIKAL_SPD_SMBIOS_INFO * CONST  Info
   );
 
 #endif // BAIKAL_SPD_LIB_H_

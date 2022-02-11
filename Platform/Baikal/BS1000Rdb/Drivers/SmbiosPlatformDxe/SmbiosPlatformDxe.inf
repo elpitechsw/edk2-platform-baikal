@@ -1,0 +1,42 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SmbiosPlatformDxe
+  FILE_GUID                      = DE5E1107-D794-4FE5-8EF5-5AFF806D7567
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SmbiosPlatformDxeInitialize
+
+[Sources]
+  SmbiosPlatformDxe.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  ArmLib
+  MemoryAllocationLib
+  PrintLib
+  UefiDriverEntryPoint
+
+[FixedPcd]
+  gArmTokenSpaceGuid.PcdFdSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString
+
+[Protocols]
+  gEfiSmbiosProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+
+[Depex]
+  gEfiSmbiosProtocolGuid

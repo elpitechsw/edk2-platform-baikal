@@ -3,13 +3,7 @@
 *  Copyright (c) 2011-2014, ARM Limited. All rights reserved.
 *  Copyright (c) 2014, Linaro Limited. All rights reserved.
 *
-*  This program and the accompanying materials
-*  are licensed and made available under the terms and conditions of the BSD License
-*  which accompanies this distribution.  The full text of the license may be found at
-*  http://opensource.org/licenses/bsd-license.php
-*
-*  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+*  SPDX-License-Identifier: BSD-2-Clause-Patent
 *
 **/
 
@@ -17,17 +11,18 @@
 
 #include <Library/ArmMmuLib.h>
 #include <Library/ArmPlatformLib.h>
+#include <Library/CacheMaintenanceLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
-#include <Library/CacheMaintenanceLib.h>
 
 VOID
 BuildMemoryTypeInformationHob (
   VOID
   );
 
+STATIC
 VOID
 InitMmu (
   VOID
@@ -35,14 +30,14 @@ InitMmu (
 {
   ARM_MEMORY_REGION_DESCRIPTOR  *MemoryTable;
   VOID                          *TranslationTableBase;
-  UINTN                         TranslationTableSize;
-  RETURN_STATUS                 Status;
+  UINTN                          TranslationTableSize;
+  RETURN_STATUS                  Status;
 
   // Get Virtual Memory Map from the Platform Library
   ArmPlatformGetVirtualMemoryMap (&MemoryTable);
 
-  //Note: Because we called PeiServicesInstallPeiMemory() before to call InitMmu() the MMU Page Table resides in
-  //      DRAM (even at the top of DRAM as it is the first permanent memory allocation)
+  // Note: Because we called PeiServicesInstallPeiMemory() before to call InitMmu() the MMU Page Table resides in
+  //       DRAM (even at the top of DRAM as it is the first permanent memory allocation).
   Status = ArmConfigureMmu (MemoryTable, &TranslationTableBase, &TranslationTableSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "Error: Failed to enable MMU\n"));
@@ -52,89 +47,57 @@ InitMmu (
 EFI_STATUS
 EFIAPI
 MemoryPeim (
-  IN EFI_PHYSICAL_ADDRESS               UefiMemoryBase,
-  IN UINT64                             UefiMemorySize
+  IN  EFI_PHYSICAL_ADDRESS  UefiMemoryBase,
+  IN  UINT64                UefiMemorySize
   )
 {
-  EFI_RESOURCE_ATTRIBUTE_TYPE ResourceAttributes;
-  UINT64                      SystemMemoryTop;
+  EFI_RESOURCE_ATTRIBUTE_TYPE  ResourceAttributes;
 
   // Ensure PcdSystemMemorySize has been set
-  ASSERT (PcdGet64 (PcdSystemMemorySize) != 0);
+  ASSERT (PcdGet64 (PcdSystemMemorySize));
 
-  //
   // Now, the permanent memory has been installed, we can call AllocatePages()
-  //
-  ResourceAttributes = (
-      EFI_RESOURCE_ATTRIBUTE_PRESENT |
-      EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
-      EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
-      EFI_RESOURCE_ATTRIBUTE_TESTED
-  );
+  ResourceAttributes =
+    EFI_RESOURCE_ATTRIBUTE_PRESENT |
+    EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
+    EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
+    EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+    EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
+    EFI_RESOURCE_ATTRIBUTE_TESTED;
 
-  SystemMemoryTop = PcdGet64 (PcdSystemMemoryBase) +
-                    PcdGet64 (PcdSystemMemorySize);
+  BuildResourceDescriptorHob (
+    EFI_RESOURCE_SYSTEM_MEMORY,
+    ResourceAttributes,
+    PcdGet64 (PcdSystemMemoryBase),
+    0x10000000
+    );
 
-  if (SystemMemoryTop - 1 > MAX_ADDRESS) {
-    BuildResourceDescriptorHob (
-        EFI_RESOURCE_SYSTEM_MEMORY,
-        ResourceAttributes,
-        PcdGet64 (PcdSystemMemoryBase),
-        (UINT64)MAX_ADDRESS - PcdGet64 (PcdSystemMemoryBase) + 1
-        );
-    BuildResourceDescriptorHob (
-        EFI_RESOURCE_SYSTEM_MEMORY,
-        ResourceAttributes,
-        (UINT64)MAX_ADDRESS + 1,
-        SystemMemoryTop - MAX_ADDRESS - 1
-        );
-  } else {
-    DEBUG ((EFI_D_WARN, "MemBase: 0x%llx\n", PcdGet64 (PcdSystemMemoryBase)));
-    BuildResourceDescriptorHob (
-        EFI_RESOURCE_SYSTEM_MEMORY,
-        ResourceAttributes,
-        PcdGet64 (PcdSystemMemoryBase),
-        0x10000000
-        );
-     // Reserved Trusted Firmware region
-     BuildResourceDescriptorHob (
-          EFI_RESOURCE_SYSTEM_MEMORY,
-          ( EFI_RESOURCE_ATTRIBUTE_PRESENT |
-            EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
-            EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
-            EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
-            EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
-            EFI_RESOURCE_ATTRIBUTE_TESTED ),
-           0x90000000,
-           0x10000000 );
+  // Reserve secure memory region
+  BuildResourceDescriptorHob (
+    EFI_RESOURCE_SYSTEM_MEMORY,
+    ResourceAttributes,
+    0x90000000,
+    0x10000000
+    );
 
-    BuildMemoryAllocationHob (
-           0x90000000,
-           0x10000000,
-           EfiReservedMemoryType
-           );
+  BuildMemoryAllocationHob (
+    0x90000000,
+    0x10000000,
+    EfiReservedMemoryType
+    );
 
-    BuildResourceDescriptorHob (
-        EFI_RESOURCE_SYSTEM_MEMORY,
-        ResourceAttributes,
-        0xA0000000,
-        PcdGet64 (PcdSystemMemorySize) - 0x10000000 - 0x10000000
-        );
-  }
-
-  // When running under virtualization, the PI/UEFI memory region may be
-  // clean but not invalidated in system caches or in lower level caches
-  // on other CPUs. So invalidate the region by virtual address, to ensure
-  // that the contents we put there with the caches and MMU off will still
-  // be visible after turning them on.
-  //
-  InvalidateDataCacheRange ((VOID*)(UINTN)UefiMemoryBase, UefiMemorySize);
+  BuildResourceDescriptorHob (
+    EFI_RESOURCE_SYSTEM_MEMORY,
+    ResourceAttributes,
+    0xA0000000,
+    PcdGet64 (PcdSystemMemorySize) - 0x20000000
+    );
 
   // Build Memory Allocation Hob
   InitMmu ();
 
   if (FeaturePcdGet (PcdPrePiProduceMemoryTypeInformationHob)) {
-    // Optional feature that helps prevent EFI memory map fragmentation.
+    // Optional feature that helps prevent EFI memory map fragmentation
     BuildMemoryTypeInformationHob ();
   }
 

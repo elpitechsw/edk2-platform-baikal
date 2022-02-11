@@ -1,0 +1,59 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = AcpiPlatformDxe
+  FILE_GUID                      = FAEC4453-C811-467B-9ECD-06A1088BEF1C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = AcpiPlatformDxeInitialize
+
+[Sources]
+  AcpiPlatformDxe.c
+  Csrt.c
+  Dbg2.c
+  Dsdt.asl
+  Facs.c
+  Fadt.c
+  Gtdt.c
+  Iort.c
+  Madt.c
+  Mcfg.c
+  Pptt.c
+  Spcr.c
+  SsdtPcieCustom.asl
+  SsdtPcieEcam.asl
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/BM1000/BM1000.dec
+
+[LibraryClasses]
+  PcdLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+
+[FixedPcd]
+  gArmTokenSpaceGuid.PcdGicDistributorBase
+  gArmTokenSpaceGuid.PcdGicRedistributorsBase
+
+[Pcd]
+  gArmTokenSpaceGuid.PcdArmArchTimerHypIntrNum
+  gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
+  gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
+  gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode
+  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks
+
+[Depex]
+  gConfigDxeProtocolGuid AND gEfiPciRootBridgeIoProtocolGuid

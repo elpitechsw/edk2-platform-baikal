@@ -13,8 +13,10 @@
 
 [Guids.common]
   gBaikalTokenSpaceGuid = { 0x0B6F5CA7, 0x4F53, 0x445A, { 0xB7, 0x6E, 0x2E, 0x36, 0x5B, 0x80, 0x63, 0x66 } }
+  gConfigDxeFormSetGuid = { 0x30AA34DC, 0xEB61, 0x48C9, { 0x93, 0xE7, 0x37, 0xD7, 0x85, 0x87, 0x15, 0x15 } }
 
 [Protocols]
+  gConfigDxeProtocolGuid = { 0x8C2E2EEF, 0xCE42, 0x451B, { 0xA9, 0xBB, 0x0A, 0xF4, 0xFA, 0x0B, 0xBC, 0x48 } }
   gFdtClientProtocolGuid = { 0xE11FACA0, 0x4710, 0x4C8E, { 0xA7, 0xA2, 0x01, 0xBA, 0xA2, 0x59, 0x1B, 0x4C } }
   gFruClientProtocolGuid = { 0xFD7E02B7, 0x3465, 0x4DDB, { 0xB8, 0xED, 0x19, 0x4C, 0x82, 0xAC, 0xEC, 0xA1 } }
 
@@ -38,12 +40,12 @@
   # MaxMode must be one number higher than the actual max mode,
   # i.e. for actual maximum mode 2, set the value to 3.
   #
-  # For a list of mode numbers look in LcdArmVExpress.c
+  # For a list of mode numbers look in Platform/Baikal/Library/BaikalVduLib/BaikalVduPlatform.c
   #
   gBaikalTokenSpaceGuid.PcdHdmiBase|0x30280000|UINT32|0x00000009
   gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x0000000B
   gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000006
-  gBaikalTokenSpaceGuid.PcdVduMaxMode|9|UINT32|0x00000005
+  gBaikalTokenSpaceGuid.PcdVduMaxMode|10|UINT32|0x00000005
 
 [PcdsFeatureFlag.common]
   gArmPlatformTokenSpaceGuid.PcdSystemMemoryInitializeInSec|FALSE|BOOLEAN|0x00000002
@@ -51,3 +53,8 @@
 [PcdsDynamic]
   gBaikalTokenSpaceGuid.PcdVduBase|0|UINT32|0x00000004
   gBaikalTokenSpaceGuid.PcdVduLcruId|0|UINT32|0x0000000A
+
+[PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x00000011
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|0|UINT32|0x00000010
+  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0|UINT32|0x0000000F

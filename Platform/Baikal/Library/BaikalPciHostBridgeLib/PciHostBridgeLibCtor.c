@@ -8,42 +8,46 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/GpioLib.h>
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PciHostBridgeLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Platform/ConfigVars.h>
 #include <Platform/Pcie.h>
 #include <Protocol/FdtClient.h>
 #include <Protocol/PciHostBridgeResourceAllocation.h>
 
-#define BM1000_GPIO32_BASE           0x20200000
-#define BM1000_GPIO32_DATA           (BM1000_GPIO32_BASE + 0x00)
-#define BM1000_GPIO32_DIR            (BM1000_GPIO32_BASE + 0x04)
+#define BM1000_PCIE_GPR_BASE  0x02050000
+#define BM1000_GPIO32_BASE    0x20200000
 
-#define BM1000_PCIE_LCRU_GPR_BASE                     0x02050000
+#define BM1000_PCIE_GPR_RESET_REG(PcieIdx)       (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x00)
+#define BM1000_PCIE_GPR_RESET_PHY_RESET          BIT0
+#define BM1000_PCIE_GPR_RESET_PIPE0_RESET        BIT4
+#define BM1000_PCIE_GPR_RESET_PIPE1_RESET        BIT5
+#define BM1000_PCIE_GPR_RESET_CORE_RST           BIT8
+#define BM1000_PCIE_GPR_RESET_PWR_RST            BIT9
+#define BM1000_PCIE_GPR_RESET_STICKY_RST         BIT10
+#define BM1000_PCIE_GPR_RESET_NONSTICKY_RST      BIT11
+#define BM1000_PCIE_GPR_RESET_HOT_RESET          BIT12
+#define BM1000_PCIE_GPR_RESET_ADB_PWRDWN         BIT13
 
-#define BM1000_PCIE_LCRU_GPR_RESET_REG(PcieIdx)       (BM1000_PCIE_LCRU_GPR_BASE + (PcieIdx) * 0x20 + 0x00)
-#define BM1000_PCIE_LCRU_GPR_RESET_PHY_RESET          BIT0
-#define BM1000_PCIE_LCRU_GPR_RESET_PIPE0_RESET        BIT4
-#define BM1000_PCIE_LCRU_GPR_RESET_PIPE1_RESET        BIT5
-#define BM1000_PCIE_LCRU_GPR_RESET_CORE_RST           BIT8
-#define BM1000_PCIE_LCRU_GPR_RESET_PWR_RST            BIT9
-#define BM1000_PCIE_LCRU_GPR_RESET_STICKY_RST         BIT10
-#define BM1000_PCIE_LCRU_GPR_RESET_NONSTICKY_RST      BIT11
-#define BM1000_PCIE_LCRU_GPR_RESET_HOT_RESET          BIT12
-#define BM1000_PCIE_LCRU_GPR_RESET_ADB_PWRDWN         BIT13
+#define BM1000_PCIE_GPR_STATUS_REG(PcieIdx)      (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x04)
 
-#define BM1000_PCIE_LCRU_GPR_STATUS_REG(PcieIdx)      (BM1000_PCIE_LCRU_GPR_BASE + (PcieIdx) * 0x20 + 0x04)
-#define BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP       BIT6
-#define BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP       BIT7
-#define BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK  0x3F
-#define BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_L0    0x11
+#define BM1000_PCIE_GPR_GENCTL_REG(PcieIdx)      (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x08)
+#define BM1000_PCIE_GPR_GENCTL_LTSSM_ENABLE      BIT1
 
-#define BM1000_PCIE_LCRU_GPR_GENCTL_REG(PcieIdx)      (BM1000_PCIE_LCRU_GPR_BASE + (PcieIdx) * 0x20 + 0x08)
-#define BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE      BIT1
+#define BM1000_PCIE_GPR_POWERCTL_REG(PcieIdx)    (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x10)
 
-#define BM1000_PCIE_LCRU_GPR_POWERCTL_REG(PcieIdx)    (BM1000_PCIE_LCRU_GPR_BASE + (PcieIdx) * 0x20 + 0x10)
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_REG                   (BM1000_PCIE_GPR_BASE + 0xF8)
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE0_MSI_TRANS_EN    BIT9
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE1_MSI_TRANS_EN    BIT10
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE2_MSI_TRANS_EN    BIT11
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE0_MASK  (3 << 0)
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE1_MASK  (3 << 2)
+#define BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE2_MASK  (3 << 4)
 
 #define BM1000_PCIE_PF0_TYPE1_HDR_TYPE1_CLASS_CODE_REV_ID_REG                        0x008
 #define BM1000_PCIE_PF0_PCIE_CAP_LINK_CAPABILITIES_REG                               0x07C
@@ -160,18 +164,18 @@ STATIC CONST EFI_PCI_ROOT_BRIDGE_DEVICE_PATH  mEfiPciRootBridgeDevicePaths[] = {
   }
 };
 
+STATIC UINTN                       mPcieIdxs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 CONST EFI_PHYSICAL_ADDRESS         mPcieCdmBases[]    = BM1000_PCIE_CDM_BASES;
 CONST EFI_PHYSICAL_ADDRESS         mPcieCfgBases[]    = BM1000_PCIE_CFG_BASES;
 STATIC CONST UINTN                 mPcieBusMins[]     = BM1000_PCIE_BUS_MINS;
 STATIC CONST UINTN                 mPcieBusMaxs[]     = BM1000_PCIE_BUS_MAXS;
 STATIC CONST EFI_PHYSICAL_ADDRESS  mPcieMmio32Bases[] = BM1000_PCIE_MMIO32_BASES;
 STATIC CONST UINTN                 mPcieMmio32Sizes[] = BM1000_PCIE_MMIO32_SIZES;
-STATIC CONST EFI_PHYSICAL_ADDRESS  mPcieMmio64Bases[] = BM1000_PCIE_MMIO64_BASES;
-STATIC CONST UINTN                 mPcieMmio64Sizes[] = BM1000_PCIE_MMIO64_SIZES;
 STATIC CONST EFI_PHYSICAL_ADDRESS  mPciePortIoBases[] = BM1000_PCIE_PORTIO_BASES;
 STATIC CONST UINTN                 mPciePortIoSizes[] = BM1000_PCIE_PORTIO_SIZES;
 STATIC CONST UINTN                 mPciePortIoMins[]  = BM1000_PCIE_PORTIO_MINS;
 STATIC CONST UINTN                 mPciePortIoMaxs[]  = BM1000_PCIE_PORTIO_MAXS;
+UINT32                             mPcieCfg0FilteringWorks;
 
 STATIC PCI_ROOT_BRIDGE  *mPcieRootBridges;
 STATIC UINTN             mPcieRootBridgesNum;
@@ -193,9 +197,9 @@ BaikalPciHostBridgeLibLink (
 {
   ASSERT (PcieIdx < ARRAY_SIZE (mEfiPciRootBridgeDevicePaths));
 
-  UINT32 RegPcieLcruGpr = MmioRead32 (BM1000_PCIE_LCRU_GPR_STATUS_REG (PcieIdx));
-  return ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP) &&
-          (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP));
+  CONST UINT32  PcieGprStat = MmioRead32 (BM1000_PCIE_GPR_STATUS_REG (PcieIdx));
+  return (PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) ==
+                        BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0;
 }
 
 VOID
@@ -250,6 +254,35 @@ BaikalPciHostBridgeLibCfgWindow (
     );
 }
 
+STATIC
+VOID
+EFIAPI
+BaikalPciHostBridgeLibExitBootServices (
+  IN  EFI_EVENT   Event,
+  IN  VOID       *Context
+  )
+{
+  UINTN  Iter;
+
+  for (Iter = 0; Iter < mPcieRootBridgesNum; ++Iter) {
+    CONST UINTN  PcieIdx = mPcieIdxs[Iter];
+    //
+    // Linux will use EFI PciIo protocol to disable bus mastering (unless
+    // efi=enable_pci_busmaster is used) on all PCI bridges. However, in ECAM
+    // mode, the RP isn't actually visible to Linux, and that will break DMA for
+    // the visible device (symptom: cannot boot Linux for PCIe attached SSD).
+    // Thus, if we are requested to boot in ECAM mode, restore BM for RPs.
+    //
+    DEBUG ((
+      EFI_D_INFO,
+      "PcieRoot(0x%x): restoring Bus Master\n",
+      PcieIdx
+      ));
+
+    MmioOr32 (mPcieCdmBases[PcieIdx] + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_BUS_MASTER);
+  }
+}
+
 EFI_STATUS
 EFIAPI
 BaikalPciHostBridgeLibCtor (
@@ -264,19 +297,17 @@ BaikalPciHostBridgeLibCtor (
     ARRAY_SIZE (mPcieCfgBases)    == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
     ARRAY_SIZE (mPcieMmio32Bases) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
     ARRAY_SIZE (mPcieMmio32Sizes) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
-    ARRAY_SIZE (mPcieMmio64Bases) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
-    ARRAY_SIZE (mPcieMmio64Sizes) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
     ARRAY_SIZE (mPciePortIoBases) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
     ARRAY_SIZE (mPciePortIoSizes) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
     ARRAY_SIZE (mPciePortIoMaxs)  == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths) &&
     ARRAY_SIZE (mPciePortIoMins)  == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)
     );
 
+  EFI_EVENT             Event;
   FDT_CLIENT_PROTOCOL  *FdtClient;
   INT32                 FdtNode;
   UINTN                 Iter;
   UINTN                 PcieIdx;
-  UINTN                 PcieIdxs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   UINTN                 PcieNumLanes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   INTN                  PciePerstGpios[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   INTN                  PciePerstPolarity[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
@@ -285,7 +316,7 @@ BaikalPciHostBridgeLibCtor (
   EFI_STATUS            Status;
   PCI_ROOT_BRIDGE      *lPcieRootBridge;
 
-  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **)&FdtClient);
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   ASSERT_EFI_ERROR (Status);
 
   // Acquire PCIe RC related data from FDT
@@ -293,7 +324,7 @@ BaikalPciHostBridgeLibCtor (
     CONST VOID  *Prop;
     UINT32       PropSize;
 
-    Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,pcie-m", FdtNode, &FdtNode);
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-pcie", FdtNode, &FdtNode);
     if (EFI_ERROR (Status)) {
       break;
     }
@@ -309,11 +340,11 @@ BaikalPciHostBridgeLibCtor (
 
     PcieIdx = SwapBytes64 (((CONST UINT64 *)Prop)[0]) & 0xFFFFFFFF;
     if (PcieIdx >= ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)) {
-      PcieIdxs[Iter] = 0;
+      mPcieIdxs[Iter] = 0;
       continue;
     }
 
-    PcieIdxs[Iter] = PcieIdx;
+    mPcieIdxs[Iter] = PcieIdx;
 
     Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "num-lanes", &Prop, &PropSize);
     if (Status == EFI_SUCCESS && PropSize == 4) {
@@ -334,7 +365,7 @@ BaikalPciHostBridgeLibCtor (
       PciePerstGpios[PcieIdx] = -1;
     }
 
-    if (PcieIdx == BM1000_PCIE_X8_IDX) {
+    if (PcieIdx == BM1000_PCIE2_IDX) {
       INT32  FdtSubnode;
 
       FdtSubnode = 0;
@@ -365,6 +396,21 @@ BaikalPciHostBridgeLibCtor (
     return EFI_SUCCESS;
   }
 
+  //
+  // Disable MSI translations (they are disabled after reset).
+  // This allows PCIe devices to target GICD_NS_SETSPI,
+  // exposed via a V2M frame MADT descriptor for Windows on Arm.
+  //
+  MmioAnd32 (
+      BM1000_PCIE_GPR_MSI_TRANS_CTL2_REG,
+    ~(BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE0_MASK |
+      BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE1_MASK |
+      BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE2_MASK |
+      BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE0_MSI_TRANS_EN   |
+      BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE1_MSI_TRANS_EN   |
+      BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE2_MSI_TRANS_EN)
+    );
+
   mPcieRootBridges = AllocateZeroPool (mPcieRootBridgesNum * sizeof (PCI_ROOT_BRIDGE));
   lPcieRootBridge  = &mPcieRootBridges[0];
 
@@ -374,15 +420,14 @@ BaikalPciHostBridgeLibCtor (
     UINTN    PciePortLinkCapableLanesVal;
     UINT64   TimeStart;
 
-    PcieIdx = PcieIdxs[Iter];
+    PcieIdx = mPcieIdxs[Iter];
     lPcieRootBridge->Segment    = PcieIdx;
     lPcieRootBridge->Supports   = 0;
     lPcieRootBridge->Attributes = lPcieRootBridge->Supports;
     lPcieRootBridge->DmaAbove4G = TRUE;
     lPcieRootBridge->NoExtendedConfigSpace = FALSE;
     lPcieRootBridge->ResourceAssigned      = FALSE;
-    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM |
-                                             EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
+    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
 
     lPcieRootBridge->Bus.Base          = mPcieBusMins[PcieIdx];
     lPcieRootBridge->Bus.Limit         = mPcieBusMaxs[PcieIdx];
@@ -393,40 +438,37 @@ BaikalPciHostBridgeLibCtor (
                                            mPcieMmio32Bases[PcieIdx] + mPcieMmio32Sizes[PcieIdx] - 1 :
                                            mPcieMmio32Bases[PcieIdx] + SIZE_4GB - 1;
 
-    lPcieRootBridge->MemAbove4G.Base   = mPcieMmio64Bases[PcieIdx];
-    lPcieRootBridge->MemAbove4G.Limit  = mPcieMmio64Sizes[PcieIdx] < SIZE_4GB ?
-                                           mPcieMmio64Bases[PcieIdx] + mPcieMmio64Sizes[PcieIdx] - 1 :
-                                           mPcieMmio64Bases[PcieIdx] + SIZE_4GB - 1;
-
+    lPcieRootBridge->MemAbove4G.Base   = MAX_UINT64;
+    lPcieRootBridge->MemAbove4G.Limit  = 0;
     lPcieRootBridge->PMem.Base         = MAX_UINT64;
     lPcieRootBridge->PMem.Limit        = 0;
     lPcieRootBridge->PMemAbove4G.Base  = MAX_UINT64;
     lPcieRootBridge->PMemAbove4G.Limit = 0;
-    lPcieRootBridge->DevicePath        = (EFI_DEVICE_PATH_PROTOCOL *)&mEfiPciRootBridgeDevicePaths[PcieIdx];
+    lPcieRootBridge->DevicePath        = (EFI_DEVICE_PATH_PROTOCOL *) &mEfiPciRootBridgeDevicePaths[PcieIdx];
 
     // Assert PERST pin
     if (PciePerstGpios[PcieIdx] >= 0 &&
         PciePerstGpios[PcieIdx] <= 31 &&
         PciePerstPolarity[PcieIdx] >= 0) {
       if (PciePerstPolarity[PcieIdx]) {
-        MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
+        GpioOutRst (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
       } else {
-        MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+        GpioOutSet (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
       }
 
-      MmioOr32 (BM1000_GPIO32_DIR, 1 << PciePerstGpios[PcieIdx]);
+      GpioDirSet (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
     }
 
-    MmioAnd32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
+    MmioAnd32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_GPR_GENCTL_LTSSM_ENABLE);
 
     // Assert PCIe RC resets
-    if (PcieIdx == BM1000_PCIE_X8_IDX) {
+    if (PcieIdx == BM1000_PCIE2_IDX) {
       MmioOr32 (
-        BM1000_PCIE_LCRU_GPR_RESET_REG (PcieIdx),
-        BM1000_PCIE_LCRU_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_LCRU_GPR_RESET_STICKY_RST  |
-        BM1000_PCIE_LCRU_GPR_RESET_PWR_RST       | BM1000_PCIE_LCRU_GPR_RESET_CORE_RST    |
-        BM1000_PCIE_LCRU_GPR_RESET_PIPE1_RESET   | BM1000_PCIE_LCRU_GPR_RESET_PIPE0_RESET |
-        BM1000_PCIE_LCRU_GPR_RESET_PHY_RESET
+        BM1000_PCIE_GPR_RESET_REG (PcieIdx),
+        BM1000_PCIE_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_GPR_RESET_STICKY_RST  |
+        BM1000_PCIE_GPR_RESET_PWR_RST       | BM1000_PCIE_GPR_RESET_CORE_RST    |
+        BM1000_PCIE_GPR_RESET_PIPE1_RESET   | BM1000_PCIE_GPR_RESET_PIPE0_RESET |
+        BM1000_PCIE_GPR_RESET_PHY_RESET
         );
 
       // Assert PRSNT pin
@@ -434,41 +476,41 @@ BaikalPciHostBridgeLibCtor (
           PcieX8PrsntGpio <= 31 &&
           PcieX8PrsntPolarity >= 0) {
         if (PcieX8PrsntPolarity) {
-          MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PcieX8PrsntGpio));
+          GpioOutRst (BM1000_GPIO32_BASE, PcieX8PrsntGpio);
         } else {
-          MmioOr32 (BM1000_GPIO32_DATA, 1 << PcieX8PrsntGpio);
+          GpioOutSet (BM1000_GPIO32_BASE, PcieX8PrsntGpio);
         }
 
-        MmioOr32 (BM1000_GPIO32_DIR, 1 << PcieX8PrsntGpio);
+        GpioDirSet (BM1000_GPIO32_BASE, PcieX8PrsntGpio);
       }
     } else {
       MmioOr32 (
-        BM1000_PCIE_LCRU_GPR_RESET_REG (PcieIdx),
-        BM1000_PCIE_LCRU_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_LCRU_GPR_RESET_STICKY_RST  |
-        BM1000_PCIE_LCRU_GPR_RESET_PWR_RST       | BM1000_PCIE_LCRU_GPR_RESET_CORE_RST    |
-        BM1000_PCIE_LCRU_GPR_RESET_PIPE0_RESET   | BM1000_PCIE_LCRU_GPR_RESET_PHY_RESET
+        BM1000_PCIE_GPR_RESET_REG (PcieIdx),
+        BM1000_PCIE_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_GPR_RESET_STICKY_RST  |
+        BM1000_PCIE_GPR_RESET_PWR_RST       | BM1000_PCIE_GPR_RESET_CORE_RST    |
+        BM1000_PCIE_GPR_RESET_PIPE0_RESET   | BM1000_PCIE_GPR_RESET_PHY_RESET
         );
     }
 
-    gBS->Stall (1);  // Delay at least 100 ns
+    gBS->Stall (1); // Delay at least 100 ns
 
     // Deassert PCIe RC resets
-    if (PcieIdx == BM1000_PCIE_X8_IDX) {
+    if (PcieIdx == BM1000_PCIE2_IDX) {
       MmioAnd32 (
-        BM1000_PCIE_LCRU_GPR_RESET_REG (PcieIdx),
-        ~(BM1000_PCIE_LCRU_GPR_RESET_ADB_PWRDWN    | BM1000_PCIE_LCRU_GPR_RESET_HOT_RESET   |
-          BM1000_PCIE_LCRU_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_LCRU_GPR_RESET_STICKY_RST  |
-          BM1000_PCIE_LCRU_GPR_RESET_PWR_RST       | BM1000_PCIE_LCRU_GPR_RESET_CORE_RST    |
-          BM1000_PCIE_LCRU_GPR_RESET_PIPE1_RESET   | BM1000_PCIE_LCRU_GPR_RESET_PIPE0_RESET |
-          BM1000_PCIE_LCRU_GPR_RESET_PHY_RESET)
+          BM1000_PCIE_GPR_RESET_REG (PcieIdx),
+        ~(BM1000_PCIE_GPR_RESET_ADB_PWRDWN    | BM1000_PCIE_GPR_RESET_HOT_RESET   |
+          BM1000_PCIE_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_GPR_RESET_STICKY_RST  |
+          BM1000_PCIE_GPR_RESET_PWR_RST       | BM1000_PCIE_GPR_RESET_CORE_RST    |
+          BM1000_PCIE_GPR_RESET_PIPE1_RESET   | BM1000_PCIE_GPR_RESET_PIPE0_RESET |
+          BM1000_PCIE_GPR_RESET_PHY_RESET)
         );
     } else {
       MmioAnd32 (
-        BM1000_PCIE_LCRU_GPR_RESET_REG (PcieIdx),
-        ~(BM1000_PCIE_LCRU_GPR_RESET_ADB_PWRDWN    | BM1000_PCIE_LCRU_GPR_RESET_HOT_RESET   |
-          BM1000_PCIE_LCRU_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_LCRU_GPR_RESET_STICKY_RST  |
-          BM1000_PCIE_LCRU_GPR_RESET_PWR_RST       | BM1000_PCIE_LCRU_GPR_RESET_CORE_RST    |
-          BM1000_PCIE_LCRU_GPR_RESET_PIPE0_RESET   | BM1000_PCIE_LCRU_GPR_RESET_PHY_RESET)
+          BM1000_PCIE_GPR_RESET_REG (PcieIdx),
+        ~(BM1000_PCIE_GPR_RESET_ADB_PWRDWN    | BM1000_PCIE_GPR_RESET_HOT_RESET   |
+          BM1000_PCIE_GPR_RESET_NONSTICKY_RST | BM1000_PCIE_GPR_RESET_STICKY_RST  |
+          BM1000_PCIE_GPR_RESET_PWR_RST       | BM1000_PCIE_GPR_RESET_CORE_RST    |
+          BM1000_PCIE_GPR_RESET_PIPE0_RESET   | BM1000_PCIE_GPR_RESET_PHY_RESET)
         );
     }
 
@@ -529,6 +571,48 @@ BaikalPciHostBridgeLibCtor (
       ~BM1000_PCIE_PF0_PORT_LOGIC_MISC_CONTROL_1_OFF_DBI_RO_WR_EN
       );
 
+    if (PcdGet32 (PcdAcpiPcieMode) == ACPI_PCIE_ECAM &&
+        PcdGet32 (PcdAcpiMsiMode)  == ACPI_MSI_ITS) {
+      //
+      // Enable improved ITS support by encoding the RCNUM for different RCs,
+      // so that devices on different segments don't map to same DeviceID. E.g.,
+      // - for DBM:
+      // PCIe0 -> 0x10008
+      // PCIe1 -> 0x20008
+      // PCIe2 -> 0x30008
+      // - for MBM:
+      // PCIe0 -> 0x10008
+      // PCIe2 -> 0x20008
+      //
+      if (PcieIdx == BM1000_PCIE0_IDX) {
+        MmioAndThenOr32 (
+           BM1000_PCIE_GPR_MSI_TRANS_CTL2_REG,
+          ~BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE0_MASK,
+           BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE0_MSI_TRANS_EN | (1 << 0)
+          );
+      } else if (PcieIdx == BM1000_PCIE1_IDX) {
+        MmioAndThenOr32 (
+           BM1000_PCIE_GPR_MSI_TRANS_CTL2_REG,
+          ~BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE1_MASK,
+           BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE1_MSI_TRANS_EN | (2 << 2)
+          );
+      } else if (PcieIdx == BM1000_PCIE2_IDX) {
+        if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm", -1, &FdtNode) == EFI_SUCCESS) {
+          MmioAndThenOr32 (
+             BM1000_PCIE_GPR_MSI_TRANS_CTL2_REG,
+            ~BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE2_MASK,
+             BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE2_MSI_TRANS_EN | (3 << 4)
+            );
+        } else {
+          MmioAndThenOr32 (
+             BM1000_PCIE_GPR_MSI_TRANS_CTL2_REG,
+            ~BM1000_PCIE_GPR_MSI_TRANS_CTL2_MSI_RCNUM_PCIE2_MASK,
+             BM1000_PCIE_GPR_MSI_TRANS_CTL2_PCIE2_MSI_TRANS_EN | (2 << 4)
+            );
+        }
+      }
+    }
+
     // Region 0: MMIO32 range
     BaikalPciHostBridgeLibCfgWindow (
       mPcieCdmBases[PcieIdx],
@@ -540,15 +624,30 @@ BaikalPciHostBridgeLibCtor (
       0
       );
 
-    // Region 2: MMIO64 range
+    // Region 1: CFG0
+    BaikalPciHostBridgeLibCfgWindow (
+      mPcieCdmBases[PcieIdx],
+      1,
+      mPcieCfgBases[PcieIdx],
+      //
+      // See AcpiPlatformDxe/Iort.c for implications of using 0 here instead of
+      // encoding the bus.
+      //
+      0,
+      SIZE_64KB,
+      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
+      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
+      );
+
+    // Region 2: CFG1
     BaikalPciHostBridgeLibCfgWindow (
       mPcieCdmBases[PcieIdx],
       2,
-      lPcieRootBridge->MemAbove4G.Base,
-      lPcieRootBridge->MemAbove4G.Base,
-      lPcieRootBridge->MemAbove4G.Limit - lPcieRootBridge->MemAbove4G.Base + 1,
-      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_MEM,
-      0
+      mPcieCfgBases[PcieIdx],
+      0,
+      mPcieBusMaxs[PcieIdx] * SIZE_1MB,
+      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1,
+      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
       );
 
     // Region 3: port I/O range
@@ -570,16 +669,16 @@ BaikalPciHostBridgeLibCtor (
        1
       );
 
-    MmioOr32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
+    MmioOr32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_GPR_GENCTL_LTSSM_ENABLE);
 
     // Deassert PERST pin
     if (PciePerstGpios[PcieIdx] >= 0 &&
         PciePerstGpios[PcieIdx] <= 31 &&
         PciePerstPolarity[PcieIdx] >= 0) {
       if (PciePerstPolarity[PcieIdx]) {
-        MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+        GpioOutSet (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
       } else {
-        MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
+        GpioOutRst (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
       }
     }
 
@@ -587,75 +686,132 @@ BaikalPciHostBridgeLibCtor (
     ComponentExists = FALSE;
     TimeStart = GetTimeInNanoSecond (GetPerformanceCounter ());
     for (;;) {
-      CONST UINT32  RegPcieLcruGpr = MmioRead32 (BM1000_PCIE_LCRU_GPR_STATUS_REG (PcieIdx));
+      CONST UINT32  PcieGprStat = MmioRead32 (BM1000_PCIE_GPR_STATUS_REG (PcieIdx));
 
       if (!ComponentExists) {
-        if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK) > 0x01) {
+        if ((PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) > 0x01) {
           ComponentExists = TRUE;
           DEBUG ((
             EFI_D_INFO,
-            "PcieRoot(0x%x): link partner entered detect state within %u ms\n",
+            "PcieRoot(0x%x)[%3u ms, LTSSM:0x%02x]: link partner detected\n",
             PcieIdx,
-            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000
+            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000,
+            PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK
             ));
         } else if ((GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) > 50000000) {
           // According to PCI Express Base Specification device must enter LTSSM detect state within 20 ms of reset
           break;
         }
       } else {
-        if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_SMLH_LINKUP) &&
-            (RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_RDLH_LINKUP)) {
+        if ((PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) ==
+                           BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
 #if !defined (MDEPKG_NDEBUG)
-          CONST UINT32  RegPcieLnkStat = MmioRead32 (mPcieCdmBases[PcieIdx] +
-                                                      BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG);
+          CONST UINT32  PcieLnkStat = MmioRead32 (mPcieCdmBases[PcieIdx] +
+                                                   BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG);
           DEBUG ((
             EFI_D_INFO,
-            "PcieRoot(0x%x): Ltssm:0x%02x LnkSpeed:%u LnkWidth:%u Delay:%u ms\n",
+            "PcieRoot(0x%x)[%3u ms, LTSSM:0x%02x]: LnkSpeed:%u LnkWidth:%u\n",
             PcieIdx,
-            RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK,
-            (RegPcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_BITS) >>
+            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000,
+            PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK,
+            (PcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_BITS) >>
               BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_SHIFT,
-            (RegPcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_BITS) >>
-              BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT,
-            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000
+            (PcieLnkStat & BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_BITS) >>
+              BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT
             ));
 #endif
+          if (MmioRead32 (mPcieCfgBases[PcieIdx]) != 0xFFFFFFFF &&
+              MmioRead32 (mPcieCfgBases[PcieIdx] + 0x8000) == 0xFFFFFFFF) {
+            //
+            // Device appears to filter CFG0 requests, so the 64 KiB granule for the iATU
+            // isn't a problem. We don't have to ignore fn > 0 or shift MCFG by 0x8000.
+            //
+            DEBUG ((EFI_D_INFO, "PcieRoot(0x%x): CFG0 filtering seems functional\n", PcieIdx));
+            mPcieCfg0FilteringWorks |= 1 << PcieIdx;
+            Status = PcdSet32S (PcdPcieCfg0FilteringWorks, mPcieCfg0FilteringWorks);
+            ASSERT_EFI_ERROR (Status);
+          }
+
           break;
         } else if ((GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) > 100000000) {
           // Wait up to 100 ms for link up
-          DEBUG ((EFI_D_INFO, "PcieRoot(0x%x): PHY and Data links are not up\n", PcieIdx));
-          break;
-        } else if ((RegPcieLcruGpr & BM1000_PCIE_LCRU_GPR_STATUS_LTSSM_STATE_MASK) == 0x03) {
-          DEBUG ((EFI_D_INFO, "PcieRoot(0x%x): LTSSM entered polling compliance state\n", PcieIdx));
+          DEBUG ((
+            EFI_D_INFO,
+            "PcieRoot(0x%x)[%3u ms, LTSSM:0x%02x]: device is not entered L0 state\n",
+            PcieIdx,
+            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000,
+            PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK
+            ));
 
-          MmioAnd32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
+          //
+          // System hangups have been observed when PCIe partner enters detect state
+          // but does not reach L0. Disabling LTSSM helps to prevent these hangups.
+          //
+          MmioAnd32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_GPR_GENCTL_LTSSM_ENABLE);
+          break;
+        } else if ((PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) == 0x03 ||
+                   (PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) == 0x05) {
+          DEBUG ((
+            EFI_D_INFO,
+            "PcieRoot(0x%x)[%3u ms, LTSSM:0x%02x]: %a\n",
+            PcieIdx,
+            (GetTimeInNanoSecond (GetPerformanceCounter ()) - TimeStart) / 1000000,
+            PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK,
+            (PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) == 0x03 ?
+              "polling compliance" : "pre detect quiet"
+            ));
+
+          MmioAnd32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_GPR_GENCTL_LTSSM_ENABLE);
 
           // Assert PERST pin
           if (PciePerstGpios[PcieIdx] >= 0 &&
               PciePerstGpios[PcieIdx] <= 31 &&
               PciePerstPolarity[PcieIdx] >= 0) {
             if (PciePerstPolarity[PcieIdx]) {
-              MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
+              GpioOutRst (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
             } else {
-              MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+              GpioOutSet (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
             }
           }
 
+          MmioOr32 (
+             BM1000_PCIE_GPR_RESET_REG (PcieIdx),
+             BM1000_PCIE_GPR_RESET_CORE_RST
+             );
+
           gBS->Stall (1000);
-          MmioOr32 (BM1000_PCIE_LCRU_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_LCRU_GPR_GENCTL_LTSSM_ENABLE);
+          MmioAnd32 (
+             BM1000_PCIE_GPR_RESET_REG (PcieIdx),
+            ~BM1000_PCIE_GPR_RESET_CORE_RST
+            );
+
+          MmioOr32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_GPR_GENCTL_LTSSM_ENABLE);
 
           // Deassert PERST pin
           if (PciePerstGpios[PcieIdx] >= 0 &&
               PciePerstGpios[PcieIdx] <= 31 &&
               PciePerstPolarity[PcieIdx] >= 0) {
             if (PciePerstPolarity[PcieIdx]) {
-              MmioOr32 (BM1000_GPIO32_DATA, 1 << PciePerstGpios[PcieIdx]);
+              GpioOutSet (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
             } else {
-              MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << PciePerstGpios[PcieIdx]));
+              GpioOutRst (BM1000_GPIO32_BASE, PciePerstGpios[PcieIdx]);
             }
           }
         }
       }
+    }
+  }
+
+  if (PcdGet32 (PcdAcpiPcieMode) == ACPI_PCIE_ECAM) {
+    Status = gBS->CreateEvent (
+                    EVT_SIGNAL_EXIT_BOOT_SERVICES,
+                    TPL_NOTIFY,
+                    BaikalPciHostBridgeLibExitBootServices,
+                    NULL,
+                    &Event
+                    );
+    if (EFI_ERROR (Status)) {
+      return Status;
     }
   }
 

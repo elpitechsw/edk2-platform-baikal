@@ -25,6 +25,10 @@
 #define BAIKAL_SMC_PLAT_CMU_CLKCH_ROUND_RATE  10
 #define BAIKAL_CLKCH_MSHC                     19
 
+
+#define INIT_CLOCK (300*1000)
+#define DEFAULT_CLOCK (25*1000*1000)
+
 #define WAIT(X) ({               \
   EFI_STATUS  Ret = EFI_SUCCESS; \
   UINTN       Try = 100000;      \
@@ -1502,7 +1506,7 @@ SdPeimIdentificationSd (
 
   // 0) Power, Clock
   SdPeimInitHost (Base);
-  Status = SdPeimClockSupply (Base, 300 * 1000);
+  Status = SdPeimClockSupply (Base, INIT_CLOCK);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1578,7 +1582,7 @@ SdPeimIdentificationSd (
     return Status;
   }
 
-  Status = SdPeimClockSupply (Base, 25 * 1000 * 1000);
+  Status = SdPeimClockSupply (Base, DEFAULT_CLOCK);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1627,7 +1631,7 @@ SdPeimIdentificationMmc (
 
   // 0) Power, Clock
   SdPeimInitHost (Base);
-  Status = SdPeimClockSupply (Base, 300 * 1000);
+  Status = SdPeimClockSupply (Base, INIT_CLOCK);
   if (EFI_ERROR (Status)) {
   goto exit;
   }

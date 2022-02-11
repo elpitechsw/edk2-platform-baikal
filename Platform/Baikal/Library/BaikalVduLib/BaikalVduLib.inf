@@ -25,11 +25,14 @@
   ArmPkg/ArmPkg.dec
   ArmPlatformPkg/ArmPlatformPkg.dec
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
   BaseLib
   DebugLib
+  HdmiLib
+  MemoryAllocationLib
 
 [Protocols]
   gEfiEdidActiveProtocolGuid                    # PRODUCED
@@ -37,8 +40,12 @@
   gFdtClientProtocolGuid                        # CONSUMES
 
 [Pcd]
-  gBaikalTokenSpaceGuid.PcdVduBase
-  gBaikalTokenSpaceGuid.PcdVduLcruId
+  gBaikalTokenSpaceGuid.PcdVduBase ## CONSUMES
+  gBaikalTokenSpaceGuid.PcdVduLcruId ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution ## SOMETIMES_PRODUCES
 
 [FixedPcd]
   gArmPlatformTokenSpaceGuid.PcdGopPixelFormat

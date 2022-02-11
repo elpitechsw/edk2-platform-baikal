@@ -1,0 +1,25 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = DwGpioLib
+  FILE_GUID                      = 11BDCD29-A6FC-4873-82C8-E9B3E16D8E74
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = GpioLib
+
+[Sources.common]
+  DwGpioLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/Baikal/Baikal.dec
+
+[LibraryClasses]
+  DebugLib
+  IoLib

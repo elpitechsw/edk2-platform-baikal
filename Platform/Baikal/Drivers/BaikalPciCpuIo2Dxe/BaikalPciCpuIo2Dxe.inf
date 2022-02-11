@@ -1,7 +1,6 @@
 ## @file
-#  INF file for the Baikal-M PCIe Controller Driver.
-#  Produces the CPU I/O 2 Protocol by using the services of the I/O Library.
-#  Copyright (c) 2020 Baikal Electronics JSC (www.baikalelectronics.ru)
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]

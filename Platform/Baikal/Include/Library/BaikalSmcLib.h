@@ -28,8 +28,8 @@ BaikalSmcFlashRead (
 
 INTN
 BaikalSmcFlashInfo (
-  IN  UINT32 *CONST  SectorSize,
-  IN  UINT32 *CONST  SectorCount
+  IN  UINT32 * CONST  SectorSize,
+  IN  UINT32 * CONST  SectorCount
   );
 
 VOID

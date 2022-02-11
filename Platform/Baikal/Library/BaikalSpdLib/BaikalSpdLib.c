@@ -3,45 +3,25 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <Library/BaikalI2cLib.h>
-#include <Library/BaikalSmbusLib.h>
 #include <Library/BaikalSpdLib.h>
 #include <Library/BaseMemoryLib.h>
 
-CONST UINT8 SpdDdrAddr[BAIKAL_SPD_DDR_ADDR_LENGTH] = {0x50, 0x51, 0x52, 0x53};
+#define SEC_DRAM_SPD_BASE  0x8000FA00
 
-STATIC
-INTN
-SpdGetBufInternal (
-  IN   CONST UINTN        IsSmbus,
-  IN   CONST UINTN        TargetAddr,
-  IN   CONST VOID *CONST  TxBuf,
-  IN   CONST UINTN        TxBufSize,
-  OUT  VOID *CONST        RxBuf,
-  IN   CONST UINTN        RxBufSize
-  )
-{
-  if (IsSmbus) {
-    return SmbusTxRx (0, TargetAddr, TxBuf, TxBufSize, RxBuf, RxBufSize);
-  } else {
-    return I2cTxRx (1, TargetAddr, TxBuf, TxBufSize, RxBuf, RxBufSize);
-  }
-}
+CONST UINT8 SpdDdrAddr[BAIKAL_SPD_DDR_ADDR_LENGTH] = {0x50, 0x51, 0x52, 0x53};
 
 INTN
 SpdGetSize (
-  IN  CONST UINTN  IsSmbus,
   IN  CONST UINTN  TargetAddr
   )
 {
-  UINT8        Buf;
-  CONST UINT8  StartAddr = 0;
+  UINT8  *SpdPtr = (UINT8 *) SEC_DRAM_SPD_BASE;
 
-  if (SpdGetBufInternal (IsSmbus, TargetAddr, &StartAddr, sizeof (StartAddr), &Buf, 1) != 1) {
-    return 0;
+  if (TargetAddr > SpdDdrAddr[1]) {
+    SpdPtr += 512;
   }
 
-  switch (Buf & 0x07) {
+  switch (*SpdPtr & 0x07) {
   case 1:
     return 128;
   case 2:
@@ -55,33 +35,31 @@ SpdGetSize (
   return 0;
 }
 
-VOID
-SpdSwitchPage (
-  IN  CONST UINTN  IsSmbus,
-  IN  CONST UINTN  Page
-  )
-{
-  CONST UINT8  TxBuf = 0;
-  UINT8        RxBuf = 0;
-  SpdGetBufInternal (IsSmbus, Page ? 0x37 : 0x36, &TxBuf, 1, &RxBuf, 1);
-}
-
 INTN
 SpdGetBuf (
-  IN   CONST UINTN  IsSmbus,
-  IN   CONST UINTN  TargetAddr,
-  OUT  VOID *CONST  RxBuf,
-  IN   CONST UINTN  RxBufSize
+  IN   CONST UINTN   TargetAddr,
+  OUT  VOID * CONST  RxBuf,
+  IN   CONST UINTN   RxBufSize
   )
 {
-  CONST UINT8  StartAddr = 0;
-  return SpdGetBufInternal (IsSmbus, TargetAddr, &StartAddr, sizeof (StartAddr), RxBuf, RxBufSize);
+  UINTN   Idx;
+  UINT8  *SpdPtr = (UINT8 *) SEC_DRAM_SPD_BASE;
+
+  if (TargetAddr > SpdDdrAddr[1]) {
+    SpdPtr += 512;
+  }
+
+  for (Idx = 0; Idx < RxBufSize; ++Idx) {
+    *((UINT8 *) RxBuf + Idx) = *(SpdPtr + Idx);
+  }
+
+  return 0;
 }
 
 STATIC
 UINT16
 SpdGetCrc16 (
-  IN  CONST UINT8 *CONST  SpdBuf
+  IN  CONST UINT8 * CONST  SpdBuf
   )
 {
   return SpdBuf[0] | (SpdBuf[1] << 8);
@@ -94,8 +72,8 @@ SpdCrc16 (
   IN  UINTN         Size
   )
 {
-  UINT16        Crc  = 0;
-  UINTN         Idx;
+  UINT16  Crc  = 0;
+  UINTN   Idx;
 
   while (Size--) {
     Crc ^= *SpdBuf++ << 8;
@@ -114,12 +92,12 @@ SpdCrc16 (
 
 INTN
 SpdIsValid (
-  IN  CONST VOID *CONST  Buf,
-  IN  CONST UINTN        Size
+  IN  CONST VOID * CONST  Buf,
+  IN  CONST UINTN         Size
   )
 {
-  INTN                Result = 0;
-  CONST UINT8 *CONST  SpdBuf = Buf;
+  INTN                 Result = 0;
+  CONST UINT8 * CONST  SpdBuf = Buf;
 
   if (Size < 128) {
     return 0;
@@ -143,10 +121,11 @@ SpdIsValid (
 STATIC
 UINT64
 SpdGetCapacity (
-  IN  CONST UINT8 *CONST  SpdBuf
+  IN  CONST UINT8 * CONST  SpdBuf
   )
 {
-  UINT64 SdramCapacityPerDie;
+  UINT64  SdramCapacityPerDie;
+  UINT64  Total;
 
   // SDRAM capacity in MiB
   switch (SpdBuf[4] & 0xF) {
@@ -186,18 +165,17 @@ SpdGetCapacity (
 
   SdramCapacityPerDie *= 1024 * 1024; // SDRAM capacity in bytes
 
-  CONST INT16 PrimaryBusWidth         = 8 << (SpdBuf[13] & 0x7);
-  CONST CHAR8 SdramDeviceWidth        = 4 << (SpdBuf[12] & 0x3);
-  CONST CHAR8 LogicalRanksPerDimm     = ((SpdBuf[12] >> 3) & 0x7) + 1;
-  CONST CHAR8 PrimarySdramPackageType = (SpdBuf[6] >> 7) & 0x1;
-  CONST CHAR8 DieCount                = ((SpdBuf[6] >> 4) & 0x7) + 1;
-  CONST CHAR8 SignalLoading           = SpdBuf[6] & 0x3;
+  CONST CHAR8  DieCount                = ((SpdBuf[6] >> 4) & 0x7) + 1;
+  CONST CHAR8  LogicalRanksPerDimm     = ((SpdBuf[12] >> 3) & 0x7) + 1;
+  CONST INT16  PrimaryBusWidth         = 8 << (SpdBuf[13] & 0x7);
+  CONST CHAR8  PrimarySdramPackageType = (SpdBuf[6] >> 7) & 0x1;
+  CONST CHAR8  SdramDeviceWidth        = 4 << (SpdBuf[12] & 0x3);
+  CONST CHAR8  SignalLoading           = SpdBuf[6] & 0x3;
 
   if (SdramDeviceWidth > 32 || PrimaryBusWidth > 64) {
     return 0;
   }
 
-  UINT64 Total;
   Total  = SdramCapacityPerDie;
   Total /= 8;
   Total *= PrimaryBusWidth;
@@ -224,13 +202,13 @@ SpdGetCapacity (
 
 INTN
 SpdSetSmbiosInfo (
-  IN      CONST VOID *CONST              Buf,
-  IN      CONST UINT16                   Size,
-  IN      CONST UINT8                    IsHybrid,
-  IN OUT  BAIKAL_SPD_SMBIOS_INFO *CONST  Info
+  IN      CONST VOID * CONST              Buf,
+  IN      CONST UINT16                    Size,
+  IN      CONST UINT8                     IsHybrid,
+  IN OUT  BAIKAL_SPD_SMBIOS_INFO * CONST  Info
   )
 {
-  CONST UINT8 *CONST  SpdBuf = Buf;
+  CONST UINT8 * CONST  SpdBuf = Buf;
 
   Info->Size = SpdGetCapacity (SpdBuf);
   if (!Info->Size) {

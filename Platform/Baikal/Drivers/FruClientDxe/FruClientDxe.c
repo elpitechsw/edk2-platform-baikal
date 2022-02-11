@@ -3,17 +3,16 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <Library/BaikalI2cLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DwI2cLib.h>
 #include <Library/TimeBaseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FdtClient.h>
 #include <Protocol/FruClient.h>
 #include "FruInternals.h"
 
-#define EEPROM_I2C_BUS   0
-#define EEPROM_SIZE      4096
+#define EEPROM_SIZE  4096
 
 #define MULTIRECORD_TYPEID_MAC0  0xC0
 #define MULTIRECORD_TYPEID_MAC1  0xC6
@@ -29,120 +28,120 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadBoardManufacturer (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadBoardName (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadBoardSerialNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadBoardPartNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadBoardFileId (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductManufacturer (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductName (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductPartNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductVersion (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductSerialNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductAssetTag (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 UINTN
 EFIAPI
 FruClientReadProductFileId (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC
 EFI_STATUS
 EFIAPI
 FruClientGetMultirecordMacAddr (
-  IN   CONST UINTN             MacAddrIdx,
-  OUT  EFI_MAC_ADDRESS *CONST  MacAddr
+  IN   CONST UINTN              MacAddrIdx,
+  OUT  EFI_MAC_ADDRESS * CONST  MacAddr
   );
 
 STATIC
 UINTN
 FruReadTypLenEncBoardData (
-  IN   CONST UINTN   FieldIdx,
-  OUT  CHAR8 *CONST  DstBuf,
+  IN   CONST UINTN    FieldIdx,
+  OUT  CHAR8 * CONST  DstBuf,
   IN   CONST UINTN   DstBufSize
   );
 
 STATIC
 UINTN
 FruReadTypLenEncProductData (
-  IN   CONST UINTN   FieldIdx,
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  IN   CONST UINTN    FieldIdx,
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 STATIC UINTN   mFruAddr;
@@ -156,13 +155,14 @@ FruClientDxeInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  FDT_CLIENT_PROTOCOL  *FdtClient;
-  INT32                 FdtNode;
-  CONST UINT16          FruMemAddr = 0;
-  INTN                  I2cRxedSize;
-  CONST VOID           *Prop;
-  UINT32                PropSize;
-  EFI_STATUS            Status;
+  FDT_CLIENT_PROTOCOL   *FdtClient;
+  INT32                  FdtNode;
+  EFI_PHYSICAL_ADDRESS   FruI2cBase = 0;
+  CONST UINT16           FruMemAddr = 0;
+  INTN                   I2cRxedSize;
+  CONST VOID            *Prop;
+  UINT32                 PropSize;
+  EFI_STATUS             Status;
 
   STATIC FRU_CLIENT_PROTOCOL  mFruClientProtocol = {
     FruClientGetBoardMfgDateTime,
@@ -193,14 +193,18 @@ FruClientDxeInitialize (
     return Status;
   }
 
-  Status = FdtClient->FindCompatibleNode (FdtClient, "atmel,24c32", &FdtNode);
-  if (Status == EFI_SUCCESS) {
-    Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize);
-    if (Status == EFI_SUCCESS && PropSize == 4) {
-      mFruAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
-      if (mFruAddr < 0x50 || mFruAddr > 0x57) {
-        mFruAddr = 0;
-      }
+  if (FdtClient->FindCompatibleNode (FdtClient, "atmel,24c32", &FdtNode) == EFI_SUCCESS &&
+      FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+      PropSize == 4) {
+    mFruAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+    if (mFruAddr >= 0x50 && mFruAddr <= 0x57 &&
+        FdtClient->FindParentNode  (FdtClient, FdtNode, &FdtNode) == EFI_SUCCESS &&
+        FdtClient->IsNodeEnabled   (FdtClient, FdtNode) &&
+        FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 16) {
+      FruI2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+    } else {
+      mFruAddr = 0;
     }
   }
 
@@ -215,9 +219,9 @@ FruClientDxeInitialize (
     return Status;
   }
 
-  if (mFruAddr) {
+  if (FruI2cBase && mFruAddr) {
     I2cRxedSize = I2cTxRx (
-                    EEPROM_I2C_BUS,
+                    FruI2cBase,
                     mFruAddr,
                     (UINT8 *) &FruMemAddr,
                     sizeof (FruMemAddr),
@@ -399,8 +403,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadBoardManufacturer (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncBoardData (0, DstBuf, DstBufSize);
@@ -410,8 +414,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadBoardName (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncBoardData (1, DstBuf, DstBufSize);
@@ -421,8 +425,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadBoardSerialNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncBoardData (2, DstBuf, DstBufSize);
@@ -432,8 +436,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadBoardPartNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncBoardData (3, DstBuf, DstBufSize);
@@ -443,8 +447,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadBoardFileId (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncBoardData (4, DstBuf, DstBufSize);
@@ -454,8 +458,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductManufacturer (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (0, DstBuf, DstBufSize);
@@ -465,8 +469,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductName (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (1, DstBuf, DstBufSize);
@@ -476,8 +480,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductPartNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (2, DstBuf, DstBufSize);
@@ -487,8 +491,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductVersion (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (3, DstBuf, DstBufSize);
@@ -498,8 +502,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductSerialNumber (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (4, DstBuf, DstBufSize);
@@ -509,8 +513,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductAssetTag (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (5, DstBuf, DstBufSize);
@@ -520,8 +524,8 @@ STATIC
 UINTN
 EFIAPI
 FruClientReadProductFileId (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   return FruReadTypLenEncProductData (6, DstBuf, DstBufSize);
@@ -531,8 +535,8 @@ STATIC
 EFI_STATUS
 EFIAPI
 FruClientGetMultirecordMacAddr (
-  IN   CONST UINTN             MacAddrIdx,
-  OUT  EFI_MAC_ADDRESS *CONST  MacAddr
+  IN   CONST UINTN              MacAddrIdx,
+  OUT  EFI_MAC_ADDRESS * CONST  MacAddr
   )
 {
   CONST UINT8         *MrecArea;
@@ -562,8 +566,24 @@ FruClientGetMultirecordMacAddr (
                                             (mFruBuf + mFruBufSize) - MrecArea,
                                             &MrecHdr
                                             ) == EFI_SUCCESS) {
-        if (MrecHdr.Length >= 6) {
-          UINTN  Idx;
+        UINTN  Idx;
+
+        if (MrecHdr.Length == 9) {
+          // OEM Record must have 3-byte Manufacturer ID field according to IPMI FRU Spec
+          for (Idx = 0; Idx < 6; ++Idx) {
+            MacAddr->Addr[Idx] = MrecArea[sizeof (MULTIRECORD_HEADER) + 3 + Idx];
+          }
+
+          return EFI_SUCCESS;
+        } else if (MrecHdr.Length == 6) {
+          // Legacy BMC FW generates incorrect OEM Records without 3-byte Manufacturer ID field
+          DEBUG ((
+            EFI_D_WARN,
+            "%a: MrecHdr.Length:%u is deprecated for MrecHdr.TypeId:0x%02x\n",
+            __FUNCTION__,
+            MrecHdr.Length,
+            MrecHdr.TypeId
+            ));
 
           for (Idx = 0; Idx < 6; ++Idx) {
             MacAddr->Addr[Idx] = MrecArea[sizeof (MULTIRECORD_HEADER) + Idx];
@@ -573,7 +593,7 @@ FruClientGetMultirecordMacAddr (
         } else {
           DEBUG ((
             EFI_D_ERROR,
-            "%a: MrecHdr.Length(%u) does not match MrecHdr.TypeId(%u)\n",
+            "%a: MrecHdr.Length:%u does not match MrecHdr.TypeId:0x%02x\n",
             __FUNCTION__,
             MrecHdr.Length,
             MrecHdr.TypeId
@@ -595,9 +615,9 @@ FruClientGetMultirecordMacAddr (
 STATIC
 UINTN
 FruReadTypLenEncBoardData (
-  IN   CONST UINTN   FieldIdx,
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  IN   CONST UINTN    FieldIdx,
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   CONST UINT8  *BoardArea;
@@ -640,9 +660,9 @@ FruReadTypLenEncBoardData (
 STATIC
 UINTN
 FruReadTypLenEncProductData (
-  IN   CONST UINTN   FieldIdx,
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  IN   CONST UINTN    FieldIdx,
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   )
 {
   UINTN         DstStrLen = DstBufSize;

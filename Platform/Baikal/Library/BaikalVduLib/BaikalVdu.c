@@ -133,13 +133,16 @@ LcdSetupHdmi (
 
   ASSERT (PhySettings != NULL);
 
-  HdmiInitAvComposer(Horizontal, Vertical);
-  Status = HdmiPhyInit(PhySettings);
+  Status = HdmiInit (
+             Horizontal,
+             Vertical,
+             PhySettings
+             );
   if (EFI_ERROR (Status)) {
     //ASSERT_EFI_ERROR (Status);
     return Status;
   }
-  HdmiEnableVideoPath(Vertical->Sync);
+
   return EFI_SUCCESS;
 }
 
@@ -162,7 +165,8 @@ LcdSetTimings (
 
   if (VduBase == VDU_LVDS && LvdsPorts == 2) {
     --Hfp;
-    ++Hsw;
+  } else {
+    --Hsw;
   }
 
   MmioWrite32 (
@@ -218,7 +222,7 @@ LcdSetTimings (
         LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD24;
       else // LvdsOutBpp == 18
         LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD18;
-	}
+    }
   }
   if (IsBgr) {
     LcdControl |= BAIKAL_VDU_CR1_BGR;

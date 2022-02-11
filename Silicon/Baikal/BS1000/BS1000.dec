@@ -1,0 +1,13 @@
+## @file
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x0001001B
+  PACKAGE_NAME                   = BS1000Pkg
+  PACKAGE_GUID                   = 52A342E0-2603-4026-AA9B-BF67DAF8DEFE
+  PACKAGE_VERSION                = 1.0
+
+[Includes]
+  Include

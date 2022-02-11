@@ -24,10 +24,13 @@
   MdePkg/MdePkg.dec
   NetworkPkg/NetworkPkg.dec
   Platform/Baikal/Baikal.dec
+  Silicon/Baikal/Baikal.dec
 
 [LibraryClasses]
+  ArmLib
   ArmSmcLib
   BaikalSpdLib
+  GpioLib
   IoLib
   UefiDriverEntryPoint
   UefiLib

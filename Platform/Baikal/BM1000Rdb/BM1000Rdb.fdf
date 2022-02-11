@@ -15,12 +15,12 @@ NumBlocks     = 0x100
 #
 # Implement the Linux kernel header layout so that the loader will identify
 # it as something bootable, and execute it with a FDT pointer in x0 or r2.
-# This area will be reused to store a copy of the FDT so round it up to 32 KB.
+# This area will be reused to store a copy of the FDT so round it up to 64 KiB.
 #
-0x00000000|0x00008000
+0x00000000|0x00010000
 DATA = {
   0x01, 0x00, 0x00, 0x10,                         # code0: adr x1, .
-  0xff, 0x1f, 0x00, 0x14,                         # code1: b 0x8000
+  0xff, 0x3f, 0x00, 0x14,                         # code1: b 0x10000
   0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, # text_offset: 512 KB
   0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, # image_size: 2 MB
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # flags
@@ -31,7 +31,7 @@ DATA = {
   0x00, 0x00, 0x00, 0x00                          # res5
 }
 
-0x00008000|0x00140000
+0x00010000|0x00140000
 gArmTokenSpaceGuid.PcdFvBaseAddress|gArmTokenSpaceGuid.PcdFvSize
 FV = FVMAIN_COMPACT
 
@@ -138,6 +138,7 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
   INF EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
   INF EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
+  INF MdeModulePkg/Universal/EbcDxe/EbcDxe.inf
   INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
 
   # Multiple Console IO support
@@ -151,7 +152,7 @@ READ_LOCK_STATUS   = TRUE
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
 
-!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
+!if $(BAIKAL_QEMU_M) == FALSE
   INF ArmPlatformPkg/Drivers/LcdGraphicsOutputDxe/LcdGraphicsOutputDxe.inf
 !endif
 
@@ -164,24 +165,23 @@ READ_LOCK_STATUS   = TRUE
 
   # SMBIOS Support
   INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-  INF Platform/Baikal/Drivers/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
+  INF Platform/Baikal/BM1000Rdb/Drivers/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
 
   # ACPI support
   INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
-  INF Platform/Baikal/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
+  INF Platform/Baikal/BM1000Rdb/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # BDS
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+  INF Platform/Baikal/BM1000Rdb/Drivers/ConfigDxe/ConfigDxe.inf
   INF Platform/Baikal/Logo/LogoDxe.inf
   INF MdeModulePkg/Application/UiApp/UiApp.inf
 
   # Disk driver
-!if ($(BAIKAL_QEMU_S) == FALSE)
-  INF Platform/Baikal/Drivers/PciEmulation/PciEmulationAhci.inf
-!endif
+  INF Silicon/Baikal/BM1000/Drivers/NonDiscoverableAhciDxe/NonDiscoverableAhciDxe.inf
   INF MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   INF MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   INF MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
@@ -193,9 +193,7 @@ READ_LOCK_STATUS   = TRUE
 
   # Network
 !include NetworkPkg/Network.fdf.inc
-!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
-!endif
 
   # PCI
   INF Platform/Baikal/Drivers/BaikalPciCpuIo2Dxe/BaikalPciCpuIo2Dxe.inf
@@ -210,8 +208,8 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
 
   # USB
-!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
-  INF Platform/Baikal/Drivers/PciEmulation/PciEmulationXhci.inf
+!if $(BAIKAL_QEMU_M) == FALSE
+  INF Silicon/Baikal/BM1000/Drivers/NonDiscoverableXhciDxe/NonDiscoverableXhciDxe.inf
 !endif
   INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf

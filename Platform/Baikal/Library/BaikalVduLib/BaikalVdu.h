@@ -42,13 +42,19 @@
 /**********************************************************************/
 
 // Register: HTR
-#define HOR_AXIS_PANEL(hbp,hfp,hsw,hor_res) (UINT32) ((((UINT32)(hsw) - 1) << 24) | (UINT32)((hbp) << 16) | ((UINT32)((hor_res) / 16) << 8) | ((UINT32)(hfp) << 0))
+#define HOR_AXIS_PANEL(hbp,hfp,hsw,hor_res) ((UINT32) ((((UINT8) hsw) << 24) | \
+                       (((UINT8) hbp) << 16) | (((UINT8)((hor_res) / 16) << 8)) | \
+                       (((UINT8) hfp) <<  0)))
 
 // Register: VTR1
-#define VER_AXIS_PANEL(vbp,vfp,vsw) (UINT32)(((UINT32)(vbp) << 16) | ((UINT32)(vfp) << 8) | ((UINT32)(vsw) << 0))
+#define VER_AXIS_PANEL(vbp,vfp,vsw) ((UINT32) ((((UINT8) vbp)) << 16) | \
+                                    (((UINT8) vfp) << 8) | (((UINT8) vsw) << 0))
 
 // Register: HVTER
-#define TIMINGS_EXT(hbp,hfp,hsw,vbp,vfp,vsw) (UINT32)(((UINT32)(vsw / 256) << 24) | ((UINT32)(hsw / 256) << 16) | ((UINT32)(vbp / 256) << 12) | ((UINT32)(vfp / 256) << 8) | ((UINT32)(hbp / 256) << 4) | ((UINT32)(hfp / 256) << 4))
+#define TIMINGS_EXT(hbp,hfp,hsw,vbp,vfp,vsw) ((UINT32) ((((UINT8) (vsw / 256)) << 24) | \
+                        (((UINT8) (hsw / 256)) << 16) | (((UINT8) (vbp / 256)) << 12) | \
+                        (((UINT8) (vfp / 256)) <<  8) | (((UINT8) (hbp / 256)) << 4)  | \
+                        (((UINT8) (hfp / 256)) <<  4)))
 
 #define BAIKAL_VDU_CR1_FDW_4_WORDS        (0 << 16)
 #define BAIKAL_VDU_CR1_FDW_8_WORDS        (1 << 16)

@@ -1,0 +1,26 @@
+/** @file
+ *
+ *  Copyright (c) 2018 - 2021, Andrei Warkentin <andrey.warkentin@gmail.com>
+ *  Copyright (c) 2020, ARM Limited. All rights reserved.
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+ **/
+
+#langdef en-US  "English"
+
+#string STR_NULL_STRING       #language en-US ""
+
+#string STR_ACPI_FORM_TITLE   #language en-US "ACPI Configuration"
+
+#string STR_ACPI_PCIE_PROMPT  #language en-US "PCIe support"
+#string STR_ACPI_PCIE_HELP    #language en-US "PCIe support in ACPI. Baikal-specific ACPI needs OS driver. Single-device ECAM needs no special OS support"
+#string STR_ACPI_PCIE_OFF     #language en-US "No PCIe via ACPI"
+#string STR_ACPI_PCIE_CUSTOM  #language en-US "Baikal-specific ACPI"
+#string STR_ACPI_PCIE_ECAM    #language en-US "Single-device ECAM"
+
+#string STR_ACPI_MSI_PROMPT   #language en-US "PCIe MSI(X) support"
+#string STR_ACPI_MSI_HELP     #language en-US "PCIe MSI(X) support in ACPI. Choose ITS for Linux or ESXi-Arm. Choose MSI frame for Windows on Arm"
+#string STR_ACPI_MSI_NONE     #language en-US "Do not expose MSI via ITS or MADT MSI frame"
+#string STR_ACPI_MSI_ITS      #language en-US "Expose via ITS + IORT"
+#string STR_ACPI_MSI_V2M      #language en-US "Expose via MADT MSI frame"

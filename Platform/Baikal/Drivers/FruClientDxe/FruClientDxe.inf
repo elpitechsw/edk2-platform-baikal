@@ -22,6 +22,7 @@
   EmbeddedPkg/EmbeddedPkg.dec
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
+  Silicon/Baikal/Baikal.dec
 
 [LibraryClasses]
   I2cLib

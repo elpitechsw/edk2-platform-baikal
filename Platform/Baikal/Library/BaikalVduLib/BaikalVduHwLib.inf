@@ -19,8 +19,6 @@
   LIBRARY_CLASS                  = LcdHwLib
 
 [Sources.common]
-  BaikalHdmi.c
-  BaikalHdmi.h
   BaikalVdu.c
   BaikalVdu.h
 
@@ -36,8 +34,5 @@
   BaseLib
   DebugLib
   IoLib
-  TimerLib
   UefiLib
-
-[FixedPcd]
-  gBaikalTokenSpaceGuid.PcdHdmiBase
+  HdmiLib

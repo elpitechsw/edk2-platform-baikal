@@ -1,0 +1,57 @@
+/** @file
+ *
+ *  Copyright (c) 2018 - 2021, Andrei Warkentin <andrey.warkentin@gmail.com>
+ *  Copyright (c) 2020, ARM Limited. All rights reserved.
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+ **/
+
+#include <Guid/HiiPlatformSetupFormset.h>
+#include <Platform/ConfigVars.h>
+#include "ConfigDxeFormSetGuid.h"
+
+#define EFI_VARIABLE_NON_VOLATILE        0x00000001
+#define EFI_VARIABLE_BOOTSERVICE_ACCESS  0x00000002
+#define EFI_VARIABLE_RUNTIME_ACCESS      0x00000004
+#define EFI_VARIABLE_READ_ONLY           0x00000008
+
+formset
+  guid      = CONFIG_DXE_FORM_SET_GUID,
+  title     = STRING_TOKEN(STR_ACPI_FORM_TITLE),
+  help      = STRING_TOKEN(STR_NULL_STRING),
+  classguid = EFI_HII_PLATFORM_SETUP_FORMSET_GUID,
+
+  efivarstore ACPI_MSI_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = AcpiMsi,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
+  efivarstore ACPI_PCIE_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = AcpiPcie,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
+  form formid = 1,
+    title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
+    subtitle text = STRING_TOKEN(STR_NULL_STRING);
+
+    oneof varid = AcpiPcie.Mode,
+      prompt      = STRING_TOKEN(STR_ACPI_PCIE_PROMPT),
+      help        = STRING_TOKEN(STR_ACPI_PCIE_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_ACPI_PCIE_OFF),    value = ACPI_PCIE_OFF,    flags = 0;
+      option text = STRING_TOKEN(STR_ACPI_PCIE_CUSTOM), value = ACPI_PCIE_CUSTOM, flags = DEFAULT;
+      option text = STRING_TOKEN(STR_ACPI_PCIE_ECAM),   value = ACPI_PCIE_ECAM,   flags = 0;
+    endoneof;
+
+    oneof varid = AcpiMsi.Mode,
+      prompt      = STRING_TOKEN(STR_ACPI_MSI_PROMPT),
+      help        = STRING_TOKEN(STR_ACPI_MSI_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_ACPI_MSI_NONE), value = ACPI_MSI_NONE, flags = 0;
+      option text = STRING_TOKEN(STR_ACPI_MSI_ITS),  value = ACPI_MSI_ITS,  flags = DEFAULT;
+      option text = STRING_TOKEN(STR_ACPI_MSI_V2M),  value = ACPI_MSI_V2M,  flags = 0;
+    endoneof;
+  endform;
+endformset;

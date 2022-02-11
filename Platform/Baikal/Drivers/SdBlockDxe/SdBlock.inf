@@ -35,6 +35,7 @@
   gEfiBlockIoProtocolGuid
   gEfiDevicePathProtocolGuid
   gFdtClientProtocolGuid
+  gEfiCpuArchProtocolGuid
 
 [Depex]
   gFdtClientProtocolGuid

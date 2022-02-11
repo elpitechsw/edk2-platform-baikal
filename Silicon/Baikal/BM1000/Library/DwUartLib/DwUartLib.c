@@ -312,10 +312,14 @@ DwUartWrite (
   UINTN  Count = 0;
 
   while (Count < NumberOfBytes) {
-    // Wait until UART is able to accept another char
-    while (!(MmioRead32 (UART_LSR) & UART_LSR_THRE));
-
-    MmioWrite32 (UART_THR, Buffer[Count++]);
+    // Wait until UART is able to accept new data
+    if (MmioRead32 (UART_LSR) & UART_LSR_THRE) {
+      UINTN  FifoCount = 0;
+      while (FifoCount < UART_FIFO_LENGTH && Count < NumberOfBytes) {
+        MmioWrite32 (UART_THR, Buffer[Count++]);
+        ++FifoCount;
+      }
+    }
   }
 
   return Count;

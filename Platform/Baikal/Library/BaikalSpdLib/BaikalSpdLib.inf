@@ -16,10 +16,6 @@
 [Sources]
   BaikalSpdLib.c
 
-[LibraryClasses]
-  BaikalSmbusLib
-  I2cLib
-
 [Packages]
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec

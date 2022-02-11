@@ -6,16 +6,16 @@
 **/
 
 #include <PiDxe.h>
-#include <Library/BaikalI2cLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DwI2cLib.h>
 #include <Library/RealTimeClockLib.h>
 #include <Library/TimeBaseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeLib.h>
 #include <Protocol/FdtClient.h>
 
-#define RTC_I2C_BUS   0
+#define RTC_I2C_BASE  0x20250000
 
 #define BCD_MASK_SECONDS       0x7F
 #define BCD_MASK_MINUTES       0x7F
@@ -95,25 +95,27 @@ LibGetTime (
     return EFI_DEVICE_ERROR;
   }
 
-  I2cRxedSize = I2cTxRx (RTC_I2C_BUS,
-                         RtcAddr,
-                         (UINT8 *)&RegisterAddr,
-                         sizeof RegisterAddr,
-                         NULL,
-                         0
-                         );
+  I2cRxedSize = I2cTxRx (
+                  RTC_I2C_BASE,
+                  RtcAddr,
+                  (UINT8 *) &RegisterAddr,
+                  sizeof RegisterAddr,
+                  NULL,
+                  0
+                  );
 
   if (I2cRxedSize != 0) {
     return EFI_DEVICE_ERROR;
   }
 
-  I2cRxedSize = I2cTxRx (RTC_I2C_BUS,
-                         RtcAddr,
-                         NULL,
-                         0,
-                         Buf,
-                         I2cDataSize
-                         );
+  I2cRxedSize = I2cTxRx (
+                  RTC_I2C_BASE,
+                  RtcAddr,
+                  NULL,
+                  0,
+                  Buf,
+                  I2cDataSize
+                  );
 
   if (I2cRxedSize != I2cDataSize) {
     return EFI_DEVICE_ERROR;
@@ -222,13 +224,14 @@ LibSetTime (
   Buf[6] = Bin2Bcd (Time->Month);
   Buf[7] = Bin2Bcd (Time->Year - 2000);
 
-  I2cRxedSize = I2cTxRx (RTC_I2C_BUS,
-                         RtcAddr,
-                         Buf,
-                         sizeof Buf,
-                         NULL,
-                         0
-                         );
+  I2cRxedSize = I2cTxRx (
+                  RTC_I2C_BASE,
+                  RtcAddr,
+                  Buf,
+                  sizeof Buf,
+                  NULL,
+                  0
+                  );
 
   if (I2cRxedSize != 0) {
     return EFI_DEVICE_ERROR;
@@ -304,7 +307,7 @@ LibRtcInitialize (
   UINT32                PropSize;
   EFI_STATUS            Status;
 
-  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **)&FdtClient);
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   ASSERT_EFI_ERROR (Status);
 
   for (FdtNode = 0;;) {
@@ -319,7 +322,7 @@ LibRtcInitialize (
       EFI_PHYSICAL_ADDRESS  I2cBase = SwapBytes32 (((CONST UINT32 *)Prop)[1]);
 
       /* TODO: I2C bus should be identified in some other way... */
-      if (I2cBase == 0x20250000) {
+      if (I2cBase == RTC_I2C_BASE) {
         if (FdtClient->IsNodeEnabled (FdtClient, FdtNode)) {
           break;
         } else {

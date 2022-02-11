@@ -3,17 +3,16 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <Library/ArmLib.h>
 #include <Library/ArmSmcLib.h>
 #include <Library/DebugLib.h>
+#include <Library/GpioLib.h>
 #include <Library/IoLib.h>
 #include <Library/NetLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/SimpleNetwork.h>
+#include "GmacRegs.h"
 #include "GmacSnp.h"
-
-#define BM1000_GPIO32_BASE  0x20200000
-#define BM1000_GPIO32_DATA  (BM1000_GPIO32_BASE + 0x00)
-#define BM1000_GPIO32_DIR   (BM1000_GPIO32_BASE + 0x04)
 
 #define BM1000_MMXGBE_BASE                  0x30000000
 #define BM1000_MMXGBE_GMAC0_BASE            0x30240000
@@ -22,66 +21,6 @@
 #define BAIKAL_SMC_LCRU_ID                  0x82000000
 #define BAIKAL_SMC_PLAT_CMU_CLKCH_SET_RATE  6
 #define BAIKAL_SMC_PLAT_CMU_CLKCH_GET_RATE  7
-
-typedef struct {
-  UINT32  MacConfig;
-  UINT32  MacFrameFilter;
-  UINT32  MacHashHi;
-  UINT32  MacHashLo;
-  UINT32  MacMiiAddr;
-  UINT32  MacMiiData;
-  UINT32  MacFlowCtrl;
-  UINT32  MacVlanTag;
-  UINT32  MacVersion;
-  UINT32  MacDebug;
-  UINT32  MacWakeupFilter;
-  UINT32  MacPmtCtrlStatus;
-  UINT32  MacLpiCtrlStatus;
-  UINT32  MacLpiTimersCtrl;
-  UINT32  MacInt;
-  UINT32  MacIntMsk;
-  UINT32  MacAddr0Hi;
-  UINT32  MacAddr0Lo;
-  UINT32  MacAddr1Hi;
-  UINT32  MacAddr1Lo;
-  UINT32  MacAddr2Hi;
-  UINT32  MacAddr2Lo;
-  UINT32  MacAddr3Hi;
-  UINT32  MacAddr3Lo;
-  UINT32  MacAddr4Hi;
-  UINT32  MacAddr4Lo;
-  UINT32  MacAddr5Hi;
-  UINT32  MacAddr5Lo;
-  UINT32  MacAddr6Hi;
-  UINT32  MacAddr6Lo;
-  UINT32  MacAddr7Hi;
-  UINT32  MacAddr7Lo;
-  UINT32  MacAddr8Hi;
-  UINT32  MacAddr8Lo;
-  UINT32  MacReserved[20];
-  UINT32  MacMiiStatus;
-  UINT32  MacWdtTimeout;
-  UINT32  MacGpio;
-  UINT32  Reserved[967];
-  UINT32  DmaBusMode;
-  UINT32  DmaTxPollDemand;
-  UINT32  DmaRxPollDemand;
-  UINT32  DmaRxDescBaseAddr;
-  UINT32  DmaTxDescBaseAddr;
-  UINT32  DmaStatus;
-  UINT32  DmaOperationMode;
-  UINT32  DmaIntEn;
-  UINT32  DmaMissedFrameCntr;
-  UINT32  DmaRxWatchdog;
-  UINT32  DmaAxiBusMode;
-  UINT32  DmaAxiStatus;
-  UINT32  DmaReserved[6];
-  UINT32  DmaCurTxDescAddr;
-  UINT32  DmaCurRxDescAddr;
-  UINT32  DmaCurTxBufAddr;
-  UINT32  DmaCurRxBufAddr;
-  UINT32  DmaHwFeature;
-} GMAC_REGS;
 
 #define MAC_CONFIG_RE               BIT2
 #define MAC_CONFIG_TE               BIT3
@@ -169,6 +108,7 @@ typedef struct {
   EFI_SIMPLE_NETWORK_MODE      SnpMode;
   volatile GMAC_REGS          *Regs;
   UINTN                        Tx2ClkFreq;
+  EFI_PHYSICAL_ADDRESS         ResetGpioBase;
   INTN                         ResetGpioPin;
   INTN                         ResetPolarity;
   volatile UINT8               RxBufs[RX_DESC_NUM][RX_BUF_SIZE] __attribute__((aligned(16)));
@@ -327,7 +267,7 @@ GmacSnpGetReceiveFilterSetting (
   IN  EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   )
 {
-  CONST GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  CONST GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
   UINT32  ReceiveFilterSetting = EFI_SIMPLE_NETWORK_RECEIVE_UNICAST;
 
   if (!(GmacInst->Regs->MacFrameFilter & MAC_FRAMEFILTER_DBF)) {
@@ -354,9 +294,9 @@ GmacSnpGetStatus (
   OUT  VOID                        **TxBuf             OPTIONAL
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  UINTN                 MacMiiStatus;
-  EFI_TPL               SavedTpl;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  UINTN                  MacMiiStatus;
+  EFI_TPL                SavedTpl;
 
   ASSERT (Snp != NULL);
 
@@ -460,12 +400,13 @@ GmacSnpGetStatus (
 
 EFI_STATUS
 GmacSnpInstanceCtor (
-  IN   VOID              *GmacRegs,
-  IN   CONST INTN         ResetGpioPin,
-  IN   CONST INTN         ResetPolarity,
-  IN   EFI_MAC_ADDRESS   *MacAddr,
-  OUT  VOID             **Snp,
-  OUT  EFI_HANDLE       **Handle
+  IN   volatile GMAC_REGS           *GmacRegs,
+  IN   CONST EFI_PHYSICAL_ADDRESS    ResetGpioBase,
+  IN   CONST INTN                    ResetGpioPin,
+  IN   CONST INTN                    ResetPolarity,
+  IN   EFI_MAC_ADDRESS              *MacAddr,
+  OUT  VOID                        **Snp,
+  OUT  EFI_HANDLE                  **Handle
   )
 {
   GMAC_INSTANCE         *GmacInst;
@@ -489,6 +430,7 @@ GmacSnpInstanceCtor (
   GmacInst->Handle         = NULL;
   GmacInst->Regs           = GmacRegs;
   GmacInst->Tx2ClkFreq     = 0;
+  GmacInst->ResetGpioBase  = ResetGpioBase;
   GmacInst->ResetGpioPin   = ResetGpioPin;
   GmacInst->ResetPolarity  = ResetPolarity;
 
@@ -558,8 +500,8 @@ GmacSnpInstanceDtor (
   IN  VOID  *Snp
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  EFI_STATUS            Status;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  EFI_STATUS             Status;
 
   Status = gBS->FreePages ((EFI_PHYSICAL_ADDRESS) GmacInst, EFI_SIZE_TO_PAGES (sizeof (GMAC_INSTANCE)));
   return Status;
@@ -574,10 +516,10 @@ GmacSnpInitialize (
   IN  UINTN                         ExtraTxBufSize   OPTIONAL
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  UINTN                 DescIdx;
-  UINTN                 Limit;
-  EFI_TPL               SavedTpl;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  UINTN                  DescIdx;
+  UINTN                  Limit;
+  EFI_TPL                SavedTpl;
 
   ASSERT (Snp != NULL);
 
@@ -607,33 +549,38 @@ GmacSnpInitialize (
     return EFI_DEVICE_ERROR;
   }
 
-  if (GmacInst->ResetGpioPin >= 0  &&
+  if (GmacInst->ResetGpioBase &&
+      GmacInst->ResetGpioBase != (EFI_PHYSICAL_ADDRESS) &GmacInst->Regs->MacGpio &&
+      GmacInst->ResetGpioPin >= 0  &&
       GmacInst->ResetGpioPin <= 31 &&
       GmacInst->ResetPolarity >= 0) {
     if (GmacInst->ResetPolarity) {
-      MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << GmacInst->ResetGpioPin));
+      GpioOutRst (GmacInst->ResetGpioBase, GmacInst->ResetGpioPin);
     } else {
-      MmioOr32 (BM1000_GPIO32_DATA, 1 << GmacInst->ResetGpioPin);
+      GpioOutSet (GmacInst->ResetGpioBase, GmacInst->ResetGpioPin);
     }
 
-    MmioOr32 (BM1000_GPIO32_DIR, 1 << GmacInst->ResetGpioPin);
+    GpioDirSet (GmacInst->ResetGpioBase, GmacInst->ResetGpioPin);
   }
 
   GmacInst->Regs->DmaBusMode = DMA_BUSMODE_SWR;
   gBS->Stall (100);
 
-  if (GmacInst->ResetGpioPin >= 0  &&
+  if (GmacInst->ResetGpioBase      &&
+      GmacInst->ResetGpioBase != (EFI_PHYSICAL_ADDRESS) &GmacInst->Regs->MacGpio &&
+      GmacInst->ResetGpioPin >= 0  &&
       GmacInst->ResetGpioPin <= 31 &&
       GmacInst->ResetPolarity >= 0) {
     if (GmacInst->ResetPolarity) {
-      MmioOr32 (BM1000_GPIO32_DATA, 1 << GmacInst->ResetGpioPin);
+      GpioOutSet (GmacInst->ResetGpioBase, GmacInst->ResetGpioPin);
     } else {
-      MmioAnd32 (BM1000_GPIO32_DATA, ~(1 << GmacInst->ResetGpioPin));
+      GpioOutRst (GmacInst->ResetGpioBase, GmacInst->ResetGpioPin);
     }
   }
 
   for (Limit = 3000; Limit; --Limit) {
-    if (GmacInst->ResetGpioPin == 0xE0) {
+    if (GmacInst->ResetGpioBase == (EFI_PHYSICAL_ADDRESS) &GmacInst->Regs->MacGpio &&
+        GmacInst->ResetGpioPin == 0) {
       GmacInst->Regs->MacGpio |= MAC_GPIO_GPO;
     }
 
@@ -712,6 +659,7 @@ GmacSnpInitialize (
     }
   }
 
+  ArmDataSynchronizationBarrier ();
   GmacInst->Regs->DmaOperationMode = DMA_OPERATIONMODE_TSF |
                                      DMA_OPERATIONMODE_RSF |
                                      DMA_OPERATIONMODE_ST  |
@@ -770,12 +718,14 @@ GmacSnpExitBootServices (
   IN  VOID      *Context
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = Context;
+  GMAC_INSTANCE * CONST  GmacInst = Context;
   GmacInst->Regs->DmaBusMode = DMA_BUSMODE_SWR;
 
-  if (GmacInst->ResetGpioPin >= 0  &&
+  if (GmacInst->ResetGpioBase &&
+      GmacInst->ResetGpioBase != (EFI_PHYSICAL_ADDRESS) &GmacInst->Regs->MacGpio &&
+      GmacInst->ResetGpioPin >= 0  &&
       GmacInst->ResetGpioPin <= 31) {
-    MmioAnd32 (BM1000_GPIO32_DIR, ~(1 << GmacInst->ResetGpioPin));
+    GpioDirClr (GmacInst->ResetGpioBase, GmacInst->ResetGpioPin);
   }
 
   GmacInst->Snp.Mode->MediaPresent = FALSE;
@@ -858,9 +808,9 @@ GmacSnpReceiveFilters (
   IN  EFI_MAC_ADDRESS              *MCastFilter       OPTIONAL
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  CONST UINT32          ResultingMsk = Enable & ~Disable;
-  EFI_TPL               SavedTpl;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  CONST UINT32           ResultingMsk = Enable & ~Disable;
+  EFI_TPL                SavedTpl;
 
   ASSERT (Snp != NULL);
 
@@ -981,8 +931,8 @@ GmacSnpStationAddress (
   IN  EFI_MAC_ADDRESS              *NewMacAddr  OPTIONAL
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  EFI_TPL               SavedTpl;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  EFI_TPL                SavedTpl;
 
   ASSERT (Snp != NULL);
 
@@ -1125,8 +1075,8 @@ GmacSnpReceive ( // Receive a packet from a network interface
   OUT     UINT16                       *Protocol  OPTIONAL
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  EFI_TPL               SavedTpl;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  EFI_TPL                SavedTpl;
 
   ASSERT (Snp != NULL);
 
@@ -1197,6 +1147,7 @@ GmacSnpReceive ( // Receive a packet from a network interface
     GmacInst->RxDescReadIdx = (GmacInst->RxDescReadIdx + 1) % RX_DESC_NUM;
 
     if (GmacInst->Regs->DmaStatus & DMA_STATUS_RU) {
+      ArmDataSynchronizationBarrier ();
       GmacInst->Regs->DmaStatus   = DMA_STATUS_RU;
       GmacInst->Regs->DmaRxPollDemand = 0;
     }
@@ -1219,9 +1170,9 @@ GmacSnpTransmit (
   IN  UINT16                       *Protocol  OPTIONAL
   )
 {
-  GMAC_INSTANCE *CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
-  EFI_TPL               SavedTpl;
-  EFI_STATUS            Status;
+  GMAC_INSTANCE * CONST  GmacInst = BASE_CR (Snp, GMAC_INSTANCE, Snp);
+  EFI_TPL                SavedTpl;
+  EFI_STATUS             Status;
 
   ASSERT (Snp != NULL);
 
@@ -1294,6 +1245,7 @@ GmacSnpTransmit (
     GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes1 = BufSize << TDES1_TBS1_POS;
     GmacInst->TxDescs[GmacInst->TxDescWriteIdx].Tdes0 = TDES0_OWN | TDES0_IC | TDES0_LS | TDES0_FS | TDES0_TCH;
     GmacInst->TxDescWriteIdx = (GmacInst->TxDescWriteIdx + 1) % TX_DESC_NUM;
+    ArmDataSynchronizationBarrier ();
     Status = EFI_SUCCESS;
   } else {
     Status = EFI_NOT_READY;

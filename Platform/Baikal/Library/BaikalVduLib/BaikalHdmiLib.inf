@@ -1,0 +1,39 @@
+#/** @file
+#
+#  Component description file for BaikalHdmiLib module
+#
+# Copyright (C) 2020 Baikal Electronics JSC
+#
+# Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#**/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BaikalHdmiLib
+  FILE_GUID                      = 222F7D27-57F3-460B-A2D7-2457FF7AE52D
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = HdmiLib
+
+[Sources.common]
+  BaikalHdmi.c
+  BaikalHdmi.h
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  ArmPlatformPkg/ArmPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  DebugLib
+  IoLib
+  TimerLib
+  MemoryAllocationLib
+  BaseMemoryLib
+
+[FixedPcd]
+  gBaikalTokenSpaceGuid.PcdHdmiBase

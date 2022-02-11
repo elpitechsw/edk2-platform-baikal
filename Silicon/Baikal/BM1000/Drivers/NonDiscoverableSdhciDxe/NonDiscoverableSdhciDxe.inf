@@ -1,0 +1,31 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION    = 0x00010019
+  BASE_NAME      = NonDiscoverableSdhciDxe
+  FILE_GUID      = 59AA7146-641D-4068-8FA1-261A8B5F3CFB
+  MODULE_TYPE    = DXE_DRIVER
+  VERSION_STRING = 1.0
+  ENTRY_POINT    = NonDiscoverableSdhciEntryPoint
+
+[Sources.common]
+  NonDiscoverableSdhci.c
+
+[Packages]
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Silicon/Baikal/BM1000/BM1000.dec
+
+[LibraryClasses]
+  NonDiscoverableDeviceRegistrationLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Depex]
+  TRUE

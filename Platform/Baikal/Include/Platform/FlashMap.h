@@ -7,8 +7,8 @@
 #define FLASH_MAP_H_
 
 #define FLASH_MAP_FDT    0x40000
-#define FLASH_MAP_VAR    0x50000
-#define FLASH_MAP_FIP    0x110000
+#define FLASH_MAP_VAR    0x80000
+#define FLASH_MAP_FIP    0x140000
 #define FLASH_MAP_BLOCK  0x800000
 
 #endif // FLASH_MAP_H_

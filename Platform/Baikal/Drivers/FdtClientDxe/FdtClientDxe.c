@@ -3,13 +3,7 @@
 *
 *  Copyright (c) 2016, Linaro Ltd. All rights reserved.<BR>
 *
-*  This program and the accompanying materials are
-*  licensed and made available under the terms and conditions of the BSD License
-*  which accompanies this distribution.  The full text of the license may be found at
-*  http://opensource.org/licenses/bsd-license.php
-*
-*  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+*  SPDX-License-Identifier: BSD-2-Clause-Patent
 *
 **/
 
@@ -32,8 +26,8 @@ STATIC
 BOOLEAN
 EFIAPI
 IsNodeEnabled (
-  IN  FDT_CLIENT_PROTOCOL  *This,
-  IN  INT32                 Node
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  CONST INT32              Node
   )
 {
   INT32         Len;
@@ -66,7 +60,7 @@ EFI_STATUS
 EFIAPI
 GetNodeProperty (
   IN  FDT_CLIENT_PROTOCOL     *This,
-  IN  INT32                   Node,
+  IN  CONST INT32              Node,
   IN  CONST CHAR8             *PropertyName,
   OUT CONST VOID              **Prop,
   OUT UINT32                  *PropSize OPTIONAL
@@ -93,10 +87,10 @@ EFI_STATUS
 EFIAPI
 SetNodeProperty (
   IN  FDT_CLIENT_PROTOCOL     *This,
-  IN  INT32                   Node,
+  IN  CONST INT32              Node,
   IN  CONST CHAR8             *PropertyName,
   IN  CONST VOID              *Prop,
-  IN  UINT32                  PropSize
+  IN  CONST UINT32             PropSize
   )
 {
   INT32 Ret;
@@ -117,7 +111,7 @@ EFIAPI
 FindNextCompatibleNode (
   IN  FDT_CLIENT_PROTOCOL     *This,
   IN  CONST CHAR8             *CompatibleString,
-  IN  INT32                   PrevNode,
+  IN  CONST INT32              PrevNode,
   OUT INT32                   *Node
   )
 {
@@ -160,7 +154,7 @@ EFIAPI
 FindNextSubnode (
   IN  FDT_CLIENT_PROTOCOL     *This,
   IN  CONST CHAR8             *SubnodeString,
-  IN  INT32                   PrevSubnode,
+  IN  CONST INT32              PrevSubnode,
   OUT INT32                   *Subnode
   )
 {
@@ -176,6 +170,29 @@ FindNextSubnode (
 
   *Subnode = Next;
   return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+EFIAPI
+FindNodeByPhandle (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  CONST UINT32             Phandle,
+  OUT INT32                   *Node
+  )
+{
+  INTN  Offset;
+
+  ASSERT (mDeviceTreeBase != NULL);
+  ASSERT (Node != NULL);
+
+  Offset = fdt_node_offset_by_phandle(mDeviceTreeBase, Phandle);
+  if (Offset >= 0) {
+    *Node = Offset;
+    return EFI_SUCCESS;
+  }
+
+  return EFI_NOT_FOUND;
 }
 
 STATIC
@@ -255,9 +272,32 @@ FindCompatibleNodeReg (
 STATIC
 EFI_STATUS
 EFIAPI
+FindParentNode (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  CONST INT32              Node,
+  OUT INT32                   *ParentNode
+  )
+{
+  INTN  Offset;
+
+  ASSERT (mDeviceTreeBase != NULL);
+  ASSERT (ParentNode != NULL);
+
+  Offset = fdt_parent_offset(mDeviceTreeBase, Node);
+  if (Offset >= 0) {
+    *ParentNode = Offset;
+    return EFI_SUCCESS;
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+STATIC
+EFI_STATUS
+EFIAPI
 FindNextMemoryNodeReg (
   IN  FDT_CLIENT_PROTOCOL     *This,
-  IN  INT32                   PrevNode,
+  IN  CONST INT32              PrevNode,
   OUT INT32                   *Node,
   OUT CONST VOID              **Reg,
   OUT UINTN                   *AddressCells,
@@ -364,8 +404,10 @@ STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
   FindCompatibleNode,
   FindNextCompatibleNode,
   FindNextSubnode,
+  FindNodeByPhandle,
   FindCompatibleNodeProperty,
   FindCompatibleNodeReg,
+  FindParentNode,
   FindMemoryNodeReg,
   FindNextMemoryNodeReg,
   GetOrInsertChosenNode

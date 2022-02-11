@@ -1,0 +1,32 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SpiFlash
+  FILE_GUID                      = FC0AC1CA-84FA-11EB-B2EC-00259087216F
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SpiFlashMain
+
+[Sources]
+  SpiFlash.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  ShellPkg/ShellPkg.dec
+
+[Protocols]
+  gEfiShellParametersProtocolGuid               # PROTOCOL ALWAYS_CONSUMED
+  gEfiShellProtocolGuid                         # PROTOCOL ALWAYS_CONSUMED
+
+[LibraryClasses]
+  BaikalSmcLib
+  ShellLib
+  UefiApplicationEntryPoint
+  UefiLib

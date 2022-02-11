@@ -1,6 +1,6 @@
 ## @file
-#  INF file for the Baikal-M PCI Express Controller Driver.
-#  Copyright (c) 2020 Baikal Electronics JSC (www.baikalelectronics.ru)
+#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]
@@ -21,6 +21,7 @@
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
+  Silicon/Baikal/Baikal.dec
 
 [Protocols]
   gFdtClientProtocolGuid   ## CONSUMES
@@ -29,7 +30,14 @@
   ArmLib
   BaseLib
   DebugLib
+  GpioLib
+  PcdLib
   UefiBootServicesTableLib
+
+[Pcd]
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode
+  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks
 
 [Depex]
   TRUE

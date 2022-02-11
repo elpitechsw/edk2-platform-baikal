@@ -26,20 +26,6 @@ typedef enum {
 #define ASSERT_INVALID_PCI_SEGMENT_ADDRESS(A,M) \
   ASSERT (((A) & (0xFFFF0000F0000000ULL | (M))) == 0)
 
-#define BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0  4
-#define BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1  5
-
-VOID
-BaikalPciHostBridgeLibCfgWindow (
-  IN  EFI_PHYSICAL_ADDRESS  PcieCdmBase,
-  IN  UINTN                 RegionIdx,
-  IN  UINT64                CpuBase,
-  IN  UINT64                PciBase,
-  IN  UINT64                Size,
-  IN  UINTN                 Type,
-  IN  UINTN                 EnableFlags
-  );
-
 BOOLEAN
 BaikalPciHostBridgeLibLink (
   IN  CONST UINTN  PcieIdx
@@ -57,50 +43,39 @@ PciSegmentLibGetConfigBase (
   CONST UINTN  Function = (PciSegLibAddr >> 12) & 0x7;
   extern EFI_PHYSICAL_ADDRESS mPcieCdmBases[];
   extern EFI_PHYSICAL_ADDRESS mPcieCfgBases[];
+  extern UINT32               mPcieCfg0FilteringWorks;
 
-  if (!Bus) {
-    if (!Device) {
+  if (Bus == 0) {
+    if (Device == 0) { // DBI access
       return mPcieCdmBases[Segment];
-    } else {
+    } else { // Must not access beyond RCB:0.0
       return MAX_UINT64;
     }
-  }
-
-  if (Bus == 1) {
-    if (!Device) {
-      if (!BaikalPciHostBridgeLibLink(Segment)) {
+  } else if (Bus == 1) {
+    if (Device == 0) {
+      if (Function == 0 || (mPcieCfg0FilteringWorks & (1 << Segment))) {
+        if (BaikalPciHostBridgeLibLink(Segment)) {
+          return mPcieCfgBases[Segment] + (Function << 12);
+        } else {
+          return MAX_UINT64;
+        }
+      } else {
+        //
+        // TLP filtering doesn't work. Must not access beyond RCS:0.0. But this
+        // probably means its a simple adapter with a single function anyway.
+        //
         return MAX_UINT64;
       }
-
-      BaikalPciHostBridgeLibCfgWindow (
-        mPcieCdmBases[Segment],
-        1,
-        mPcieCfgBases[Segment],
-        (Bus << 24) | (Device << 19) | (Function << 16),
-        SIZE_64KB,
-        BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
-        0
-        );
     } else {
       return MAX_UINT64;
     }
   } else {
-    if (!BaikalPciHostBridgeLibLink(Segment)) {
+    if (BaikalPciHostBridgeLibLink(Segment)) {
+      return mPcieCfgBases[Segment] + (Bus << 20) + (Device << 15) + (Function << 12);
+    } else {
       return MAX_UINT64;
     }
-
-    BaikalPciHostBridgeLibCfgWindow (
-      mPcieCdmBases[Segment],
-      1,
-      mPcieCfgBases[Segment],
-      (Bus << 24) | (Device << 19) | (Function << 16),
-      SIZE_64KB,
-      BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1,
-      0
-      );
   }
-
-  return mPcieCfgBases[Segment];
 }
 
 /**

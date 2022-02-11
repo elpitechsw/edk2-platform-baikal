@@ -22,92 +22,92 @@ UINTN
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_BOARD_MANUFACTURER) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_BOARDNAME) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_BOARD_SERIALNUMBER) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_BOARD_PARTNUMBER) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_BOARD_FILEID) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_MANUFACTURER) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_NAME) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_PARTNUMBER) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_VERSION) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_SERIALNUMBER) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_ASSETTAG) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 UINTN
 (EFIAPI *FRU_CLIENT_READ_PRODUCT_FILEID) (
-  OUT  CHAR8 *CONST  DstBuf,
-  IN   CONST UINTN   DstBufSize
+  OUT  CHAR8 * CONST  DstBuf,
+  IN   CONST UINTN    DstBufSize
   );
 
 typedef
 EFI_STATUS
 (EFIAPI *FRU_CLIENT_GET_MULTIRECORD_MACADDR) (
-  IN   CONST UINTN             MacAddrIdx,
-  OUT  EFI_MAC_ADDRESS *CONST  MacAddr
+  IN   CONST UINTN              MacAddrIdx,
+  OUT  EFI_MAC_ADDRESS * CONST  MacAddr
   );
 
 struct _FRU_CLIENT_PROTOCOL {

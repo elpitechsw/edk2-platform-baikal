@@ -17,16 +17,16 @@
   FLASH_DEFINITION        = Platform/Baikal/BM1000Rdb/BM1000Rdb.fdf
 
   # Network definition
-  DEFINE NETWORK_HTTP_BOOT_ENABLE = FALSE
-  DEFINE NETWORK_IP6_ENABLE       = FALSE
-  DEFINE NETWORK_ISCSI_ENABLE     = FALSE
-  DEFINE NETWORK_SNP_ENABLE       = FALSE
-  DEFINE NETWORK_TLS_ENABLE       = FALSE
-  DEFINE NETWORK_VLAN_ENABLE      = FALSE
+  DEFINE NETWORK_ALLOW_HTTP_CONNECTIONS = TRUE
+  DEFINE NETWORK_IP6_ENABLE             = FALSE
+  DEFINE NETWORK_ISCSI_ENABLE           = FALSE
+  DEFINE NETWORK_SNP_ENABLE             = FALSE
+  DEFINE NETWORK_TLS_ENABLE             = FALSE
+  DEFINE NETWORK_VLAN_ENABLE            = FALSE
 
 [BuildOptions]
   GCC:*_*_*_CC_FLAGS = -DDISABLE_NEW_DEPRECATED_INTERFACES
-  GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a
+  GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a -fno-stack-protector
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
 !if $(BAIKAL_MBM10)
@@ -57,7 +57,6 @@
   ArmPlatformStackLib|ArmPlatformPkg/Library/ArmPlatformStackLib/ArmPlatformStackLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
-  BaikalSmbusLib|Platform/Baikal/Library/BaikalSmbusLib/BaikalSmbusLib.inf
   BaikalSmcLib|Platform/Baikal/Library/BaikalSmcLib/BaikalSmcLib.inf
   BaikalSpdLib|Platform/Baikal/Library/BaikalSpdLib/BaikalSpdLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
@@ -79,9 +78,11 @@
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
+  GpioLib|Silicon/Baikal/Library/DwGpioLib/DwGpioLib.inf
+  HdmiLib|Platform/Baikal/Library/BaikalVduLib/BaikalHdmiLib.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
-  I2cLib|Platform/Baikal/Library/BaikalI2cLib/BaikalI2cLib.inf
+  I2cLib|Silicon/Baikal/Library/DwI2cLib/DwI2cLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LcdHwLib|Platform/Baikal/Library/BaikalVduLib/BaikalVduHwLib.inf
   LcdPlatformLib|Platform/Baikal/Library/BaikalVduLib/BaikalVduLib.inf
@@ -100,7 +101,7 @@
   PrePiHobListPointerLib|ArmPlatformPkg/Library/PrePiHobListPointerLib/PrePiHobListPointerLib.inf
   PrePiLib|EmbeddedPkg/Library/PrePiLib/PrePiLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
-!if ($(BAIKAL_QEMU_M) == FALSE) AND ($(BAIKAL_QEMU_S) == FALSE)
+!if $(BAIKAL_QEMU_M) == FALSE
   RealTimeClockLib|Platform/Baikal/Library/BaikalRtcLib/BaikalRtcLib.inf
 !else
   RealTimeClockLib|EmbeddedPkg/Library/TemplateRealTimeClockLib/TemplateRealTimeClockLib.inf
@@ -127,7 +128,6 @@
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   VarCheckLib|MdeModulePkg/Library/VarCheckLib/VarCheckLib.inf
-
 !if $(TARGET) == RELEASE
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
@@ -193,6 +193,7 @@
   MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
   EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
   EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
+  MdeModulePkg/Universal/EbcDxe/EbcDxe.inf
 
   MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
   MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf {
@@ -239,17 +240,18 @@
 
   # SMBIOS Support
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-  Platform/Baikal/Drivers/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
+  Platform/Baikal/BM1000Rdb/Drivers/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
 
   # ACPI support
   MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
-  Platform/Baikal/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
+  Platform/Baikal/BM1000Rdb/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # BDS
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+  Platform/Baikal/BM1000Rdb/Drivers/ConfigDxe/ConfigDxe.inf
   Platform/Baikal/Logo/LogoDxe.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
     <LibraryClasses>
@@ -259,7 +261,7 @@
   }
 
   # Disk driver
-  Platform/Baikal/Drivers/PciEmulation/PciEmulationAhci.inf
+  Silicon/Baikal/BM1000/Drivers/NonDiscoverableAhciDxe/NonDiscoverableAhciDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Pci/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
@@ -285,7 +287,7 @@
   Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
 
   # USB
-  Platform/Baikal/Drivers/PciEmulation/PciEmulationXhci.inf
+  Silicon/Baikal/BM1000/Drivers/NonDiscoverableXhciDxe/NonDiscoverableXhciDxe.inf
   MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
   MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
@@ -328,9 +330,9 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutUgaSupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdHiiOsRuntimeSupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdInstallAcpiSdtProtocol|TRUE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdDriverDiagnostics2Disable|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdDriverDiagnosticsDisable|TRUE
+  gEfiMdePkgTokenSpaceGuid.PcdUgaConsumeSupport|FALSE
   gEmbeddedTokenSpaceGuid.PcdPrePiProduceMemoryTypeInformationHob|TRUE
 
 [PcdsPatchableInModule.common]
@@ -393,14 +395,17 @@
 !endif
 
 [PcdsDynamicDefault.common]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|80
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|25
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn|100
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow|31
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|1920
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|1080
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|1920
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|1080
+  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
 
 [PcdsDynamicHii.common]
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|L"AcpiMsi"|gConfigDxeFormSetGuid|0x0|1
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|L"AcpiPcie"|gConfigDxeFormSetGuid|0x0|1
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5
