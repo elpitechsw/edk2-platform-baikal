@@ -59,8 +59,8 @@
   gBaikalTokenSpaceGuid.PcdVduLcruId|0|UINT32|0x0000000A
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
-  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x00000011
-  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|0|UINT32|0x00000010
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|1|UINT32|0x00000011
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|1|UINT32|0x00000010
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|1|UINT32|0x00000012
   gBaikalTokenSpaceGuid.PcdUart1Mode|1|UINT32|0x00000013
   gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0|UINT32|0x0000000F
