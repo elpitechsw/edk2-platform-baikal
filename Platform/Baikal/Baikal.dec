@@ -49,6 +49,7 @@
   gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x0000000B
   gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000006
   gBaikalTokenSpaceGuid.PcdVduMaxMode|10|UINT32|0x00000005
+  gBaikalTokenSpaceGuid.PcdPs2MultUartBaseAddr|0x20240000|UINT64|0x0000000C
 
 [PcdsFeatureFlag.common]
   gArmPlatformTokenSpaceGuid.PcdSystemMemoryInitializeInSec|FALSE|BOOLEAN|0x00000002

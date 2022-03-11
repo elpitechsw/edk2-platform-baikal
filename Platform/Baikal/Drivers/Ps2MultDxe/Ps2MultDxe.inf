@@ -1,0 +1,94 @@
+## @file
+# PS/2 Multiplexer Driver.
+#
+# PS/2 Multiplexer Driver for UEFI. The keyboard type implemented follows IBM
+# compatible PS2 protocol.
+#
+# Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution.  The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Ps2MultDxe
+  MODULE_UNI_FILE                = Ps2MultDxe.uni
+  FILE_GUID                      = 41e61528-65dc-4307-9102-ff9950ebba09
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializePs2Mult
+  UNLOAD                         = UnloadPs2Mult
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#  DRIVER_BINDING                = gPs2MultDriver;
+#  COMPONENT_NAME                = gPs2MultComponentName;
+#  COMPONENT_NAME2               = gPs2MultComponentName2;
+#
+
+[Sources]
+  ComponentName.c
+  Ps2Mult.h
+  Ps2KbdCtrller.c
+  Ps2KbdTextIn.c
+  Ps2MultIo.c
+  Ps2Mult.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/BM1000/BM1000.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UefiRuntimeServicesTableLib
+  DebugLib
+  ReportStatusCodeLib
+  UefiBootServicesTableLib
+  UefiLib
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  TimerLib
+  PcdLib
+  IoLib
+  DwUartLib
+
+[Protocols]
+  gEfiSimpleTextInProtocolGuid                  ## BY_START
+  gEfiSimpleTextInputExProtocolGuid             ## BY_START
+  gEfiSimplePointerProtocolGuid                 ## BY_START
+  gEfiPs2PolicyProtocolGuid                     ## SOMETIMES_CONSUMES
+  gEfiDevicePathProtocolGuid                    ## TO_START
+
+[FeaturePcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPs2KbdExtendedVerification     ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPs2MouseExtendedVerification   ## CONSUMES
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFastPS2Detection             ## SOMETIMES_CONSUMES
+  gBaikalTokenSpaceGuid.PcdPs2MultUartBaseAddr                   ## CONSUMES
+
+#
+# [Event]
+#
+#   ##
+#   # Timer event used to read key strokes at a regular interval.
+#   #
+#   EVENT_TYPE_PERIODIC_TIMER   ## CONSUMES
+#
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  Ps2MultDxeExtra.uni
+
+[Depex]
+  TRUE
