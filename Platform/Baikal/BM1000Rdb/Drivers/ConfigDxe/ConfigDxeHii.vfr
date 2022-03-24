@@ -32,6 +32,11 @@ formset
     name      = AcpiPcie,
     guid      = CONFIG_DXE_FORM_SET_GUID;
 
+  efivarstore VDU_LVDS_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = VduLvds,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
   form formid = 1,
     title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
     subtitle text = STRING_TOKEN(STR_NULL_STRING);
@@ -53,5 +58,14 @@ formset
       option text = STRING_TOKEN(STR_ACPI_MSI_ITS),  value = ACPI_MSI_ITS,  flags = DEFAULT;
       option text = STRING_TOKEN(STR_ACPI_MSI_V2M),  value = ACPI_MSI_V2M,  flags = 0;
     endoneof;
+
+    oneof varid = VduLvds.Mode,
+      prompt      = STRING_TOKEN(STR_VDU_LVDS_PROMPT),
+      help        = STRING_TOKEN(STR_VDU_LVDS_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_VDU_LVDS_OFF), value = VDU_LVDS_OFF, flags = 0;
+      option text = STRING_TOKEN(STR_VDU_LVDS_ON),  value = VDU_LVDS_ON,  flags = DEFAULT;
+    endoneof;
   endform;
 endformset;
+

@@ -127,6 +127,19 @@ SetupVariables (
     ASSERT_EFI_ERROR (Status);
   }
 
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"VduLvds",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Status = PcdSet32S (PcdVduLvdsMode, PcdGet32 (PcdVduLvdsMode));
+    ASSERT_EFI_ERROR (Status);
+  }
+
   return EFI_SUCCESS;
 }
 

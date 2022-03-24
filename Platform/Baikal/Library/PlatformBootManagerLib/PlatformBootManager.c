@@ -32,6 +32,7 @@
 #include <Protocol/PciIo.h>
 #include <Protocol/PciRootBridgeIo.h>
 #include <Protocol/PlatformBootManager.h>
+#include <Protocol/FdtClient.h>
 
 #define DP_NODE_LEN(Type) { (UINT8)sizeof (Type), (UINT8)(sizeof (Type) >> 8) }
 
@@ -628,6 +629,50 @@ PlatformRegisterOptionsAndKeys (
   ASSERT (Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED);
 }
 
+#define VDU_LVDS      0x202D0000
+
+VOID
+EFIAPI
+FixupFdt (
+  VOID
+  )
+{
+  FDT_CLIENT_PROTOCOL             *FdtClient;
+  EFI_STATUS                       Status;
+  INT32                            Node = 0;
+  CONST VOID                      *Prop;
+  UINT32                           PropSize;
+
+  if (PcdGet32(PcdVduLvdsMode) == 0) {
+    Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+    if (EFI_ERROR (Status)) {
+      return;
+    }
+    while (
+      FdtClient->FindNextCompatibleNode (
+        FdtClient, "baikal,vdu", Node, &Node
+      ) == EFI_SUCCESS
+    ) {
+      Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
+      if(Status == EFI_SUCCESS && PropSize == 16) {
+        if (SwapBytes64 (((CONST UINT64 *) Prop)[0]) == VDU_LVDS) {
+          Status = FdtClient->SetNodeProperty (
+            FdtClient,
+            Node,
+            "status",
+	    "disabled",
+            9
+	    );
+          break;
+        }
+      }
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't update vdu_lvds status - %r\n", Status));
+    }
+  }
+}
+
 //
 // BDS Platform Functions
 //
@@ -726,6 +771,8 @@ PlatformBootManagerBeforeConsole (
   // Register platform-specific boot options and keyboard shortcuts.
   //
   PlatformRegisterOptionsAndKeys ();
+
+  FixupFdt ();
 }
 
 STATIC
