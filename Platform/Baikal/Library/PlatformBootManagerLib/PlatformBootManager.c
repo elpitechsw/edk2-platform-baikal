@@ -639,36 +639,39 @@ FixupFdt (
 {
   FDT_CLIENT_PROTOCOL             *FdtClient;
   EFI_STATUS                       Status;
-  INT32                            Node = 0;
-  CONST VOID                      *Prop;
-  UINT32                           PropSize;
+  INT32                            Node = 0, SubNode;
+
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
 
   if (PcdGet32(PcdVduLvdsMode) == 0) {
-    Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
-    if (EFI_ERROR (Status)) {
-      return;
-    }
-    while (
-      FdtClient->FindNextCompatibleNode (
-        FdtClient, "baikal,vdu", Node, &Node
-      ) == EFI_SUCCESS
-    ) {
-      Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
-      if(Status == EFI_SUCCESS && PropSize == 16) {
-        if (SwapBytes64 (((CONST UINT64 *) Prop)[0]) == VDU_LVDS) {
-          Status = FdtClient->SetNodeProperty (
+    Status = FdtClient->FindNodeByAlias (FdtClient, "vdu-lvds", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->SetNodeProperty (
             FdtClient,
             Node,
             "status",
 	    "disabled",
             9
 	    );
-          break;
-        }
-      }
     }
     if (EFI_ERROR(Status)) {
       DEBUG((EFI_D_ERROR, "Can't update vdu_lvds status - %r\n", Status));
+    }
+  }
+
+  if (PcdGet32(PcdUart1Mode) == 0) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "serial1", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->FindNextSubnode(FdtClient, "ps2mult", Node, &SubNode);
+      if(Status == EFI_SUCCESS) {
+        Status = FdtClient->DeleteNode(FdtClient, SubNode);
+      }
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't delete ps2mult node - %r\n", Status));
     }
   }
 }

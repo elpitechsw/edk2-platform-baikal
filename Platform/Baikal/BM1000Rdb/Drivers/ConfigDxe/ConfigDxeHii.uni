@@ -11,7 +11,7 @@
 
 #string STR_NULL_STRING       #language en-US ""
 
-#string STR_ACPI_FORM_TITLE   #language en-US "ACPI/LVDS Configuration"
+#string STR_ACPI_FORM_TITLE   #language en-US "ACPI/Devices Configuration"
 
 #string STR_ACPI_PCIE_PROMPT  #language en-US "PCIe support"
 #string STR_ACPI_PCIE_HELP    #language en-US "PCIe support in ACPI. Baikal-specific ACPI needs OS driver. Device-per-segment ECAM needs no special OS support"
@@ -29,3 +29,8 @@
 #string STR_VDU_LVDS_HELP     #language en-US "Enable/Disable VDU LVDS."
 #string STR_VDU_LVDS_OFF      #language en-US "Disabled"
 #string STR_VDU_LVDS_ON       #language en-US "Enabled"
+
+#string STR_UART1_PROMPT      #language en-US "UART1 mode"
+#string STR_UART1_HELP        #language en-US "Set Serdev or Normal UART1 mode."
+#string STR_UART1_NORM        #language en-US "Normal"
+#string STR_UART1_SERDEV      #language en-US "Serdev"
