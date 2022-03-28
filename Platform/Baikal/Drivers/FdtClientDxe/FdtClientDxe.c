@@ -396,6 +396,46 @@ GetOrInsertChosenNode (
   return EFI_SUCCESS;
 }
 
+STATIC
+EFI_STATUS
+EFIAPI
+FindNodeByAlias (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  CONST CHAR8             *Alias,
+  OUT INT32                   *Node
+  )
+{
+  CONST CHAR8                 *Path;
+  INT32                        Offset;
+
+  Path = fdt_get_alias(mDeviceTreeBase, Alias);
+  if (!Path)
+    return EFI_NOT_FOUND;
+  Offset = fdt_path_offset(mDeviceTreeBase, Path);
+  if (Offset > 0) {
+    *Node = Offset;
+    return EFI_SUCCESS;
+  } else {
+    return EFI_NOT_FOUND;
+  }
+}
+
+STATIC
+EFI_STATUS
+EFIAPI
+DeleteNode (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  INT32                    Node
+  )
+{
+  ASSERT (mDeviceTreeBase != NULL);
+  ASSERT (Node != 0);
+
+  fdt_del_node(mDeviceTreeBase, Node);
+
+  return EFI_SUCCESS;
+}
+
 STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
   IsNodeEnabled,
   GetNodeProperty,
@@ -409,7 +449,9 @@ STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
   FindParentNode,
   FindMemoryNodeReg,
   FindNextMemoryNodeReg,
-  GetOrInsertChosenNode
+  GetOrInsertChosenNode,
+  FindNodeByAlias,
+  DeleteNode
 };
 
 STATIC
