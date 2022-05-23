@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -8,17 +8,17 @@
 #include <Library/PciHostBridgeLib.h>
 
 PCI_ROOT_BRIDGE *
-BaikalPciHostBridgeLibGetRootBridges (
-  OUT UINTN  *Count
+PciHostBridgeLibGetRootBridges (
+  OUT UINTN * CONST  Count
 );
 
 PCI_ROOT_BRIDGE *
 EFIAPI
 PciHostBridgeGetRootBridges (
-  OUT UINTN  *Count
+  OUT UINTN * CONST  Count
   )
 {
-  return BaikalPciHostBridgeLibGetRootBridges (Count);
+  return PciHostBridgeLibGetRootBridges (Count);
 }
 
 VOID

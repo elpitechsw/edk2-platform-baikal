@@ -1,5 +1,5 @@
 ## @file
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -11,13 +11,3 @@
 
 [Includes]
   Include
-
-[Guids]
-  gBm1000TokenSpaceGuid = { 0x35E5A568, 0xF699, 0x11EA, { 0xA4, 0x5C, 0x48, 0x4D, 0x7E, 0x9D, 0xF5, 0x24 } }
-
-[PcdsFixedAtBuild.common]
-  gBm1000TokenSpaceGuid.PcdUartRegisterBase|0x0|UINT64|0x00000001
-  gBm1000TokenSpaceGuid.PcdUartBaudRate|115200|UINT64|0x00000002
-  gBm1000TokenSpaceGuid.PcdUartDataBits|8|UINT8|0x00000003
-  gBm1000TokenSpaceGuid.PcdUartParity|1|UINT8|0x00000004
-  gBm1000TokenSpaceGuid.PcdUartStopBits|1|UINT8|0x00000005

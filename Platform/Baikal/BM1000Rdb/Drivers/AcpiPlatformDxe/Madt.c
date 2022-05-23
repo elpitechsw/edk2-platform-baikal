@@ -16,9 +16,9 @@
 
 #define BAIKAL_MADT_GICC_ENTRY(CPUInterfaceNumber, Mpidr)  {                 \
   /* UINT8   Type                          */                                \
-  EFI_ACPI_6_3_GIC,                                                          \
+  EFI_ACPI_6_4_GIC,                                                          \
   /* UINT8   Length                        */                                \
-  sizeof (EFI_ACPI_6_3_GIC_STRUCTURE),                                       \
+  sizeof (EFI_ACPI_6_4_GIC_STRUCTURE),                                       \
   /* UINT16  Reserved                      */                                \
   EFI_ACPI_RESERVED_WORD,                                                    \
   /* UINT32  CPUInterfaceNumber            */                                \
@@ -26,7 +26,7 @@
   /* UINT32  AcpiProcessorUid              */                                \
   CPUInterfaceNumber,                                                        \
   /* UINT32  Flags                         */                                \
-  EFI_ACPI_6_3_GIC_ENABLED,                                                  \
+  EFI_ACPI_6_4_GIC_ENABLED,                                                  \
   /* UINT32  ParkingProtocolVersion        */                                \
   0,                                                                         \
   /* UINT32  PerformanceInterruptGsiv      */                                \
@@ -55,19 +55,19 @@
 
 #pragma pack(1)
 typedef struct {
-  EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER  Table;
-  EFI_ACPI_6_3_GIC_STRUCTURE                           GicC[BAIKAL_MADT_CPU_COUNT];
-  EFI_ACPI_6_3_GIC_DISTRIBUTOR_STRUCTURE               GicD;
-  EFI_ACPI_6_3_GIC_MSI_FRAME_STRUCTURE                 GicMsiFrame;
-  EFI_ACPI_6_3_GIC_ITS_STRUCTURE                       GicIts;
+  EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER  Table;
+  EFI_ACPI_6_4_GIC_STRUCTURE                           GicC[BAIKAL_MADT_CPU_COUNT];
+  EFI_ACPI_6_4_GIC_DISTRIBUTOR_STRUCTURE               GicD;
+  EFI_ACPI_6_4_GIC_MSI_FRAME_STRUCTURE                 GicMsiFrame;
+  EFI_ACPI_6_4_GIC_ITS_STRUCTURE                       GicIts;
 } BAIKAL_ACPI_MADT;
 
 STATIC BAIKAL_ACPI_MADT  Madt = {
   {
     BAIKAL_ACPI_HEADER (
-      EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+      EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
       BAIKAL_ACPI_MADT,
-      EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION,
+      EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION,
       0x5444414D
       ),
     /* UINT32  LocalApicAddress */
@@ -87,9 +87,9 @@ STATIC BAIKAL_ACPI_MADT  Madt = {
   },
   {
     /* UINT8   Type                */
-    EFI_ACPI_6_3_GICD,
+    EFI_ACPI_6_4_GICD,
     /* UINT8   Length              */
-    sizeof (EFI_ACPI_6_3_GIC_DISTRIBUTOR_STRUCTURE),
+    sizeof (EFI_ACPI_6_4_GIC_DISTRIBUTOR_STRUCTURE),
     /* UINT16  Reserved1           */
     EFI_ACPI_RESERVED_WORD,
     /* UINT32  GicId               */
@@ -99,15 +99,15 @@ STATIC BAIKAL_ACPI_MADT  Madt = {
     /* UINT32  SystemVectorBase    */
     EFI_ACPI_RESERVED_DWORD,
     /* UINT8   GicVersion          */
-    EFI_ACPI_6_3_GIC_V3,
+    EFI_ACPI_6_4_GIC_V3,
     /* UINT8   Reserved2[3]        */
     { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE }
   },
   {
     /* UINT8   Type                      */
-    EFI_ACPI_6_3_GIC_MSI_FRAME,
+    EFI_ACPI_6_4_GIC_MSI_FRAME,
     /* UINT8   Length                    */
-    sizeof (EFI_ACPI_6_3_GIC_MSI_FRAME_STRUCTURE),
+    sizeof (EFI_ACPI_6_4_GIC_MSI_FRAME_STRUCTURE),
     /* UINT16  Reserved1                 */
     EFI_ACPI_RESERVED_WORD,
     /* UINT16  GicMsiFrameId             */
@@ -115,7 +115,7 @@ STATIC BAIKAL_ACPI_MADT  Madt = {
     /* UINT64  PhysicalBaseAddress       */
     FixedPcdGet64 (PcdGicDistributorBase),
     /* UINT32  Flags                     */
-    EFI_ACPI_6_3_SPI_COUNT_BASE_SELECT,
+    EFI_ACPI_6_4_SPI_COUNT_BASE_SELECT,
     /* UINT16  SPICount                  */
     200,
     /* UINT16  SPIBase                   */
@@ -123,9 +123,9 @@ STATIC BAIKAL_ACPI_MADT  Madt = {
   },
   {
     /* UINT8   Type                */
-    EFI_ACPI_6_3_GIC_ITS,
+    EFI_ACPI_6_4_GIC_ITS,
     /* UINT8   Length              */
-    sizeof (EFI_ACPI_6_3_GIC_ITS_STRUCTURE),
+    sizeof (EFI_ACPI_6_4_GIC_ITS_STRUCTURE),
     /* UINT16  Reserved            */
     EFI_ACPI_RESERVED_WORD,
     /* UINT32  GicItsId            */

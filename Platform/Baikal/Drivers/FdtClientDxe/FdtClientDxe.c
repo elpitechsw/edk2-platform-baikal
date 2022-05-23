@@ -320,7 +320,6 @@ FindNextMemoryNodeReg (
     }
 
     if (!IsNodeEnabled (This, Next)) {
-      DEBUG ((DEBUG_WARN, "%a: ignoring disabled node\n", __FUNCTION__));
       continue;
     }
 

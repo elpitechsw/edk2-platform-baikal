@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -24,6 +24,7 @@
   Iort.c
   Madt.c
   Mcfg.c
+  Pmtt.c
   Pptt.c
   Spcr.c
   SsdtPcieCustom.asl
@@ -36,11 +37,15 @@
   Silicon/Baikal/BM1000/BM1000.dec
 
 [LibraryClasses]
+  BaseMemoryLib
+  MemoryAllocationLib
   PcdLib
+  PrintLib
   UefiDriverEntryPoint
 
 [Protocols]
   gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+  gEfiPciIoProtocolGuid
 
 [FixedPcd]
   gArmTokenSpaceGuid.PcdGicDistributorBase

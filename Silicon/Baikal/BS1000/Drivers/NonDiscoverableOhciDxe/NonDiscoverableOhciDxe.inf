@@ -1,18 +1,18 @@
 ## @file
 #
-#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION    = 0x00010019
-  BASE_NAME      = NonDiscoverableOhciDxe
-  FILE_GUID      = E36DAD3C-F58A-462D-AD1D-2F6EE24964BE
-  MODULE_TYPE    = DXE_DRIVER
-  VERSION_STRING = 1.0
-  ENTRY_POINT    = NonDiscoverableOhciEntryPoint
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = NonDiscoverableOhciDxe
+  FILE_GUID                      = E36DAD3C-F58A-462D-AD1D-2F6EE24964BE
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = NonDiscoverableOhciEntryPoint
 
 [Sources.common]
   NonDiscoverableOhci.c

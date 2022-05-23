@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -11,6 +11,7 @@
 #include "AcpiPlatform.h"
 
 extern unsigned char  dsdt_aml_code[];
+extern unsigned char  ssdtpcie_aml_code[];
 
 STATIC
 EFI_STATUS
@@ -19,6 +20,16 @@ DsdtInit (
   )
 {
   *Table = (EFI_ACPI_DESCRIPTION_HEADER *) dsdt_aml_code;
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+SsdtPcieInit (
+  EFI_ACPI_DESCRIPTION_HEADER  **Table
+  )
+{
+  *Table = (EFI_ACPI_DESCRIPTION_HEADER *) ssdtpcie_aml_code;
   return EFI_SUCCESS;
 }
 
@@ -33,7 +44,10 @@ extern EFI_STATUS Dbg2Init (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS FacsInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS FadtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS GtdtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
+extern EFI_STATUS IortInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS MadtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
+extern EFI_STATUS McfgInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
+extern EFI_STATUS PmttInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS PpttInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS SpcrInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 
@@ -44,9 +58,13 @@ STATIC BAIKAL_ACPI_INIT_FUNCTION  AcpiTableInit[] = {
   &FacsInit,
   &FadtInit,
   &GtdtInit,
+  &IortInit,
   &MadtInit,
+  &McfgInit,
+  &PmttInit,
   &PpttInit,
-  &SpcrInit
+  &SpcrInit,
+  &SsdtPcieInit
 };
 
 EFI_STATUS

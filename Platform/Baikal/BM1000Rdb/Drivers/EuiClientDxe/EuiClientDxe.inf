@@ -1,0 +1,35 @@
+## @file
+#
+#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = EuiClientDxe
+  FILE_GUID                      = CF02602B-A13F-4718-A48A-5FBA3DD5308E
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EuiClientDxeInitialize
+
+[Sources]
+  EuiClientDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/BM1000/BM1000.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEuiClientProtocolGuid                        # PROTOCOL ALWAYS_PRODUCED
+  gFruClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+  gUidClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+
+[Depex]
+  gFruClientProtocolGuid AND
+  gUidClientProtocolGuid

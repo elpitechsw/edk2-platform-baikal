@@ -7,19 +7,19 @@
 
 #include "AcpiPlatform.h"
 
-#define BAIKAL_FADT_NULL_GAS  { EFI_ACPI_6_3_SYSTEM_MEMORY, 0, 0, EFI_ACPI_6_3_UNDEFINED, 0 }
+#define BAIKAL_FADT_NULL_GAS  { EFI_ACPI_6_4_SYSTEM_MEMORY, 0, 0, EFI_ACPI_6_4_UNDEFINED, 0 }
 
-#define BAIKAL_FADT_FLAGS  (EFI_ACPI_6_3_HW_REDUCED_ACPI | \
-                            EFI_ACPI_6_3_LOW_POWER_S0_IDLE_CAPABLE)
+#define BAIKAL_FADT_FLAGS  (EFI_ACPI_6_4_HW_REDUCED_ACPI | \
+                            EFI_ACPI_6_4_LOW_POWER_S0_IDLE_CAPABLE)
 
 #pragma pack(1)
-typedef EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE  BAIKAL_ACPI_FADT;
+typedef EFI_ACPI_6_4_FIXED_ACPI_DESCRIPTION_TABLE  BAIKAL_ACPI_FADT;
 
 STATIC BAIKAL_ACPI_FADT  Fadt = {
   BAIKAL_ACPI_HEADER (
-    EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
+    EFI_ACPI_6_4_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
     BAIKAL_ACPI_FADT,
-    EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_REVISION,
+    EFI_ACPI_6_4_FIXED_ACPI_DESCRIPTION_TABLE_REVISION,
     0x54444146
     ),
   /* UINT32                                  FirmwareCtrl             */
@@ -29,7 +29,7 @@ STATIC BAIKAL_ACPI_FADT  Fadt = {
   /* UINT8                                   Reserved0                */
   EFI_ACPI_RESERVED_BYTE,
   /* UINT8                                   PreferredPmProfile       */
-  EFI_ACPI_6_3_PM_PROFILE_SOHO_SERVER,
+  EFI_ACPI_6_4_PM_PROFILE_SOHO_SERVER,
   /* UINT16                                  SciInt                   */
   0,
   /* UINT32                                  SmiCmd                   */
@@ -98,37 +98,37 @@ STATIC BAIKAL_ACPI_FADT  Fadt = {
   EFI_ACPI_RESERVED_BYTE,
   /* UINT32                                  Flags                    */
   BAIKAL_FADT_FLAGS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  ResetReg                 */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  ResetReg                 */
   BAIKAL_FADT_NULL_GAS,
   /* UINT8                                   ResetValue               */
   0,
   /* UINT16                                  ArmBootArch              */
-  EFI_ACPI_6_3_ARM_PSCI_COMPLIANT,
+  EFI_ACPI_6_4_ARM_PSCI_COMPLIANT,
   /* UINT8                                   MinorVersion             */
-  EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_MINOR_REVISION,
+  EFI_ACPI_6_4_FIXED_ACPI_DESCRIPTION_TABLE_MINOR_REVISION,
   /* UINT64                                  XFirmwareCtrl            */
   0,
   /* UINT64                                  XDsdt                    */
   0,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XPm1aEvtBlk              */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XPm1aEvtBlk              */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XPm1bEvtBlk              */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XPm1bEvtBlk              */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XPm1aCntBlk              */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XPm1aCntBlk              */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XPm1bCntBlk              */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XPm1bCntBlk              */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XPm2CntBlk               */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XPm2CntBlk               */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XPmTmrBlk                */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XPmTmrBlk                */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XGpe0Blk                 */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XGpe0Blk                 */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  XGpe1Blk                 */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  XGpe1Blk                 */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  SleepControlReg          */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  SleepControlReg          */
   BAIKAL_FADT_NULL_GAS,
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  SleepStatusReg           */
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  SleepStatusReg           */
   BAIKAL_FADT_NULL_GAS,
   /* UINT64                                  HypervisorVendorIdentity */
   0

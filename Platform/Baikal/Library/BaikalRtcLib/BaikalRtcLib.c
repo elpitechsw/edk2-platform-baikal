@@ -1,7 +1,7 @@
 /** @file
   Implement EFI RealTimeClock runtime services via RTC Lib.
 
-  Copyright (c) 2018 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2018 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -15,8 +15,6 @@
 #include <Library/UefiRuntimeLib.h>
 #include <Protocol/FdtClient.h>
 
-#define RTC_I2C_BASE  0x20250000
-
 #define BCD_MASK_SECONDS       0x7F
 #define BCD_MASK_MINUTES       0x7F
 #define BCD_MASK_HOURS12       0x1F
@@ -25,7 +23,9 @@
 #define BCD_MASK_MONTHS        0x1F
 #define ABEOZ9_BCD_MASK_YEARS  0x7F
 
-STATIC UINTN  RtcAddr;
+STATIC EFI_PHYSICAL_ADDRESS  I2cBase;
+STATIC UINTN                 RtcAddr;
+
 enum {
   RTC_TYPE_UNKNOWN,
   RTC_TYPE_ABEOZ9,
@@ -96,7 +96,7 @@ LibGetTime (
   }
 
   I2cRxedSize = I2cTxRx (
-                  RTC_I2C_BASE,
+                  I2cBase,
                   RtcAddr,
                   (UINT8 *) &RegisterAddr,
                   sizeof RegisterAddr,
@@ -109,7 +109,7 @@ LibGetTime (
   }
 
   I2cRxedSize = I2cTxRx (
-                  RTC_I2C_BASE,
+                  I2cBase,
                   RtcAddr,
                   NULL,
                   0,
@@ -225,7 +225,7 @@ LibSetTime (
   Buf[7] = Bin2Bcd (Time->Year - 2000);
 
   I2cRxedSize = I2cTxRx (
-                  RTC_I2C_BASE,
+                  I2cBase,
                   RtcAddr,
                   Buf,
                   sizeof Buf,
@@ -302,7 +302,7 @@ LibRtcInitialize (
 {
   EFI_TIME              EfiTime;
   FDT_CLIENT_PROTOCOL  *FdtClient;
-  INT32                 FdtNode;
+  INT32                 Node;
   CONST VOID           *Prop;
   UINT32                PropSize;
   EFI_STATUS            Status;
@@ -310,46 +310,30 @@ LibRtcInitialize (
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   ASSERT_EFI_ERROR (Status);
 
-  for (FdtNode = 0;;) {
-    Status = FdtClient->FindNextCompatibleNode (FdtClient, "snps,designware-i2c", FdtNode, &FdtNode);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-
-    Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize);
-
-    if (Status == EFI_SUCCESS && PropSize == 16) {
-      EFI_PHYSICAL_ADDRESS  I2cBase = SwapBytes32 (((CONST UINT32 *)Prop)[1]);
-
-      /* TODO: I2C bus should be identified in some other way... */
-      if (I2cBase == RTC_I2C_BASE) {
-        if (FdtClient->IsNodeEnabled (FdtClient, FdtNode)) {
-          break;
-        } else {
-          return EFI_DEVICE_ERROR;
-        }
-      }
-    }
-  }
-
-  FdtNode = 0;
-  if (FdtClient->FindNextCompatibleNode (FdtClient, "abracon,abeoz9", FdtNode, &FdtNode) == EFI_SUCCESS) {
+  Node = 0;
+  if (FdtClient->FindNextCompatibleNode (FdtClient, "abracon,abeoz9", Node, &Node) == EFI_SUCCESS) {
     RtcType = RTC_TYPE_ABEOZ9;
-  } else if (FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2127", FdtNode, &FdtNode) == EFI_SUCCESS ||
-             FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2129", FdtNode, &FdtNode) == EFI_SUCCESS) {
+  } else if (FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2127", Node, &Node) == EFI_SUCCESS ||
+             FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2129", Node, &Node) == EFI_SUCCESS) {
     RtcType = RTC_TYPE_PCF212X;
-  }
-
-  if (RtcType == RTC_TYPE_UNKNOWN) {
+  } else {
     return EFI_DEVICE_ERROR;
   }
 
-  Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize);
-  if (Status != EFI_SUCCESS || PropSize != 4) {
+  Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
+  if (EFI_ERROR (Status) || PropSize != 4) {
     return EFI_DEVICE_ERROR;
   }
 
-  RtcAddr = SwapBytes32 (((CONST UINT32 *)Prop)[0]);
+  RtcAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+
+  if (FdtClient->FindParentNode (FdtClient, Node, &Node) == EFI_SUCCESS &&
+      FdtClient->IsNodeEnabled (FdtClient, Node) &&
+      FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 16) {
+    I2cBase = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
+  } else {
+    return EFI_DEVICE_ERROR;
+  }
 
   Status = LibGetTime (&EfiTime, NULL);
   if (Status == EFI_SUCCESS && !IsTimeValid (&EfiTime)) {

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -156,10 +156,10 @@ FruClientDxeInitialize (
   )
 {
   FDT_CLIENT_PROTOCOL   *FdtClient;
-  INT32                  FdtNode;
   EFI_PHYSICAL_ADDRESS   FruI2cBase = 0;
   CONST UINT16           FruMemAddr = 0;
   INTN                   I2cRxedSize;
+  INT32                  Node;
   CONST VOID            *Prop;
   UINT32                 PropSize;
   EFI_STATUS             Status;
@@ -193,14 +193,14 @@ FruClientDxeInitialize (
     return Status;
   }
 
-  if (FdtClient->FindCompatibleNode (FdtClient, "atmel,24c32", &FdtNode) == EFI_SUCCESS &&
-      FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+  if (FdtClient->FindCompatibleNode (FdtClient, "atmel,24c32", &Node) == EFI_SUCCESS &&
+      FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
       PropSize == 4) {
     mFruAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
     if (mFruAddr >= 0x50 && mFruAddr <= 0x57 &&
-        FdtClient->FindParentNode  (FdtClient, FdtNode, &FdtNode) == EFI_SUCCESS &&
-        FdtClient->IsNodeEnabled   (FdtClient, FdtNode) &&
-        FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+        FdtClient->FindParentNode  (FdtClient, Node, &Node) == EFI_SUCCESS &&
+        FdtClient->IsNodeEnabled   (FdtClient, Node) &&
+        FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize == 16) {
       FruI2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
     } else {
@@ -251,7 +251,7 @@ FruClientDxeInitialize (
     return Status;
   }
 
-#if !defined (MDEPKG_NDEBUG)
+#if !defined(MDEPKG_NDEBUG)
   if (mFruBufSize == EEPROM_SIZE) {
     UINTN            Idx;
     EFI_MAC_ADDRESS  MacAddr;

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -7,7 +7,10 @@
 
 #include "AcpiPlatform.h"
 
+#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, 0x0, 0, 0xFF, 0, 0x100)
+
 DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
+  External (\_SB.CRU0, DeviceObj)
   External (\_SB.GPIO, DeviceObj)
   External (\_SB.GPIO.GPIP, DeviceObj)
   External (\_SB.STA0, FieldUnitObj)
@@ -15,15 +18,6 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
   External (\_SB.STA2, FieldUnitObj)
 
   Scope (_SB_) {
-    // PCIe LCRU
-    Device (CRU0) {
-      Name (_ADR, 0x02000000)
-      Name (_UID, 0x02000000)
-      Name (_CRS, ResourceTemplate () {
-        Memory32Fixed (ReadWrite, 0x02000000, 0x80000)
-      })
-    }
-
     // PCIe0 (x4 #0)
     Device (PCI0) {
       Name (_HID, EISAID ("PNP0A08"))
@@ -35,40 +29,53 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
 
       Method (_STA, 0, Serialized) {
         if ((\_SB.STA0 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                    BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
+                         BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
           Return (0x0)
         }
 
         Return (0xF)
       }
 
-      Name (_CRS, ResourceTemplate () {
-        QWordMemory (ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x3C0000000, 0x40000000)
-        QWordIo (ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, Zero, 0x000FFFFF, 0x70000000, 0x00100000, ,,, TypeTranslation)
-        WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
-      })
+      Method (_CRS, 0, Serialized) {
+        Name (RBUF, ResourceTemplate () {
+          BUS_RES
+          PROD_MEM_BUF(01)
+          PROD_IO_BUF(02)
+        })
+
+        QRES_BUF_SET(01, BM1000_PCIE0_MMIO32_BASE,  BM1000_PCIE0_MMIO32_SIZE, 0)
+        QRES_BUF_SET(02, BM1000_PCIE0_PORTIO_MIN,   BM1000_PCIE0_PORTIO_SIZE,
+                         BM1000_PCIE0_PORTIO_BASE - BM1000_PCIE0_PORTIO_MIN)
+
+        Return (RBUF)
+      }
 
       Name (NUML, 4)
       Name (NUMV, 4)
       Name (LCRU, Package () { ^CRU0, 0 })
 
       Device (RES0) {
-        Name (_HID, "PNP0C02")
-        Name (_UID, 100)
-        Name (_CRS, ResourceTemplate () {
-          Memory32Fixed (ReadWrite, 0x40100000, 0x10000000)
-          Memory32Fixed (ReadWrite, 0x02200000, 0x00001000)
-          Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 458, 461 }
-#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
-          GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 6 }
+        Name (_ADR, Zero)
+        Method (_CRS, 0, Serialized) {
+          Name (RBUF, ResourceTemplate () {
+            CONS_MEM_BUF(01)
+            Memory32Fixed (ReadWrite, BM1000_PCIE0_DBI_BASE, BM1000_PCIE0_DBI_SIZE)
+            Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 458, 461 }
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+            GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 6 }
 #endif
-        })
+          })
+
+          QRES_BUF_SET(01, BM1000_PCIE0_CFG_BASE, BM1000_PCIE0_CFG_SIZE, 0)
+
+          Return (RBUF)
+        }
       }
 
       NATIVE_PCIE_OSC
     }
 
-#ifdef BAIKAL_DBM
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
     // PCIe1 (x4 #1)
     Device (PCI1) {
       Name (_HID, EISAID ("PNP0A08"))
@@ -80,34 +87,44 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
 
       Method (_STA, 0, Serialized) {
         if ((\_SB.STA1 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                    BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
+                         BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
           Return (0x0)
         }
 
         Return (0xF)
       }
 
-      Name (_CRS, ResourceTemplate () {
-        Memory32Fixed (ReadWrite, 0x50100000, 0x10000000)
-        Memory32Fixed (ReadWrite, 0x02210000, 0x00001000)
-        QWordMemory (ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x40000000, 0x7FFFFFFF, 0x4C0000000, 0x40000000)
-        QWordIo (ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00100000, 0x001FFFFF, 0x70000000, 0x00100000, ,,, TypeTranslation)
-        WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
-        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
-      })
+      Method (_CRS, 0, Serialized) {
+        Name (RBUF, ResourceTemplate () {
+          BUS_RES
+          PROD_MEM_BUF(01)
+          PROD_IO_BUF(02)
+        })
+
+        QRES_BUF_SET(01, BM1000_PCIE1_MMIO32_BASE,  BM1000_PCIE1_MMIO32_SIZE, 0)
+        QRES_BUF_SET(02, BM1000_PCIE1_PORTIO_MIN,   BM1000_PCIE1_PORTIO_SIZE,
+                         BM1000_PCIE1_PORTIO_BASE - BM1000_PCIE1_PORTIO_MIN)
+
+        Return (RBUF)
+      }
 
       Name (NUML, 4)
       Name (NUMV, 4)
       Name (LCRU, Package () { ^CRU0, One })
 
       Device (RES0) {
-        Name (_HID, "PNP0C02")
-        Name (_UID, 200)
-        Name (_CRS, ResourceTemplate () {
-          Memory32Fixed (ReadWrite, 0x50100000, 0x10000000)
-          Memory32Fixed (ReadWrite, 0x02210000, 0x00001000)
-          Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
-        })
+        Name (_ADR, Zero)
+        Method (_CRS, 0, Serialized) {
+          Name (RBUF, ResourceTemplate () {
+            CONS_MEM_BUF(01)
+            Memory32Fixed (ReadWrite, BM1000_PCIE1_DBI_BASE, BM1000_PCIE1_DBI_SIZE)
+            Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
+          })
+
+          QRES_BUF_SET(01, BM1000_PCIE1_CFG_BASE, BM1000_PCIE1_CFG_SIZE, 0)
+
+          Return (RBUF)
+        }
       }
 
       NATIVE_PCIE_OSC
@@ -125,40 +142,47 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
 
       Method (_STA, 0, Serialized) {
         if ((\_SB.STA2 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                    BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
+                         BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
           Return (0x0)
         }
 
         Return (0xF)
       }
 
-      Name (_CRS, ResourceTemplate () {
-        Memory32Fixed (ReadWrite, 0x60100000, 0x10000000)
-        Memory32Fixed (ReadWrite, 0x02220000, 0x00001000)
-        QWordMemory (ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite, Zero, 0x80000000, 0xFFFFFFFF, 0x580000000, 0x80000000)
-        QWordIo (ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange, Zero, 0x00200000, 0x002FFFFF, 0x70000000, 0x00100000, ,,, TypeTranslation)
-        WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, Zero, Zero, 255, Zero, 256)
-        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
-#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
-        GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
-#endif
-      })
+      Method (_CRS, 0, Serialized) {
+        Name (RBUF, ResourceTemplate () {
+          BUS_RES
+          PROD_MEM_BUF(01)
+          PROD_IO_BUF(02)
+        })
+
+        QRES_BUF_SET(01, BM1000_PCIE2_MMIO32_BASE,  BM1000_PCIE2_MMIO32_SIZE, 0)
+        QRES_BUF_SET(02, BM1000_PCIE2_PORTIO_MIN,   BM1000_PCIE2_PORTIO_SIZE,
+                         BM1000_PCIE2_PORTIO_BASE - BM1000_PCIE2_PORTIO_MIN)
+
+        Return (RBUF)
+      }
 
       Name (NUML, 8)
       Name (NUMV, 4)
       Name (LCRU, Package () { ^CRU0, 2 })
 
       Device (RES0) {
-        Name (_HID, "PNP0C02")
-        Name (_UID, 300)
-        Name (_CRS, ResourceTemplate () {
-          Memory32Fixed (ReadWrite, 0x60100000, 0x10000000)
-          Memory32Fixed (ReadWrite, 0x02220000, 0x00001000)
-          Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
-#if defined (BAIKAL_MBM10) || defined (BAIKAL_MBM20)
-          GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
+        Name (_ADR, Zero)
+        Method (_CRS, 0, Serialized) {
+          Name (RBUF, ResourceTemplate () {
+            CONS_MEM_BUF(01)
+            Memory32Fixed (ReadWrite, BM1000_PCIE2_DBI_BASE, BM1000_PCIE2_DBI_SIZE)
+            Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+            GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
 #endif
-        })
+          })
+
+          QRES_BUF_SET(01, BM1000_PCIE2_CFG_BASE, BM1000_PCIE2_CFG_SIZE, 0)
+
+          Return (RBUF)
+        }
       }
 
       NATIVE_PCIE_OSC

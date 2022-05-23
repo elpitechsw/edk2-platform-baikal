@@ -1,12 +1,13 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/BaikalSpdLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrcLib.h>
 
-#define SEC_DRAM_SPD_BASE  0x8000FA00
+#define DIMM_SPD_DATA_BASE  0x8000FA00
 
 CONST UINT8 SpdDdrAddr[BAIKAL_SPD_DDR_ADDR_LENGTH] = {0x50, 0x51, 0x52, 0x53};
 
@@ -15,7 +16,7 @@ SpdGetSize (
   IN  CONST UINTN  TargetAddr
   )
 {
-  UINT8  *SpdPtr = (UINT8 *) SEC_DRAM_SPD_BASE;
+  UINT8  *SpdPtr = (UINT8 *) DIMM_SPD_DATA_BASE;
 
   if (TargetAddr > SpdDdrAddr[1]) {
     SpdPtr += 512;
@@ -42,16 +43,13 @@ SpdGetBuf (
   IN   CONST UINTN   RxBufSize
   )
 {
-  UINTN   Idx;
-  UINT8  *SpdPtr = (UINT8 *) SEC_DRAM_SPD_BASE;
+  UINT8  *SpdPtr = (UINT8 *) DIMM_SPD_DATA_BASE;
 
   if (TargetAddr > SpdDdrAddr[1]) {
     SpdPtr += 512;
   }
 
-  for (Idx = 0; Idx < RxBufSize; ++Idx) {
-    *((UINT8 *) RxBuf + Idx) = *(SpdPtr + Idx);
-  }
+  CopyMem (RxBuf, SpdPtr, RxBufSize);
 
   return 0;
 }
@@ -63,31 +61,6 @@ SpdGetCrc16 (
   )
 {
   return SpdBuf[0] | (SpdBuf[1] << 8);
-}
-
-STATIC
-UINT16
-SpdCrc16 (
-  IN  CONST UINT8  *SpdBuf,
-  IN  UINTN         Size
-  )
-{
-  UINT16  Crc  = 0;
-  UINTN   Idx;
-
-  while (Size--) {
-    Crc ^= *SpdBuf++ << 8;
-
-    for (Idx = 0; Idx < 8; ++Idx) {
-      if (Crc & 0x8000) {
-        Crc = Crc << 1 ^ 0x1021;
-      } else {
-        Crc <<= 1;
-      }
-    }
-  }
-
-  return Crc & 0xFFFF;
 }
 
 INTN
@@ -104,15 +77,15 @@ SpdIsValid (
   }
 
   if (Size >= 128) {
-    Result = SpdGetCrc16 (SpdBuf + 126) == SpdCrc16 (SpdBuf, 126);
+    Result = SpdGetCrc16 (SpdBuf + 126) == Crc16 (SpdBuf, 126, 0);
   }
 
   if (Size >= 256) {
-    Result &= SpdGetCrc16 (SpdBuf + 254) == SpdCrc16 (SpdBuf + 128, 126);
+    Result &= SpdGetCrc16 (SpdBuf + 254) == Crc16 (SpdBuf + 128, 126, 0);
   }
 
   if (Size >= 320) {
-    Result &= SpdGetCrc16 (SpdBuf + 318) == SpdCrc16 (SpdBuf + 256, 62);
+    Result &= SpdGetCrc16 (SpdBuf + 318) == Crc16 (SpdBuf + 256, 62, 0);
   }
 
   return Result;

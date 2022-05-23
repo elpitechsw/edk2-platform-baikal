@@ -1,0 +1,46 @@
+## @file
+#
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = PciHostBridgeLib
+  FILE_GUID                      = A50FDDB0-7768-11EA-B5C5-00259020F96E
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PciHostBridgeLib|DXE_DRIVER
+  CONSTRUCTOR                    = PciHostBridgeLibConstructor
+
+[Sources]
+  PciHostBridgeLib.c
+  PciHostBridgeLibConstructor.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/Baikal.dec
+
+[LibraryClasses]
+  ArmLib
+  BaseLib
+  DebugLib
+  GpioLib
+  PcdLib
+  UefiBootServicesTableLib
+
+[Pcd]
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode
+  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks
+
+[Protocols]
+  gEfiPciIoProtocolGuid    ## CONSUMES
+  gFdtClientProtocolGuid   ## CONSUMES
+
+[Depex]
+  TRUE

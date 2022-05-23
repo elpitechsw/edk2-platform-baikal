@@ -1,0 +1,35 @@
+## @file
+#
+#  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SpdClientDxe
+  FILE_GUID                      = 83311BCD-F4F1-4BC0-BE87-8CF1CA3FD814
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SpdClientDxeInitialize
+
+[Sources]
+  SpdClientDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/BS1000/BS1000.dec
+  Silicon/Baikal/Baikal.dec
+
+[LibraryClasses]
+  CrcLib
+  DebugLib
+  I2cLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gSpdClientProtocolGuid                        # PROTOCOL ALWAYS_PRODUCED
+
+[Depex]
+  TRUE

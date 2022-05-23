@@ -1,18 +1,18 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION    = 0x00010019
-  BASE_NAME      = NonDiscoverableXhciDxe
-  FILE_GUID      = 53FD05B8-3BB4-11EB-864C-00259087216F
-  MODULE_TYPE    = DXE_DRIVER
-  VERSION_STRING = 1.0
-  ENTRY_POINT    = NonDiscoverableXhciEntryPoint
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = NonDiscoverableXhciDxe
+  FILE_GUID                      = 53FD05B8-3BB4-11EB-864C-00259087216F
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = NonDiscoverableXhciEntryPoint
 
 [Sources.common]
   NonDiscoverableXhci.c

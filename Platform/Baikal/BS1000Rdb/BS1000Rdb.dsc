@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -48,13 +48,16 @@
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
   BaikalSmcLib|Platform/Baikal/Library/BaikalSmcLib/BaikalSmcLib.inf
+  BaikalSpdLib|Platform/Baikal/Library/BaikalSpdLib/BaikalSpdLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibOptDxe/BaseMemoryLibOptDxe.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  CmuLib|Platform/Baikal/BS1000Rdb/Library/CmuLib/CmuLib.inf
   CpuExceptionHandlerLib|ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
+  CrcLib|Platform/Baikal/Library/CrcLib/CrcLib.inf
   CustomizedDisplayLib|MdeModulePkg/Library/CustomizedDisplayLib/CustomizedDisplayLib.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
@@ -69,6 +72,7 @@
   GpioLib|Silicon/Baikal/Library/DwGpioLib/DwGpioLib.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
+  I2cLib|Silicon/Baikal/Library/DwI2cLib/DwI2cLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LzmaDecompressLib|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
@@ -77,6 +81,8 @@
   PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
   PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+  PciHostBridgeLib|Silicon/Baikal/BS1000/Library/PciHostBridgeLib/PciHostBridgeLib.inf
+  PciSegmentLib|Silicon/Baikal/BS1000/Library/PciSegmentLib/PciSegmentLib.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
@@ -199,6 +205,9 @@
   Platform/Baikal/Drivers/BaikalSpiFvDxe/BaikalSpiFvDxe.inf
   Platform/Baikal/Drivers/BaikalSpiBlockDxe/BaikalSpiBlockDxe.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
+  Platform/Baikal/BS1000Rdb/Drivers/EuiClientDxe/EuiClientDxe.inf
+  Platform/Baikal/BS1000Rdb/Drivers/SpdClientDxe/SpdClientDxe.inf
+  Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
 
@@ -242,6 +251,15 @@
 
   # Network
 !include NetworkPkg/Network.dsc.inc
+  Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
+
+  # PCI
+  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
+  Silicon/Baikal/BS1000/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+
+  # NVMe
+  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   # USB
   Silicon/Baikal/BS1000/Drivers/NonDiscoverableEhciDxe/NonDiscoverableEhciDxe.inf
@@ -312,7 +330,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|{ 0x42, 0x41, 0x49, 0x4B, 0x41, 0x4C }
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision|1
-  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|{ 0x42, 0x4B, 0x4C, 0x45, 0x42, 0x4B, 0x4C, 0x45 }
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId|{ 0x42, 0x4B, 0x4C, 0x45 }
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiExposedTableVersions|0x20
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xAA, 0x2C, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6E, 0x8A, 0xB6, 0xF4, 0x66, 0x23, 0x31 }
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0xC000000000007FD1
@@ -345,7 +363,7 @@
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiReservedMemoryType|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode|150
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData|300
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|22
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|24
 !if $(TARGET) == RELEASE
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0

@@ -1,6 +1,6 @@
 /** @file
-  Copyright (c) 2021, Andrei Warkentin <andreiw@mm.st>
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Andrei Warkentin <andreiw@mm.st>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -13,29 +13,29 @@
 
 #include "AcpiPlatform.h"
 
-#define BAIKAL_MCFG_TABLE_ENTRY(Segment, Addr)  { \
-  /* UINT64  BaseAddress           */             \
-  Addr,                                           \
-  /* UINT16  PciSegmentGroupNumber */             \
-  Segment,                                        \
-  /* UINT8   StartBusNumber        */             \
-  0,                                              \
-  /* UINT8   EndBusNumber          */             \
-  255,                                            \
-  /* UINT32  Reserved              */             \
-  EFI_ACPI_RESERVED_DWORD                         \
+#define BAIKAL_MCFG_TABLE_ENTRY(Segment, Addr, EndBusNumber)  { \
+  /* UINT64  BaseAddress           */                           \
+  Addr,                                                         \
+  /* UINT16  PciSegmentGroupNumber */                           \
+  Segment,                                                      \
+  /* UINT8   StartBusNumber        */                           \
+  0,                                                            \
+  /* UINT8   EndBusNumber          */                           \
+  EndBusNumber,                                                 \
+  /* UINT32  Reserved              */                           \
+  EFI_ACPI_RESERVED_DWORD                                       \
 }
 
 #pragma pack(1)
 typedef struct {
   EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER                         Header;
-  EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATION_STRUCTURE  Table[BAIKAL_ACPI_PCIE_COUNT];
+  EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATION_STRUCTURE  Table[BAIKAL_ACPI_PCIE_COUNT * SYNTH_BUS_PER_SEG];
 } BAIKAL_ACPI_MCFG;
 
 STATIC BAIKAL_ACPI_MCFG  Mcfg = {
   {
     BAIKAL_ACPI_HEADER (
-      EFI_ACPI_6_3_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE,
+      EFI_ACPI_6_4_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE,
       BAIKAL_ACPI_MCFG,
       EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_SPACE_ACCESS_TABLE_REVISION,
       0x4746434D
@@ -44,11 +44,26 @@ STATIC BAIKAL_ACPI_MCFG  Mcfg = {
     EFI_ACPI_RESERVED_QWORD
   },
   {
-    BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE0_SEGMENT, BM1000_PCIE0_CFG_BASE),
-#ifdef BAIKAL_DBM
-    BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE1_SEGMENT, BM1000_PCIE1_CFG_BASE),
+    BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE0_SEGMENT, BM1000_PCIE0_CFG_BASE, 255),
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+    BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE1_SEGMENT, BM1000_PCIE1_CFG_BASE, 255),
 #endif
-    BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE2_SEGMENT, BM1000_PCIE2_CFG_BASE)
+    BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE2_SEGMENT, BM1000_PCIE2_CFG_BASE, 255),
+
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 2), BM1000_PCIE0_CFG_BASE + (2 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 3), BM1000_PCIE0_CFG_BASE + (3 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 4), BM1000_PCIE0_CFG_BASE + (4 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 5), BM1000_PCIE0_CFG_BASE + (5 << 20), 0),
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 2), BM1000_PCIE1_CFG_BASE + (2 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 3), BM1000_PCIE1_CFG_BASE + (3 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 4), BM1000_PCIE1_CFG_BASE + (4 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 5), BM1000_PCIE1_CFG_BASE + (5 << 20), 0),
+#endif
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 2), BM1000_PCIE2_CFG_BASE + (2 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 3), BM1000_PCIE2_CFG_BASE + (3 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 4), BM1000_PCIE2_CFG_BASE + (4 << 20), 0),
+    BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 5), BM1000_PCIE2_CFG_BASE + (5 << 20), 0),
   }
 };
 #pragma pack()
@@ -74,7 +89,7 @@ McfgInit (
 
     Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].StartBusNumber = 0;
     Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].EndBusNumber = 0;
-#ifdef BAIKAL_DBM
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
     if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE1_IDX)) == 0) {
       Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].BaseAddress += 0x8000;
     }

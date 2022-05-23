@@ -10,8 +10,8 @@
 
 #define BAIKAL_DBG2_NUMBER_OF_DEBUG_PORTS                2
 #define BAIKAL_DBG2_NUMBER_OF_GENERIC_ADDRESS_REGISTERS  1
-#define BAIKAL_DBG2_NAME_PORT0                           "COM0"
-#define BAIKAL_DBG2_NAME_PORT1                           "COM1"
+#define BAIKAL_DBG2_NAME_PORT0                           "\\_SB_.COM0"
+#define BAIKAL_DBG2_NAME_PORT1                           "\\_SB_.COM1"
 #define BAIKAL_DBG2_NAMESPACE_STRING_SIZE                sizeof (BAIKAL_DBG2_NAME_PORT0)
 #define BAIKAL_DBG2_UART_ADDRESS_LENGTH                  0x1000
 
@@ -42,8 +42,8 @@
     /* UINT16  AddressSizeOffset               */                                                  \
     OFFSET_OF (BAIKAL_DBG2_DEVICE_INFORMATION, AddressSize)                                        \
   },                                                                                               \
-  /* EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE  BaseAddressRegister */                                \
-  { EFI_ACPI_6_3_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_3_BYTE, UartBase },                              \
+  /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  BaseAddressRegister */                                \
+  { EFI_ACPI_6_4_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_4_BYTE, UartBase },                              \
   /* UINT32                                  AddressSize */                                        \
   BAIKAL_DBG2_UART_ADDRESS_LENGTH,                                                                 \
   /* UINT8                                   NamespaceString[BAIKAL_DBG2_NAMESPACE_STRING_SIZE] */ \
@@ -53,7 +53,7 @@
 #pragma pack(1)
 typedef struct {
   EFI_ACPI_DBG2_DEBUG_DEVICE_INFORMATION_STRUCT  Device;
-  EFI_ACPI_6_3_GENERIC_ADDRESS_STRUCTURE         BaseAddressRegister;
+  EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE         BaseAddressRegister;
   UINT32                                         AddressSize;
   UINT8                                          NamespaceString[BAIKAL_DBG2_NAMESPACE_STRING_SIZE];
 } BAIKAL_DBG2_DEVICE_INFORMATION;
@@ -66,7 +66,7 @@ typedef struct {
 STATIC BAIKAL_ACPI_DBG2  Dbg2 = {
   {
     BAIKAL_ACPI_HEADER (
-      EFI_ACPI_6_3_DEBUG_PORT_2_TABLE_SIGNATURE,
+      EFI_ACPI_6_4_DEBUG_PORT_2_TABLE_SIGNATURE,
       BAIKAL_ACPI_DBG2,
       EFI_ACPI_DEBUG_PORT_2_TABLE_REVISION,
       0x32474244

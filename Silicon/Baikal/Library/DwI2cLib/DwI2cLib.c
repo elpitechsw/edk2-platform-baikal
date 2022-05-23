@@ -1,11 +1,10 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
 #include <Library/DebugLib.h>
-
 #include <Library/DwI2cLib.h>
 
 typedef struct {
@@ -53,10 +52,7 @@ typedef struct {
   UINT32  IcHsSpkLen;
 } I2C_CONTROLLER_REGS;
 
-#define IC_SPEED_MODE_STANDARD     1
 #define IC_SPEED_MODE_FAST         2
-#define IC_SPEED_MODE_MAX          3
-
 #define IC_CON_MASTER_MODE         BIT0
 #define IC_CON_SPEED               (IC_SPEED_MODE_FAST << 1)
 #define IC_CON_IC_SLAVE_DISABLE    BIT6
@@ -65,14 +61,12 @@ typedef struct {
 #define IC_DATA_CMD_STOP           BIT9
 
 #define IC_RAW_INTR_STAT_TX_ABRT   BIT6
-#define IC_RAW_INTR_STAT_STOP_DET  BIT9
 
 #define IC_ENABLE_ENABLE           BIT0
 
 #define IC_STATUS_TFNF             BIT1
 #define IC_STATUS_TFE              BIT2
 #define IC_STATUS_RFNE             BIT3
-#define IC_STATUS_RFF              BIT4
 #define IC_STATUS_MST_ACTIVITY     BIT5
 
 #define IC_ENABLE_STATUS_IC_EN     BIT0

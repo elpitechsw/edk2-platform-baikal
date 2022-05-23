@@ -1,17 +1,14 @@
-#/** @file
+## @file
 #
-#  Component description file for BaikalVduLib module
-#
-#  Copyright (c) 2020, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #  Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 #
-#  SPDX-License-Identifier: BSD-2-Clause-Patent
-#
-#**/
+##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = BaikalVduLib
   FILE_GUID                      = EBE4F9BA-18AE-4DC7-BA8C-258D8168AE49
   MODULE_TYPE                    = BASE
@@ -40,12 +37,12 @@
   gFdtClientProtocolGuid                        # CONSUMES
 
 [Pcd]
-  gBaikalTokenSpaceGuid.PcdVduBase ## CONSUMES
-  gBaikalTokenSpaceGuid.PcdVduLcruId ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn ## SOMETIMES_PRODUCES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow ## SOMETIMES_PRODUCES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution ## SOMETIMES_PRODUCES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution ## SOMETIMES_PRODUCES
+  gBaikalTokenSpaceGuid.PcdVduBase                                  ## CONSUMES
+  gBaikalTokenSpaceGuid.PcdVduLcruId                                ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn               ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow                  ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution  ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution    ## SOMETIMES_PRODUCES
 
 [FixedPcd]
   gArmPlatformTokenSpaceGuid.PcdGopPixelFormat

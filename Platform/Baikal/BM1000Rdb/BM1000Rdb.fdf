@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -121,6 +121,8 @@ READ_LOCK_STATUS   = TRUE
 
   INF MdeModulePkg/Core/Dxe/DxeMain.inf
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF Platform/Baikal/BM1000Rdb/Drivers/EuiClientDxe/EuiClientDxe.inf
+  INF Platform/Baikal/BM1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
@@ -146,7 +148,9 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+!if ($(TARGET) == DEBUG) || $(BAIKAL_QEMU_M)
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+!endif
 
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
@@ -169,6 +173,7 @@ READ_LOCK_STATUS   = TRUE
 
   # ACPI support
   INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+  INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
   INF Platform/Baikal/BM1000Rdb/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # BDS
@@ -196,10 +201,10 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
-  INF Platform/Baikal/Drivers/BaikalPciCpuIo2Dxe/BaikalPciCpuIo2Dxe.inf
-  INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
-  INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+  INF ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
   INF Emulator/X86EmulatorDxe/X86EmulatorDxe.inf
+  INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+  INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 
   # NVMe
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf

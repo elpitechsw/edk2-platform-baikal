@@ -6,11 +6,11 @@
 #include <IndustryStandard/Acpi.h>
 
 #pragma pack(1)
-typedef EFI_ACPI_6_3_FIRMWARE_ACPI_CONTROL_STRUCTURE  BAIKAL_ACPI_FACS;
+typedef EFI_ACPI_6_4_FIRMWARE_ACPI_CONTROL_STRUCTURE  BAIKAL_ACPI_FACS;
 
 STATIC BAIKAL_ACPI_FACS  Facs = {
   /* UINT32  Signature             */
-  EFI_ACPI_6_3_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE,
+  EFI_ACPI_6_4_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE,
   /* UINT32  Length                */
   sizeof (BAIKAL_ACPI_FACS),
   /* UINT32  HardwareSignature     */
@@ -20,11 +20,11 @@ STATIC BAIKAL_ACPI_FACS  Facs = {
   /* UINT32  GlobalLock            */
   0,
   /* UINT32  Flags                 */
-  EFI_ACPI_6_3_64BIT_WAKE_SUPPORTED_F,
+  EFI_ACPI_6_4_64BIT_WAKE_SUPPORTED_F,
   /* UINT64  XFirmwareWakingVector */
   0,
   /* UINT8   Version               */
-  EFI_ACPI_6_3_FIRMWARE_ACPI_CONTROL_STRUCTURE_VERSION,
+  EFI_ACPI_6_4_FIRMWARE_ACPI_CONTROL_STRUCTURE_VERSION,
   /* UINT8   Reserved0[3]          */
   {
     EFI_ACPI_RESERVED_BYTE,

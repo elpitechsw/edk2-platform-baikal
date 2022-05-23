@@ -1,16 +1,16 @@
-#/** @file
+## @file
 #
 #  Copyright (c) 2011-2014, ARM Ltd. All rights reserved.<BR>
 #  Copyright (c) 2014, Linaro Ltd. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
-#**/
+##
 
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = BaikalMemoryInitPeiLib
-  FILE_GUID                      = 021b6156-3cc8-4e99-85ee-13d8a871edf2
+  FILE_GUID                      = 021B6156-3CC8-4E99-85EE-13D8A871EDF2
   MODULE_TYPE                    = SEC
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MemoryInitPeiLib

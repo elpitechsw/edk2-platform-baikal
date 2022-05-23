@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -25,6 +25,7 @@
 
 [LibraryClasses]
   ArmLib
+  BaikalSpdLib
   MemoryAllocationLib
   PrintLib
   UefiDriverEntryPoint
@@ -37,6 +38,8 @@
 
 [Protocols]
   gEfiSmbiosProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+  gFdtClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+  gSpdClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
 
 [Depex]
-  gEfiSmbiosProtocolGuid
+  gEfiSmbiosProtocolGuid AND gFdtClientProtocolGuid AND gSpdClientProtocolGuid

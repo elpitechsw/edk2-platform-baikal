@@ -1,12 +1,11 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
-#include <Library/DebugLib.h>
-
 #include <Library/DbSmbusLib.h>
+#include <Library/DebugLib.h>
 
 typedef struct {
   UINT32  Cr1;
@@ -37,16 +36,10 @@ typedef struct {
 
 #define CR1_IRT   BIT0
 #define CR1_TRS   BIT1
-#define CR1_MSS   BIT2
 #define CR1_IEB   BIT3
-#define CR1_SAS   BIT4
-#define CR1_GCA   BIT5
 
-#define CR2_FRT   BIT0
 #define CR2_FTE   BIT1
 #define CR2_HBD   BIT2
-#define CR2_RSE   BIT3
-#define CR2_RSF   BIT4
 
 #define SCD2_SHT  BIT7
 
@@ -100,7 +93,6 @@ SmbusTxRx (
     UINTN  TxedSize;
 
     SmbusRegs->Cr1 |= CR1_TRS;
-
     for (TxedSize = 0; TxedSize < TxBufSize;) {
       UINTN  ByteCount;
       BOOLEAN  HoldBus = FALSE;
@@ -110,6 +102,10 @@ SmbusTxRx (
         ByteCount = FIFO_SIZE;
         HoldBus = TRUE;
       }
+
+      SmbusRegs->Isr1 = ISR1_TCS | ISR1_FFE |
+                        ISR1_ALD | ISR1_RNK |
+                        ISR1_FER | ISR1_FOR | ISR1_FUR;
 
       SmbusRegs->Fbcr1 = ByteCount;
       do {
@@ -125,12 +121,7 @@ SmbusTxRx (
         SmbusRegs->Cr2 &= ~CR2_HBD;
       }
 
-      SmbusRegs->Isr1 = ISR1_TCS | ISR1_FFE | ISR1_ALD |
-                        ISR1_RNK | ISR1_FER | ISR1_FOR |
-                        ISR1_FUR;
-
       SmbusRegs->Isr2 = ISR2_MSH;
-
       SmbusRegs->Cr2 |= CR2_FTE;
 
       while (!(SmbusRegs->Isr1 &
@@ -148,10 +139,11 @@ SmbusTxRx (
   for (RxedSize = 0; RxedSize < RxBufSize;) {
     UINTN  ByteCount = MIN (RxBufSize - RxedSize, FIFO_SIZE);
 
-    SmbusRegs->Fbcr1 = ByteCount;
-    SmbusRegs->Isr1  = ISR1_TCS | ISR1_FFE | ISR1_ALD | ISR1_RNK |
+    SmbusRegs->Isr1  = ISR1_TCS | ISR1_FFE |
+                       ISR1_ALD | ISR1_RNK |
                        ISR1_FER | ISR1_FOR | ISR1_FUR;
 
+    SmbusRegs->Fbcr1 = ByteCount;
     SmbusRegs->Cr2   = CR2_FTE;
 
     while ((SmbusRegs->Cr2 & CR2_FTE) &&
@@ -163,7 +155,6 @@ SmbusTxRx (
 
     do {
       RxPtr[RxedSize] = SmbusRegs->Fifo;
-
       if (SmbusRegs->Isr1 & ISR1_FUR) {
         goto Exit;
       }

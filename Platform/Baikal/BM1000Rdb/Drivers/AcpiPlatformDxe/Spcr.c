@@ -17,28 +17,28 @@ STATIC EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE  Spcr = {
     EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_REVISION,
     0x52435053
     ),
-  BAIKAL_ACPI_PORT_SUBTYPE_SERIAL_16550_GAS,                            // InterfaceType
+  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERFACE_TYPE_16550_WITH_GAS, // InterfaceType
   { EFI_ACPI_RESERVED_BYTE,
     EFI_ACPI_RESERVED_BYTE,
-    EFI_ACPI_RESERVED_BYTE },                                           // Reserved1[3]
-  { EFI_ACPI_6_3_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_3_BYTE, 0x20230000 }, // BaseAddress
-  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERRUPT_TYPE_GIC,    // InterruptType
-  0,                                                                    // Irq
-  101,                                                                  // GlobalSystemInterrupt
-  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_BAUD_RATE_115200,      // BaudRate
-  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_PARITY_NO_PARITY,      // Parity
-  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_STOP_BITS_1,           // StopBits
-  0,                                                                    // FlowControl
-  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_TERMINAL_TYPE_ANSI,    // TerminalType
-  EFI_ACPI_RESERVED_BYTE,                                               // Language
-  0xFFFF,                                                               // PciDeviceId
-  0xFFFF,                                                               // PciVendorId
-  0,                                                                    // PciBusNumber
-  0,                                                                    // PciDeviceNumber
-  0,                                                                    // PciFunctionNumber
-  0,                                                                    // PciFlags
-  0,                                                                    // PciSegment
-  EFI_ACPI_RESERVED_DWORD                                               // Reserved2
+    EFI_ACPI_RESERVED_BYTE },                                                   // Reserved1[3]
+  { EFI_ACPI_6_4_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_4_BYTE, 0x20230000 },         // BaseAddress
+  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERRUPT_TYPE_GIC,            // InterruptType
+  0,                                                                            // Irq
+  101,                                                                          // GlobalSystemInterrupt
+  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_BAUD_RATE_115200,              // BaudRate
+  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_PARITY_NO_PARITY,              // Parity
+  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_STOP_BITS_1,                   // StopBits
+  0,                                                                            // FlowControl
+  EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_TERMINAL_TYPE_ANSI,            // TerminalType
+  EFI_ACPI_RESERVED_BYTE,                                                       // Language
+  0xFFFF,                                                                       // PciDeviceId
+  0xFFFF,                                                                       // PciVendorId
+  0,                                                                            // PciBusNumber
+  0,                                                                            // PciDeviceNumber
+  0,                                                                            // PciFunctionNumber
+  0,                                                                            // PciFlags
+  0,                                                                            // PciSegment
+  EFI_ACPI_RESERVED_DWORD                                                       // Reserved2
 };
 #pragma pack()
 

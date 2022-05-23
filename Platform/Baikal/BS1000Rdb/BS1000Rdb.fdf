@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -121,6 +121,9 @@ READ_LOCK_STATUS   = TRUE
 
   INF MdeModulePkg/Core/Dxe/DxeMain.inf
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF Platform/Baikal/BS1000Rdb/Drivers/EuiClientDxe/EuiClientDxe.inf
+  INF Platform/Baikal/BS1000Rdb/Drivers/SpdClientDxe/SpdClientDxe.inf
+  INF Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
   INF Platform/Baikal/Drivers/BaikalSpiFvDxe/BaikalSpiFvDxe.inf
@@ -186,11 +189,19 @@ READ_LOCK_STATUS   = TRUE
 
   # Network
 !include NetworkPkg/Network.fdf.inc
+  INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
+
+  # PCI
+  INF Emulator/X86EmulatorDxe/X86EmulatorDxe.inf
+  INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+  INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
+  INF Silicon/Baikal/BS1000/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+
+  # NVMe
+  INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   # USB
-!if $(BAIKAL_QEMU_S) == FALSE
   INF Silicon/Baikal/BS1000/Drivers/NonDiscoverableEhciDxe/NonDiscoverableEhciDxe.inf
-!endif
   INF Silicon/Baikal/BS1000/Drivers/NonDiscoverableOhciDxe/NonDiscoverableOhciDxe.inf
   INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
@@ -200,6 +211,7 @@ READ_LOCK_STATUS   = TRUE
 
   # UEFI application (Shell Embedded Boot Loader)
   INF ShellPkg/Application/Shell/Shell.inf
+  INF ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf
 
 [FV.FVMAIN_COMPACT]
 FvAlignment        = 16

@@ -1,14 +1,14 @@
-#/** @file
+## @file
 #
 #  Copyright (c) 2019 - 2020, ARM Limited. All rights reserved.
 #  Copyright (c) 2018 - 2021, Andrei Warkentin <andrey.warkentin@gmail.com>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
-#**/
+##
 
 [Defines]
-  INF_VERSION                    = 0x0001001A
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = ConfigDxe
   FILE_GUID                      = 7D08889B-EDEF-47C9-A796-60C11267C6A0
   MODULE_TYPE                    = DXE_DRIVER

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x0001001B
   BASE_NAME                      = AcpiPlatformDxe
-  FILE_GUID                      = FAEC4453-C811-467B-9ECD-06A1088BEF1C
+  FILE_GUID                      = 459FE9FA-6E37-4E14-B037-B5F960BCDFF9
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = AcpiPlatformDxeInitialize
@@ -21,15 +21,18 @@
   Facs.c
   Fadt.c
   Gtdt.c
-  #TODO Iort.c
+  Iort.c
   Madt.c
-  #TODO Mcfg.c
+  Mcfg.c
+  Pmtt.c
   Pptt.c
   Spcr.c
+  SsdtPcie.asl
 
 [Packages]
   ArmPkg/ArmPkg.dec
   MdePkg/MdePkg.dec
+  Silicon/Baikal/BS1000/BS1000.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint

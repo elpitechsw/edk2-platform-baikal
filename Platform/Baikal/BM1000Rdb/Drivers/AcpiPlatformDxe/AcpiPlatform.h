@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -28,7 +28,7 @@
 }
 
 #define BAIKAL_ACPI_PCIE0_SEGMENT   0
-#ifdef BAIKAL_DBM
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
 # define BAIKAL_ACPI_PCIE1_SEGMENT  1
 # define BAIKAL_ACPI_PCIE2_SEGMENT  2
 # define BAIKAL_ACPI_PCIE_COUNT     3
@@ -37,7 +37,47 @@
 # define BAIKAL_ACPI_PCIE_COUNT     2
 #endif
 
-#define BAIKAL_ACPI_PORT_SUBTYPE_SERIAL_16550_GAS  0x0012
+#define SYNTH_SEG(RealSegment, Bus)  ((RealSegment + 1) * 10 + Bus)
+#define SYNTH_BUS_PER_SEG            5
+
+#define CONS_MEM_BUF(Index)                                     \
+  QWordMemory (ResourceConsumer,,                               \
+    MinFixed, MaxFixed, NonCacheable, ReadWrite,                \
+    0x0, 0x0, 0x0, 0x0, 0x1,,, RB ## Index)
+
+#define PROD_MEM_BUF(Index)                                     \
+  QWordMemory (ResourceProducer,,                               \
+    MinFixed, MaxFixed, NonCacheable, ReadWrite,                \
+    0x0, 0x0, 0x0, 0x0, 0x1,,, RB ## Index)
+
+#define PROD_IO_BUF(Index)                                      \
+  QWordIO (ResourceProducer,                                    \
+    MinFixed, MaxFixed, PosDecode, EntireRange,                 \
+    0x0, 0x0, 0x0, 0x0, 0x1,,, RB ## Index, TypeTranslation, )
+
+#define PROD_BUS_BUF(Index)                                     \
+  WordBusNumber (ResourceProducer,                              \
+    MinFixed, MaxFixed, PosDecode, 0x0, 0, 0, 0, 1,,, RB ## Index)
+
+#define QRES_BUF_SET(Index, Offset, Length, Translation)        \
+  CreateQwordField (RBUF, RB ## Index._MIN, MI ## Index)        \
+  CreateQwordField (RBUF, RB ## Index._MAX, MA ## Index)        \
+  CreateQwordField (RBUF, RB ## Index._LEN, LE ## Index)        \
+  CreateQwordField (RBUF, RB ## Index._TRA, TR ## Index)        \
+  Store (Length, LE ## Index)                                   \
+  Store (Offset, MI ## Index)                                   \
+  Store (Translation, TR ## Index)                              \
+  Add (MI ## Index, LE ## Index - 1, MA ## Index)
+
+#define WRES_BUF_SET(Index, Offset, Length, Translation)        \
+  CreateWordField (RBUF, RB ## Index._MIN, MI ## Index)         \
+  CreateWordField (RBUF, RB ## Index._MAX, MA ## Index)         \
+  CreateWordField (RBUF, RB ## Index._LEN, LE ## Index)         \
+  CreateWordField (RBUF, RB ## Index._TRA, TR ## Index)         \
+  Store (Length, LE ## Index)                                   \
+  Store (Offset, MI ## Index)                                   \
+  Store (Translation, TR ## Index)                              \
+  Add (MI ## Index, LE ## Index - 1, MA ## Index)
 
 #define NATIVE_PCIE_OSC                                                    \
   Name (SUPP, Zero) /* PCI _OSC Support Field value */                     \
@@ -60,12 +100,13 @@
       /* * Clock PM */                                                     \
       /* * MSI/MSI-X */                                                    \
       If (LNotEqual (And (SUPP, 0x16), 0x16)) {                            \
-        And (CTRL, 0x1E, CTRL) /* Mask bit 0 (and undefined bits) */       \
+        And (CTRL, 0x3E, CTRL) /* Mask bit 0 (and undefined bits) */       \
       }                                                                    \
                                                                            \
-      /* Always allow native PME, AER (no dependencies) */                 \
+      /* Always allow native PME, AER and PCIe Capability Structure */     \
+      /* control */                                                        \
                                                                            \
-      /* Never allow SHPC (no SHPC controller in this system) */           \
+      /* Never allow SHPC and LTR */                                       \
       And (CTRL, 0x1D, CTRL)                                               \
                                                                            \
       /* Unknown revision */                                               \

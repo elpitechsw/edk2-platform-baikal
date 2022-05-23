@@ -42,12 +42,428 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       BAIKAL_DSDT_CLUSTER_NODE(11)
     }
 
+    Device(CLK0) {
+      Name(_HID, "BKLE0001")
+      Name(_UID, Zero)
+      /* CMU addr, clock name */
+      Name(PROP, Package() {
+        0x00410000, "cmu_sc_1"
+      })
+      /* Device reference, clock name, clock id, con_id */
+      Name(CLKS, Package() {
+        ^GMC0, "gmac1_apb", 9, "stmmaceth",
+        ^GMC0, "gmac1_axi", 10, "axi_clk",
+        ^GMC1, "gmac2_apb", 11, "stmmaceth",
+        ^GMC1, "gmac2_axi", 12, "axi_clk"
+      })
+    }
+
+    Device(CLK1) {
+      Name(_HID, "BKLE0001")
+      Name(_UID, One)
+      /* CMU addr, clock name */
+      Name(PROP, Package() {
+        0x00420000, "cmu_sc_2"
+      })
+      /* Device reference, clock name, clock id, con_id */
+      Name(CLKS, Package() {
+        ^GMC0, "gmac1_ptp", 1, "ptp_ref",
+        ^GMC0, "gmac1_txx2", 2, "tx2_clk",
+        ^GMC1, "gmac2_ptp", 3, "ptp_ref",
+        ^GMC1, "gmac2_txx2", 4, "tx2_clk"
+      })
+    }
+
+    // PVT_CLUSTER0
+    Device(PVC0) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x04030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x04030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER1
+    Device(PVC1) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x08030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x08030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER2
+    Device(PVC2) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x0c030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x0c030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER3
+    Device(PVC3) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x10030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x10030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER4
+    Device(PVC4) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x14030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x14030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER5
+    Device(PVC5) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x18030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x18030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER6
+    Device(PVC6) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x1c030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x1c030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER7
+    Device(PVC7) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x20030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x20030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER8
+    Device(PVC8) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x24030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x24030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER9
+    Device(PVC9) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x28030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x28030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER10
+    Device(PVCA) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x2c030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x2c030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_CLUSTER11
+    Device(PVCB) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x30030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x30030000, 0x1000)
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_PCIE0
+    Device(PVP0) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x38030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x38030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 195 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_PCIE1
+    Device(PVP1) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x3c030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x3c030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 238 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_PCIE2
+    Device(PVP2) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x44030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x44030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 152 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_PCIE3
+    Device(PVP3) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x48030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x48030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 307 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_PCIE4
+    Device(PVP4) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x4c030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x4c030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 376 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_DDR0
+    Device(PVD0) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x50030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x50030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 395 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_DDR1
+    Device(PVD1) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x54030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x54030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 412 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_DDR2
+    Device(PVD2) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x58030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x58030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 429 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_DDR3
+    Device(PVD3) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x60030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x60030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 446 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_DDR4
+    Device(PVD4) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x64030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x64030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 463 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // PVT_DDR5
+    Device(PVD5) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x68030000)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x68030000, 0x1000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 480 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-pvt" }
+        }
+      })
+    }
+
+    // USB OHCI
+    Device(USB1) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x00A00000)
+      Name(_CCA, One)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x00A00000, 0x10000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 110 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "generic-ohci" }
+        }
+      })
+    }
+
+    // USB2
+    Device(USB2) {
+      Name(_CID, "PNP0D20")
+      Name(_UID, Zero)
+      Name(_CCA, One)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x00A10000, 0x10000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 114 }
+      })
+    }
+
     // QSPI_1
     Device(QSP1) {
       Name(_HID, "HISI0173")
       Name(_UID, Zero)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x00C20000, 0x10000)
+        Memory32Fixed(ReadWrite, 0x00C20000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 95 }
       })
       Name(_DSD, Package() {
@@ -62,7 +478,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Name(_UID, 0x00C20000)
         Name(_ADR, Zero)
         Name(_CRS, ResourceTemplate() {
-          SPISerialBusV2(Zero, PolarityLow, FourWireMode, 8, ControllerInitiated, 10000000, ClockPolarityLow, ClockPhaseFirst, "\\_SB.QSP1")
+          SPISerialBusV2(Zero, PolarityHigh, FourWireMode, 8, ControllerInitiated, 10000000, ClockPolarityLow, ClockPhaseFirst, "\\_SB.QSP1")
         })
         Name(_DSD, Package() {
           ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
@@ -74,37 +490,33 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       }
     }
 
-#if 0
-    // USB2
-    Device(USB2) {
-      Name(_CID, "PNP0D10")
-      Name(_UID, Zero)
-      Name(_CCA, One)
-      Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x00A10000, 0x10000)
-        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 114 }
-      })
-    }
-
     // QSPI_2
     Device(QSP2) {
       Name(_HID, "HISI0173")
       Name(_UID, One)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x00C30000, 0x10000)
+        Memory32Fixed(ReadWrite, 0x00C30000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 96 }
       })
     }
 
+#if 0
     // ESPI
     Device(ESPI) {
-      Name(_HID, "HISI0173")
-      Name(_UID, 2)
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x00C40000)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x00C40000, 0x10000)
+        Memory32Fixed(ReadWrite, 0x00C40000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 102 }
       })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-espi" }
+        }
+      })
     }
+#endif
 
     // GPIO32
     Device(GP32) {
@@ -245,6 +657,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
+#if 0
     // SMBUS_I2C5
     Device(I2C5) {
       Name(_HID, "APMC0D0F")
@@ -314,6 +727,52 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Memory32Fixed(ReadWrite, 0x00C10000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 94 }
       })
+    }
+
+    // GMAC0
+    Device(GMC0) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x00A20000)
+      Name(_CCA, One)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x00A20000, 0x10000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 108 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-gmac" },
+          Package() { "reg", One },
+          Package() { "phy-mode", "rgmii-rxid" },
+        }
+      })
+
+      Device(GPHY) {
+        Name(_ADR, Zero)
+      }
+    }
+
+    // GMAC1
+    Device(GMC1) {
+      Name(_HID, "PRP0001")
+      Name(_UID, 0x00A30000)
+      Name(_CCA, One)
+      Name(_CRS, ResourceTemplate() {
+        Memory32Fixed(ReadWrite, 0x00A30000, 0x10000)
+        Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 109 }
+      })
+      Name(_DSD, Package() {
+        ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package() {
+          Package() { "compatible", "baikal,bs1000-gmac" },
+          Package() { "reg", One },
+          Package() { "phy-mode", "rgmii-rxid" },
+        }
+      })
+
+      Device(GPHY) {
+        Name(_ADR, Zero)
+      }
     }
   }
 }

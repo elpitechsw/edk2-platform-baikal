@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -17,13 +17,12 @@
 #include <Protocol/FdtClient.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 #include <IndustryStandard/Sd.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Protocol/Cpu.h>
 
 #define IS_READ   TRUE
 #define IS_WRITE  FALSE
 #define SDHCI_BLOCK_SIZE_DEFAULT  512
-#define SDHCI_PARTSIZE  (4*1024)
+#define SDHCI_PARTSIZE            (4 * 1024)
 
 typedef struct {
   VENDOR_DEVICE_PATH        Vendor;
@@ -170,7 +169,7 @@ GetBaseAdr (
 {
   EFI_STATUS            Status;
   FDT_CLIENT_PROTOCOL  *FdtClient;
-  INT32                 FdtNode;
+  INT32                 Node;
   CONST VOID           *Prop;
   UINT32                PropSize;
 
@@ -179,22 +178,17 @@ GetBaseAdr (
     return Status;
   }
 
-  FdtNode = 0;
-  Status = FdtClient->FindNextCompatibleNode (FdtClient, "snps,dwcmshc-sdhci", FdtNode, &FdtNode);
+  Node = 0;
+  Status = FdtClient->FindNextCompatibleNode (FdtClient, "snps,dwcmshc-sdhci", Node, &Node);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  FdtClient->GetNodeProperty (FdtClient, FdtNode, "status", &Prop, &PropSize);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if (AsciiStrCmp ((CONST CHAR8 *)Prop, "okay")) {
+  if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
     return EFI_DEVICE_ERROR;
   }
 
-  Status = FdtClient->GetNodeProperty (FdtClient, FdtNode, "reg", &Prop, &PropSize);
+  Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
   if (EFI_ERROR (Status)) {
     return Status;
   }

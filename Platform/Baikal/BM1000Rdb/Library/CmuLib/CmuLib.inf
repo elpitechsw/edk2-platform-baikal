@@ -1,0 +1,25 @@
+## @file
+#
+#  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = CmuLib
+  FILE_GUID                      = 32C7FB9A-B848-496C-8C6F-CC6EEB7E06A7
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CmuLib
+
+[Sources.common]
+  CmuLib.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  ArmSmcLib

@@ -1,14 +1,14 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = BaikalSpiBlockDxe
-  FILE_GUID                      = 056f5434-d13c-45a1-a784-513b959037d2
+  FILE_GUID                      = 056F5434-D13C-45A1-A784-513B959037D2
   MODULE_TYPE                    = DXE_RUNTIME_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = BaikalSpiBlockDxeInitialize
@@ -60,7 +60,7 @@
 
 [Depex]
   #
-  # must be loaded before VariableRuntimeDxe in case empty flash needs populating with default values
+  # Must be loaded before VariableRuntimeDxe in case empty flash needs populating with default values
   #
   gEfiVariableArchProtocolGuid AND
   gEfiVariableWriteArchProtocolGuid

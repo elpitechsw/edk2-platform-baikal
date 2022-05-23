@@ -1,13 +1,12 @@
 ## @file
-#  Component description file for BaikalSpiFvDxe module
 #
-#  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = BaikalSpiFvDxe
   FILE_GUID                      = 1A484C42-45FB-4E5A-8D0B-052161EB6A63
   MODULE_TYPE                    = DXE_RUNTIME_DRIVER

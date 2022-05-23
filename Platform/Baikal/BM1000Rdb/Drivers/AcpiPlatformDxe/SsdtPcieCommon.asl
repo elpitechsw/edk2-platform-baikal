@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Andrei Warkentin <andreiw@mm.st><BR>
+  Copyright (c) 2021 - 2022, Andrei Warkentin <andreiw@mm.st><BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -8,222 +8,114 @@
 
 #include "AcpiPlatform.h"
 
-#define CONS_MEM_BUF(Index)                                     \
-  QWordMemory (ResourceConsumer,,                               \
-    MinFixed, MaxFixed, NonCacheable, ReadWrite,                \
-    0x0, 0x0, 0x0, 0x0, 0x1,,, RB ## Index)
-
-#define PROD_MEM_BUF(Index)                                     \
-  QWordMemory (ResourceProducer,,                               \
-    MinFixed, MaxFixed, NonCacheable, ReadWrite,                \
-    0x0, 0x0, 0x0, 0x0, 0x1,,, RB ## Index)
-
-#define PROD_IO_BUF(Index)                                      \
-  QWordIO (ResourceProducer,                                    \
-    MinFixed, MaxFixed, PosDecode, EntireRange,                 \
-    0x0, 0x0, 0x0, 0x0, 0x1,,, RB ## Index, TypeTranslation, )
-
-#define RES_BUF_SET(Index, Offset, Length, Translation)         \
-  CreateQwordField (RBUF, RB ## Index._MIN, MI ## Index)        \
-  CreateQwordField (RBUF, RB ## Index._MAX, MA ## Index)        \
-  CreateQwordField (RBUF, RB ## Index._LEN, LE ## Index)        \
-  CreateQwordField (RBUF, RB ## Index._TRA, TR ## Index)        \
-  Store (Length, LE ## Index)                                   \
-  Store (Offset, MI ## Index)                                   \
-  Store (Translation, TR ## Index)                              \
-  Add (MI ## Index, LE ## Index - 1, MA ## Index)
-
-#ifdef PCIE_SINGLE_DEVICE_BUS_RANGE
-# define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, 0x0, 0, 0, 0, 1)
-#else
-# define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, 0x0, 0, 0xFF, 0, 0x100)
-#endif // PCIE_FULL_BUS_RANGE
-
   External (\_SB.STA0, FieldUnitObj)
   External (\_SB.STA1, FieldUnitObj)
   External (\_SB.STA2, FieldUnitObj)
 
   Scope (_SB_) {
+  Device (XXXX) {
+    Name (_HID, EISAID ("PNP0A08"))
+    Name (_CID, EISAID ("PNP0A03"))
+    Name (_CCA, One)
+    Name (_BBN, 0)
+
+    //
+    // The following NAMEOPs need to be patched to "individualize" this segment.
+    //
+    // _UID - e.g. BAIKAL_ACPI_PCIE0_SEGMENT
+    // RUID - e.g. BM1000_PCIE0_IDX
+    // _SEG - e.g. BAIKAL_ACPI_PCIE0_SEGMENT
+    // CFGB - e.g. BM1000_PCIE0_CFG_BASE
+    // MB32 - e.g. BM1000_PCIE0_MMIO32_BASE
+    // MS32 - e.g. BM1000_PCIE0_MMIO32_SIZE
+    // MBPF - e.g. the prefetchable window base
+    // MSPF - e.g. the prefetchable window size
+    // IOBA - e.g. BM1000_PCIE0_PORTIO_MIN
+    // IOCA - e.g. BM1000_PCIE0_PORTIO_BASE
+    // IOSI - e.g. BM1000_PCIE0_PORTIO_SIZE
+    // BUSC - max buses
+    //
+    // The default values are important so the NameOps are sized right
+    // for patching in GeneratePcieSsdt/FindAndPatchNameOp.
+    //
+    // And uh, don't use 0xFFFFFFFFFFFFFFFF, as AML optimizes that as OnesOp.
+    //
+    Name (_UID, 0xAB)
+    Name (_SEG, 0xAB)
+    Name (RUID, 0xAB)
+    Name (CFGB, 0xABCDEF0123456789)
+    Name (MB32, 0xABCDEF0123456789)
+    Name (MS32, 0xABCDEF0123456789)
+    Name (MBPF, 0xABCDEF0123456789)
+    Name (MSPF, 0xABCDEF0123456789)
+    Name (IOBA, 0xABCDEF0123456789)
+    Name (IOCA, 0xABCDEF0123456789)
+    Name (IOSI, 0xABCDEF0123456789)
+    Name (BUSC, 0xAB)
+
+    Method (_STA, 0, Serialized) {
+      OperationRegion (LCRU, SystemMemory, BM1000_PCIE_GPR_STATUS_REG(RUID), 0x4)
+      Field (LCRU, DWordAcc, NoLock, Preserve) {
+        Offset (0x00),
+        STAR, 32
+      }
+
+      OperationRegion (CFGS, SystemMemory, CFGB, 0x10)
+      Field (CFGS, ByteAcc, NoLock, Preserve) {
+        Offset (0xE),
+        TYPE, 8
+      }
+
+      if ((STAR & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
+                  BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
+        Return (0x0)
+      }
+
+#ifdef PCIE_SINGLE_DEVICE_BUS_RANGE
+      //
+      // If we're only exposing one device, then don't bother
+      // exposing bridges as we'll never be able to access the EPs
+      // hanging off of them.
+      //
+      if ((TYPE & 0x7F) != 0) {
+        Return (0x0)
+      }
+#endif // PCIE_SINGLE_DEVICE_BUS_RANGE
+      Return (0xF)
+    }
+
+    Method (_CRS, 0, Serialized) {
+      Name (RBUF, ResourceTemplate () {
+        PROD_MEM_BUF(01)
+        PROD_MEM_BUF(02)
+        PROD_IO_BUF(03)
+        PROD_BUS_BUF(04)
+      })
+
+      QRES_BUF_SET(01, MB32, MS32, 0)
+      QRES_BUF_SET(02, MBPF, MSPF, 0)
+      QRES_BUF_SET(03, IOBA, IOSI, IOCA - IOBA)
+      WRES_BUF_SET(04, 0, BUSC, 0)
+
+      Return (RBUF)
+    }
+
+#ifdef PCIE_NATIVE
+    NATIVE_PCIE_OSC
+#endif // PCIE_NATIVE
+
 #ifdef PCIE_WITH_ECAM_RANGE
-  Device (ECAM) {
-    Name (_HID, EISAID ("PNP0C02"))
-    Method (_CRS, 0, Serialized) {
-      Name (RBUF, ResourceTemplate () {
-        CONS_MEM_BUF(01)
-#ifdef BAIKAL_DBM
-        CONS_MEM_BUF(02)
-#endif
-        CONS_MEM_BUF(03)
-      })
+      Device(ECAM) {
+        Name(_HID, EISAID("PNP0C02"))
+        Method (_CRS, 0, Serialized) {
+          Name (RBUF, ResourceTemplate () {
+            CONS_MEM_BUF(01)
+          })
 
-      RES_BUF_SET(01, BM1000_PCIE0_CFG_BASE, 0xFF00000, 0)
-#ifdef BAIKAL_DBM
-      RES_BUF_SET(02, BM1000_PCIE1_CFG_BASE, 0xFF00000, 0)
-#endif
-      RES_BUF_SET(03, BM1000_PCIE2_CFG_BASE, 0xFF00000, 0)
-
-      Return (RBUF)
-    }
-  }
+          QRES_BUF_SET(01, CFGB, 0xFF00000, 0)
+          Return (RBUF)
+        }
+      }
 #endif // PCIE_WITH_ECAM_RANGE
-
-  // PCIe0 (x4 #0)
-  Device (PCI0) {
-    Name (_HID, EISAID ("PNP0A08"))
-    Name (_CID, EISAID ("PNP0A03"))
-    Name (_UID, BAIKAL_ACPI_PCIE0_SEGMENT)
-    Name (_CCA, One)
-    Name (_SEG, BAIKAL_ACPI_PCIE0_SEGMENT)
-    Name (_BBN, 0)
-
-    OperationRegion (CFGS, SystemMemory, BM1000_PCIE0_CFG_BASE, 0x10)
-    Field (CFGS, ByteAcc, NoLock, Preserve) {
-      Offset (0xE),
-      TYPE, 8
-    }
-
-    Method (_STA, 0, Serialized) {
-      if ((\_SB.STA0 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                  BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
-        Return (0x0)
-      }
-
-#ifdef PCIE_SINGLE_DEVICE_BUS_RANGE
-      //
-      // If we're only exposing one device, then don't bother
-      // exposing bridges as we'll never be able to access the EPs
-      // hanging off of them.
-      //
-      if ((TYPE & 0x7F) != 0) {
-        Return (0x0)
-      }
-#endif // PCIE_SINGLE_DEVICE_BUS_RANGE
-      Return (0xF)
-    }
-
-    Method (_CRS, 0, Serialized) {
-      Name (RBUF, ResourceTemplate () {
-        BUS_RES
-        PROD_MEM_BUF(01)
-        PROD_IO_BUF(02)
-      })
-
-      RES_BUF_SET(01, BM1000_PCIE0_MMIO32_BASE,  BM1000_PCIE0_MMIO32_SIZE, 0)
-      RES_BUF_SET(02, BM1000_PCIE0_PORTIO_MIN,   BM1000_PCIE0_PORTIO_SIZE,
-                      BM1000_PCIE0_PORTIO_BASE - BM1000_PCIE0_PORTIO_MIN)
-
-      Return (RBUF)
-    }
-
-#ifdef PCIE_NATIVE
-    NATIVE_PCIE_OSC
-#endif // PCIE_NATIVE
-  }
-
-#ifdef BAIKAL_DBM
-  // PCIe1 (x4 #1)
-  Device (PCI1) {
-    Name (_HID, EISAID ("PNP0A08"))
-    Name (_CID, EISAID ("PNP0A03"))
-    Name (_UID, BAIKAL_ACPI_PCIE1_SEGMENT)
-    Name (_CCA, One)
-    Name (_SEG, BAIKAL_ACPI_PCIE1_SEGMENT)
-    Name (_BBN, 0)
-
-    OperationRegion (CFGS, SystemMemory, BM1000_PCIE1_CFG_BASE, 0x10)
-    Field (CFGS, ByteAcc, NoLock, Preserve) {
-      Offset (0xE),
-      TYPE, 8
-    }
-
-    Method (_STA, 0, Serialized) {
-      if ((\_SB.STA1 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                  BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
-        Return (0x0)
-      }
-
-#ifdef PCIE_SINGLE_DEVICE_BUS_RANGE
-      //
-      // If we're only exposing one device, then don't bother
-      // exposing bridges as we'll never be able to access the EPs
-      // hanging off of them.
-      //
-      if ((TYPE & 0x7F) != 0) {
-        Return (0x0)
-      }
-#endif // PCIE_SINGLE_DEVICE_BUS_RANGE
-      Return (0xF)
-    }
-
-    Method (_CRS, 0, Serialized) {
-      Name (RBUF, ResourceTemplate () {
-        BUS_RES
-        PROD_MEM_BUF(01)
-        PROD_IO_BUF(02)
-      })
-
-      RES_BUF_SET(01, BM1000_PCIE1_MMIO32_BASE,  BM1000_PCIE1_MMIO32_SIZE, 0)
-      RES_BUF_SET(02, BM1000_PCIE1_PORTIO_MIN,   BM1000_PCIE1_PORTIO_SIZE,
-                      BM1000_PCIE1_PORTIO_BASE - BM1000_PCIE1_PORTIO_MIN)
-      Return (RBUF)
-    }
-
-#ifdef PCIE_NATIVE
-    NATIVE_PCIE_OSC
-#endif // PCIE_NATIVE
-  }
-#endif
-
-  // PCIe2 (x8)
-  Device (PCI2) {
-    Name (_HID, EISAID ("PNP0A08"))
-    Name (_CID, EISAID ("PNP0A03"))
-    Name (_UID, BAIKAL_ACPI_PCIE2_SEGMENT)
-    Name (_CCA, One)
-    Name (_SEG, BAIKAL_ACPI_PCIE2_SEGMENT)
-    Name (_BBN, 0)
-
-    OperationRegion (CFGS, SystemMemory, BM1000_PCIE2_CFG_BASE, 0x10)
-    Field (CFGS, ByteAcc, NoLock, Preserve) {
-      Offset (0xE),
-      TYPE, 8
-    }
-
-    Method (_STA, 0, Serialized) {
-      if ((\_SB.STA2 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                  BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
-        Return (0x0)
-      }
-
-#ifdef PCIE_SINGLE_DEVICE_BUS_RANGE
-      //
-      // If we're only exposing one device, then don't bother
-      // exposing bridges as we'll never be able to access the EPs
-      // hanging off of them.
-      //
-      if ((TYPE & 0x7F) != 0) {
-        Return (0x0)
-      }
-#endif // PCIE_SINGLE_DEVICE_BUS_RANGE
-      Return (0xF)
-    }
-
-    Method (_CRS, 0, Serialized) {
-      Name (RBUF, ResourceTemplate () {
-        BUS_RES
-        PROD_MEM_BUF(01)
-        PROD_IO_BUF(02)
-      })
-
-      RES_BUF_SET(01, BM1000_PCIE2_MMIO32_BASE,  BM1000_PCIE2_MMIO32_SIZE, 0)
-      RES_BUF_SET(02, BM1000_PCIE2_PORTIO_MIN,   BM1000_PCIE2_PORTIO_SIZE,
-                      BM1000_PCIE2_PORTIO_BASE - BM1000_PCIE2_PORTIO_MIN)
-
-      Return (RBUF)
-    }
-
-#ifdef PCIE_NATIVE
-    NATIVE_PCIE_OSC
-#endif // PCIE_NATIVE
   }
 }

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -27,7 +27,7 @@ typedef enum {
   ASSERT (((A) & (0xFFFF0000F0000000ULL | (M))) == 0)
 
 BOOLEAN
-BaikalPciHostBridgeLibLink (
+PciHostBridgeLibGetLink (
   IN  CONST UINTN  PcieIdx
   );
 
@@ -41,21 +41,21 @@ PciSegmentLibGetConfigBase (
   CONST UINTN  Bus      = (PciSegLibAddr >> 20) & 0xFF;
   CONST UINTN  Device   = (PciSegLibAddr >> 15) & 0x1F;
   CONST UINTN  Function = (PciSegLibAddr >> 12) & 0x7;
-  extern EFI_PHYSICAL_ADDRESS mPcieCdmBases[];
-  extern EFI_PHYSICAL_ADDRESS mPcieCfgBases[];
-  extern UINT32               mPcieCfg0FilteringWorks;
+  extern UINT32                mPcieCfg0FilteringWorks;
+  extern EFI_PHYSICAL_ADDRESS  mPcieCfgBases[];
+  extern EFI_PHYSICAL_ADDRESS  mPcieDbiBases[];
 
   if (Bus == 0) {
     if (Device == 0) { // DBI access
-      return mPcieCdmBases[Segment];
+      return mPcieDbiBases[Segment];
     } else { // Must not access beyond RCB:0.0
       return MAX_UINT64;
     }
   } else if (Bus == 1) {
     if (Device == 0) {
       if (Function == 0 || (mPcieCfg0FilteringWorks & (1 << Segment))) {
-        if (BaikalPciHostBridgeLibLink(Segment)) {
-          return mPcieCfgBases[Segment] + (Function << 12);
+        if (PciHostBridgeLibGetLink(Segment)) {
+          return mPcieCfgBases[Segment] + (Bus << 20) + (Device << 15) + (Function << 12);
         } else {
           return MAX_UINT64;
         }
@@ -70,7 +70,7 @@ PciSegmentLibGetConfigBase (
       return MAX_UINT64;
     }
   } else {
-    if (BaikalPciHostBridgeLibLink(Segment)) {
+    if (PciHostBridgeLibGetLink(Segment)) {
       return mPcieCfgBases[Segment] + (Bus << 20) + (Device << 15) + (Function << 12);
     } else {
       return MAX_UINT64;

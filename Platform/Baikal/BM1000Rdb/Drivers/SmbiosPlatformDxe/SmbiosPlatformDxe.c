@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -264,7 +264,8 @@ SmbiosReadFdtModel (
     return Status;
   }
 
-  if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm", -1, &Node) == EFI_SUCCESS) {
+  if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm10", -1, &Node) == EFI_SUCCESS ||
+      FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm20", -1, &Node) == EFI_SUCCESS) {
     AsciiSPrint (DstBuf, DstSize, "%a", "DBM");
     return EFI_SUCCESS;
   } else if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,mbm10", -1, &Node) == EFI_SUCCESS ||
@@ -1292,7 +1293,7 @@ STATIC VOID  *SmbiosTable19 = BAIKAL_SMBIOS_TABLE (
     0,
     0,
     BAIKAL_SMBIOS_TABLE_HANDLE (16, 0),
-    2,
+    0,
     0,
     0
   }
@@ -1333,12 +1334,6 @@ GetDdrInfo (
 
   SpdSize = SpdGetSize (SpdDdrAddr[Num]);
   if (SpdSize == 0) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: DDR4 DIMM%d SPD is not detected\n",
-      __FUNCTION__,
-      Num
-      ));
     return EFI_NOT_FOUND;
   }
 
@@ -1530,6 +1525,7 @@ SmbiosTable16_17_19_20Init (
       }
     } else {
       DdrPresence |= 1 << Idx / Inc;
+      ((SMBIOS_TABLE_TYPE19 *) SmbiosTable19)->PartitionWidth++;
     }
   }
 
@@ -1575,6 +1571,9 @@ SmbiosTable16_17_19_20Init (
 
   // Init and load table of type 16
   ((SMBIOS_TABLE_TYPE16 *) SmbiosTable16)->NumberOfMemoryDevices = DdrAmount;
+  if (!IsMbm()) {
+    ((SMBIOS_TABLE_TYPE16 *) SmbiosTable16)->MaximumCapacity <<= 1;
+  }
   Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable16, NULL, 0);
   if (EFI_ERROR (Status)) {
     FreePool (DdrInfo);

@@ -1,12 +1,12 @@
 ## @file
 #
-#  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION                    = 0x0001001A
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = PlatformLib
   FILE_GUID                      = 16CF847C-F686-11EA-A45C-484D7E9DF524
   MODULE_TYPE                    = BASE

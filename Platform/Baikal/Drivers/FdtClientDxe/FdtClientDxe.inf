@@ -1,14 +1,12 @@
 ## @file
-#  FDT client driver
 #
 #  Copyright (c) 2016, Linaro Ltd. All rights reserved.<BR>
-#
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = FdtClientDxe
   FILE_GUID                      = 9A871B00-1C16-4F61-8D2C-93B6654B5AD6
   MODULE_TYPE                    = DXE_DRIVER

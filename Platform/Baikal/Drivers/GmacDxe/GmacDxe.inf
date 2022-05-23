@@ -1,12 +1,12 @@
 ## @file
 #
-#  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
-  INF_VERSION                    = 0x0001001A
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = GmacDxe
   FILE_GUID                      = 631C5C74-8BA0-11EB-8F99-00259087216F
   MODULE_TYPE                    = DXE_DRIVER
@@ -29,16 +29,20 @@
 [LibraryClasses]
   ArmLib
   ArmSmcLib
-  BaikalSpdLib
+  CmuLib
   GpioLib
   IoLib
+  TimerLib
   UefiDriverEntryPoint
   UefiLib
 
 [Protocols]
+  gEfiCpuArchProtocolGuid
   gEfiSimpleNetworkProtocolGuid
+  gEuiClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
   gFdtClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
-  gFruClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
 
 [Depex]
-  gFdtClientProtocolGuid AND gFruClientProtocolGuid
+  gEfiCpuArchProtocolGuid AND
+  gEuiClientProtocolGuid  AND
+  gFdtClientProtocolGuid
