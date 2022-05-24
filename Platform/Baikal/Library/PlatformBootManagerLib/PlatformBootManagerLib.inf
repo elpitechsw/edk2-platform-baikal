@@ -17,11 +17,11 @@
   PlatformBootManager.c
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   EmbeddedPkg/EmbeddedPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
   ShellPkg/ShellPkg.dec
-  Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
   BootLogoLib

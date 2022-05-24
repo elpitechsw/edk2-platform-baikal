@@ -19,9 +19,9 @@
   FruInternals.h
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   EmbeddedPkg/EmbeddedPkg.dec
   MdePkg/MdePkg.dec
-  Platform/Baikal/Baikal.dec
   Silicon/Baikal/Baikal.dec
 
 [LibraryClasses]

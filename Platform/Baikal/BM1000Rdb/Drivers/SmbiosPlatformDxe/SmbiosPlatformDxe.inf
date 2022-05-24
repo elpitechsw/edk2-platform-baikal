@@ -18,10 +18,10 @@
 
 [Packages]
   ArmPkg/ArmPkg.dec
+  Platform/Baikal/Baikal.dec
   EmbeddedPkg/EmbeddedPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
-  Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
   ArmLib
