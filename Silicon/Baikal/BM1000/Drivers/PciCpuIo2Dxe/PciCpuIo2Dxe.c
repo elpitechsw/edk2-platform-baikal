@@ -549,7 +549,7 @@ STATIC EFI_CPU_IO2_PROTOCOL mCpuIo2 = {
 **/
 EFI_STATUS
 EFIAPI
-BaikalPciCpuIo2Initialize (
+PciCpuIo2Initialize (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )

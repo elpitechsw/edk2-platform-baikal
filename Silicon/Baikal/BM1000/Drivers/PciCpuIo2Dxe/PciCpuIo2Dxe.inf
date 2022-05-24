@@ -5,14 +5,14 @@
 
 [Defines]
   INF_VERSION     = 0x00010005
-  BASE_NAME       = BaikalPciCpuIo2Dxe
+  BASE_NAME       = PciCpuIo2Dxe
   FILE_GUID       = 687b202a-9460-11ea-b5c5-00259020f96e
   MODULE_TYPE     = DXE_DRIVER
   VERSION_STRING  = 1.0
-  ENTRY_POINT     = BaikalPciCpuIo2Initialize
+  ENTRY_POINT     = PciCpuIo2Initialize
 
 [Sources]
-  BaikalPciCpuIo2Dxe.c
+  PciCpuIo2Dxe.c
 
 [Packages]
   ArmPkg/ArmPkg.dec
