@@ -312,12 +312,16 @@ ProcessBridgeForSsdt (
   UINTN               AcpiSeg;
   STATIC CONST UINT8  AcpiSegs[3] = {
      BAIKAL_ACPI_PCIE0_SEGMENT,
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
      BAIKAL_ACPI_PCIE1_SEGMENT,
 #else
      0, /* Unused */
 #endif
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
      BAIKAL_ACPI_PCIE2_SEGMENT
+#else
+     0, /* Unused */
+#endif
   };
 
   UINTN                         Index;

@@ -185,7 +185,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined (ELPITECH)
     Device(CLK1) {
       Name(_HID, "BKLE0001")
       Name(_UID, One)
@@ -293,7 +293,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           Package() {
             Package() { "reg", Zero },
             Package() { "snps,nr-gpios", 32 },
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined (ELPITECH)
             Package() { "line-name", "pcie-x8-clock" },
             Package() { "gpio-hog", One },
             Package() { "gpios", Package() { One, One } },
@@ -342,7 +342,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
           }
         })
       }
-#elif defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#elif defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined (ELPITECH)
           Package() { "cs-gpios", Zero }
         }
       })
@@ -964,7 +964,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     }
 #endif
 
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined (ELPITECH)
     // GMAC0
     Device(GMC0) {
       Name(_HID, "PRP0001")

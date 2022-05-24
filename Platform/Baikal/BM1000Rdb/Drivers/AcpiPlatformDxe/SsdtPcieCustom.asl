@@ -61,7 +61,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
             CONS_MEM_BUF(01)
             Memory32Fixed (ReadWrite, BM1000_PCIE0_DBI_BASE, BM1000_PCIE0_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 458, 461 }
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined(ELPITECH)
             GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 6 }
 #endif
           })
@@ -75,7 +75,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     // PCIe1 (x4 #1)
     Device (PCI1) {
       Name (_HID, EISAID ("PNP0A08"))
@@ -131,6 +131,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
     }
 #endif
 
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     // PCIe2 (x8)
     Device (PCI2) {
       Name (_HID, EISAID ("PNP0A08"))
@@ -174,7 +175,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
             CONS_MEM_BUF(01)
             Memory32Fixed (ReadWrite, BM1000_PCIE2_DBI_BASE, BM1000_PCIE2_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined(ELPITECH)
             GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
 #endif
           })
@@ -187,5 +188,6 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
 
       NATIVE_PCIE_OSC
     }
+#endif
   }
 }
