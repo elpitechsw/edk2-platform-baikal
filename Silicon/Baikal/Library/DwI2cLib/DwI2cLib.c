@@ -52,9 +52,14 @@ typedef struct {
   UINT32  IcHsSpkLen;
 } I2C_CONTROLLER_REGS;
 
+#define IC_SPEED_MODE_STANDARD     1
 #define IC_SPEED_MODE_FAST         2
 #define IC_CON_MASTER_MODE         BIT0
+#ifndef ELPITECH
 #define IC_CON_SPEED               (IC_SPEED_MODE_FAST << 1)
+#else
+#define IC_CON_SPEED               (IC_SPEED_MODE_STANDARD << 1)
+#endif
 #define IC_CON_IC_SLAVE_DISABLE    BIT6
 
 #define IC_DATA_CMD_CMD            BIT8
