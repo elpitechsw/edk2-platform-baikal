@@ -148,7 +148,7 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
-!if ($(TARGET) == DEBUG) || $(BAIKAL_QEMU_M)
+!if ($(TARGET) == DEBUG) || $(BAIKAL_QEMU_M) || $(BAIKAL_ELP)
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 !endif
 
@@ -201,7 +201,11 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
+!if $(BAIKAL_ELP)
+  INF Silicon/Baikal/BM1000/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+!else
   INF ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
+!endif
   INF Emulator/X86EmulatorDxe/X86EmulatorDxe.inf
   INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
