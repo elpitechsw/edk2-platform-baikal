@@ -231,28 +231,28 @@ LcdSetTimings (
   BufSize = Horizontal->Resolution * Vertical->Resolution;
 
   switch (LcdBpp) {
-  case LCD_BITS_PER_PIXEL_1:
+  case LcdBitsPerPixel_1:
     LcdControl |= BAIKAL_VDU_CR1_BPP1;
     BufSize /= 8;
     break;
-  case LCD_BITS_PER_PIXEL_2:
+  case LcdBitsPerPixel_2:
     LcdControl |= BAIKAL_VDU_CR1_BPP2;
     BufSize /= 4;
     break;
-  case LCD_BITS_PER_PIXEL_4:
+  case LcdBitsPerPixel_4:
     LcdControl |= BAIKAL_VDU_CR1_BPP4;
     BufSize /= 2;
     break;
-  case LCD_BITS_PER_PIXEL_8:
+  case LcdBitsPerPixel_8:
     LcdControl |= BAIKAL_VDU_CR1_BPP8;
     break;
-  case LCD_BITS_PER_PIXEL_16_555:
+  case LcdBitsPerPixel_16_555:
     LcdControl |= BAIKAL_VDU_CR1_OPS_555;
-  case LCD_BITS_PER_PIXEL_16_565:
+  case LcdBitsPerPixel_16_565:
     LcdControl |= BAIKAL_VDU_CR1_BPP16;
     BufSize *= 2;
     break;
-  case LCD_BITS_PER_PIXEL_24:
+  case LcdBitsPerPixel_24:
     LcdControl |= BAIKAL_VDU_CR1_BPP24;
     BufSize *= 4;
     break;
