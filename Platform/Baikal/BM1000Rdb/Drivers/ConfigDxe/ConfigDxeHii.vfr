@@ -68,8 +68,8 @@ formset
       prompt      = STRING_TOKEN(STR_VDU_LVDS_PROMPT),
       help        = STRING_TOKEN(STR_VDU_LVDS_HELP),
       flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
-      option text = STRING_TOKEN(STR_VDU_LVDS_OFF), value = VDU_LVDS_OFF, flags = 0;
-      option text = STRING_TOKEN(STR_VDU_LVDS_ON),  value = VDU_LVDS_ON,  flags = DEFAULT;
+      option text = STRING_TOKEN(STR_VDU_LVDS_OFF), value = VDU_LVDS_OFF, flags = DEFAULT;
+      option text = STRING_TOKEN(STR_VDU_LVDS_ON),  value = VDU_LVDS_ON,  flags = 0;
     endoneof;
 
     oneof varid = Uart1.Mode,
