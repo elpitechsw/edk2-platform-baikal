@@ -233,6 +233,24 @@ FruClientDxeInitialize (
 
     if (I2cRxedSize == EEPROM_SIZE) {
       mFruBufSize = I2cRxedSize;
+    } else {
+      DEBUG((EFI_D_ERROR, "Can't read fru (size %d). Retrying...\n", I2cRxedSize));
+      I2cRxedSize = I2cTxRx (
+                      FruI2cBase,
+                      mFruAddr,
+                      (UINT8 *) &FruMemAddr,
+                      sizeof (FruMemAddr),
+                      mFruBuf,
+                      EEPROM_SIZE
+                      );
+
+      if (I2cRxedSize == EEPROM_SIZE) {
+        mFruBufSize = I2cRxedSize;
+	DEBUG((EFI_D_ERROR, "Retried OK.\n"));
+      } else {
+        DEBUG((EFI_D_ERROR, "Retry failed (size %d).\n", I2cRxedSize));
+        return EFI_DEVICE_ERROR;
+      }
     }
   }
 
