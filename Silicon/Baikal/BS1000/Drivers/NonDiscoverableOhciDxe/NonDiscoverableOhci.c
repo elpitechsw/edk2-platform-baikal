@@ -6,6 +6,7 @@
 #include <PiDxe.h>
 #include <Library/DebugLib.h>
 #include <Library/NonDiscoverableDeviceRegistrationLib.h>
+#include <Library/GpioLib.h>
 
 #include <BS1000.h>
 
@@ -17,6 +18,9 @@ NonDiscoverableOhciEntryPoint (
   )
 {
   EFI_STATUS  Status;
+
+  GpioOutSet(BS1000_GPIO32_BASE, 6);
+  GpioDirSet(BS1000_GPIO32_BASE, 6);
 
   Status = RegisterNonDiscoverableMmioDevice (
              NonDiscoverableDeviceTypeOhci,

@@ -11,6 +11,7 @@
 #include <Library/PciHostBridgeLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/GpioLib.h>
 #include <Protocol/FdtClient.h>
 #include <Protocol/PciHostBridgeResourceAllocation.h>
 
@@ -701,6 +702,61 @@ PciHostBridgeLibConstructor (
        BS1000_PCIE_APB_PE_GEN_CTRL3,
       ~BS1000_PCIE_APB_PE_GEN_CTRL3_LTSSM_EN
       );
+
+    EFI_PHYSICAL_ADDRESS GpioBase = 0;
+    INTN                 ResetGpio;
+    switch (PcieIdx) {
+      case 0: /* PCIe0.P0 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 23;
+	break;
+      case 2: /* PCIe1.P0 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 25;
+	break;
+      case 4: /* PCIe2.P0 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 27;
+	break;
+      case 5: /* PCIe2.P1 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 29;
+	break;
+      case 6: /* PCIe3.P0 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 15;
+	break;
+      case 7: /* PCIe3.P1 */
+        GpioBase = BS1000_GPIO8_1_BASE;
+	ResetGpio = 6;
+	break;
+      case 8: /* PCIe3.P2 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 18;
+	break;
+      case 9: /* PCIe3.P3 */
+        GpioBase = BS1000_GPIO8_1_BASE;
+	ResetGpio = 1;
+	break;
+      case 10: /* PCIe4.P0 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 17;
+	break;
+      case 12: /* PCIe4.P2 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 31;
+	break;
+      case 13: /* PCIe4.P3 */
+        GpioBase = BS1000_GPIO32_BASE;
+	ResetGpio = 21;
+	break;
+      default:
+        GpioBase = 0;
+    }
+    if (GpioBase) {
+      GpioOutSet(GpioBase, ResetGpio);
+      GpioDirSet(GpioBase, ResetGpio);
+    }
 
     if (PcieNumLanes[PcieIdx] == 1) {
       PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X1;
