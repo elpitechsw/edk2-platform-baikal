@@ -3,8 +3,8 @@
 #include <Library/IoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <PiDxe.h>
-#include <Platform/Pcie.h>
 #include <Protocol/CpuIo2.h>
+#include <BM1000.h>
 
 #define MAX_IO_PORT_ADDRESS   0x2FFFFF
 
@@ -332,14 +332,28 @@ TranslateIoAddress (
   IN OUT EFI_PHYSICAL_ADDRESS * CONST  Address
   )
 {
-  STATIC CONST EFI_PHYSICAL_ADDRESS  PciePortIoBases[] = BM1000_PCIE_PORTIO_BASES;
-  STATIC CONST UINTN                 PciePortIoMins[]  = BM1000_PCIE_PORTIO_MINS;
-  STATIC CONST UINTN                 PciePortIoMaxs[]  = BM1000_PCIE_PORTIO_MAXS;
+  STATIC CONST EFI_PHYSICAL_ADDRESS  PciePortIoBases[] = {
+    BM1000_PCIE0_DYNIO0_BASE + SIZE_256MB - SIZE_1MB - SIZE_1MB,
+    BM1000_PCIE1_DYNIO0_BASE,
+    BM1000_PCIE2_DYNIO0_BASE
+  };
+  STATIC CONST UINTN                 PciePortIoMins[]  = {
+    0,
+    0x100000,
+    0x200000
+  };
+  STATIC CONST UINTN                 PciePortIoMaxs[]  = {
+    0x0fffff,
+    0x1fffff,
+    0x2fffff
+  };
   UINTN  Segment;
 
+  DEBUG((EFI_D_INFO, "TranslateIoAddress: Address %lx\n", *Address));
   for (Segment = 0; Segment < ARRAY_SIZE (PciePortIoBases); ++Segment) {
     if (*Address >= PciePortIoMins[Segment] && *Address <= PciePortIoMaxs[Segment]) {
       *Address = PciePortIoBases[Segment] + (*Address - PciePortIoMins[Segment]);
+      DEBUG((EFI_D_INFO, "Translated to %lx\n", *Address));
       return EFI_SUCCESS;
     }
   }

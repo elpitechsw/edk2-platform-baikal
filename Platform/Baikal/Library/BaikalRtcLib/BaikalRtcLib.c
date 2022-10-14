@@ -124,17 +124,17 @@ LibGetTime (
   Time->Second = Bcd2Bin (TimeDateBcds[0] & BCD_MASK_SECONDS);
   Time->Minute = Bcd2Bin (TimeDateBcds[1] & BCD_MASK_MINUTES);
 
-  /* Handle 12/24-hour modes */
+  // Handle 12/24-hour modes
   if ((RtcType == RTC_TYPE_ABEOZ9  && (TimeDateBcds[2] & BIT6)) ||
       (RtcType == RTC_TYPE_PCF212X && (Buf[0] & BIT2))) {
-    /* 12-hour mode */
+    // 12-hour mode
     Time->Hour = Bcd2Bin (TimeDateBcds[2] & BCD_MASK_HOURS12);
-    /* Handle AM/PM bit */
+    // Handle AM/PM bit
     if ((TimeDateBcds[2] & BIT5) && Time->Hour != 12) {
       Time->Hour += 12;
     }
   } else {
-    /* 24-hour mode */
+    // 24-hour mode
     Time->Hour = Bcd2Bin (TimeDateBcds[2] & BCD_MASK_HOURS24);
   }
 
@@ -147,7 +147,7 @@ LibGetTime (
 
   Time->Year   = Bcd2Bin (TimeDateBcds[6]) + 2000;
 
-  /* Not supported */
+  // Not supported
   Time->Pad1       = 0;
   Time->Nanosecond = 0;
   Time->TimeZone   = 0;
@@ -166,6 +166,14 @@ LibGetTime (
       Time->Minute,
       Time->Second
       ));
+
+    // Set default time
+    Time->Year   = TIME_BUILD_YEAR;
+    Time->Month  = 1;
+    Time->Day    = 1;
+    Time->Hour   = 1; // AM/PM indifferent
+    Time->Minute = 0;
+    Time->Second = 0;
   }
 
   if (Capabilities != NULL) {
@@ -300,7 +308,6 @@ LibRtcInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_TIME              EfiTime;
   FDT_CLIENT_PROTOCOL  *FdtClient;
   INT32                 Node;
   CONST VOID           *Prop;
@@ -333,17 +340,6 @@ LibRtcInitialize (
     I2cBase = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
   } else {
     return EFI_DEVICE_ERROR;
-  }
-
-  Status = LibGetTime (&EfiTime, NULL);
-  if (Status == EFI_SUCCESS && !IsTimeValid (&EfiTime)) {
-    EfiTime.Year   = TIME_BUILD_YEAR;
-    EfiTime.Month  = 1;
-    EfiTime.Day    = 1;
-    EfiTime.Hour   = 1; /* AM/PM indifferent */
-    EfiTime.Minute = 0;
-    EfiTime.Second = 0;
-    LibSetTime (&EfiTime);
   }
 
   return EFI_SUCCESS;

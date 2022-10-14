@@ -11,10 +11,10 @@
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Platform/ConfigVars.h>
-#include <Platform/Pcie.h>
 #include <Protocol/AcpiTable.h>
 #include <Protocol/PciIo.h>
 
+#include <BM1000.h>
 #include "AcpiPlatform.h"
 
 // DeviceOp PkgLength NameString
@@ -198,9 +198,9 @@ GeneratePcieSsdt (
   )
 {
   STATIC CONST EFI_PHYSICAL_ADDRESS  CfgBases[] = {
-                                                    BM1000_PCIE0_CFG_BASE,
-                                                    BM1000_PCIE1_CFG_BASE,
-                                                    BM1000_PCIE2_CFG_BASE
+                                                    BAIKAL_ACPI_PCIE0_CFG_BASE,
+                                                    BAIKAL_ACPI_PCIE1_CFG_BASE,
+                                                    BAIKAL_ACPI_PCIE2_CFG_BASE
                                                   };
 
   UINT64                        Iosi = 0;

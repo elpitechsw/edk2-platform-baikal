@@ -89,14 +89,14 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = BS1000_PCIE0_APB_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE0_P0_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE0_P0_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE0_P0_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE0_P0_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE0_P0_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE0_P0_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE0_P1_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE0_P1_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE0_P1_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE0_P1_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE0_P1_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE0_P1_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE1_APB_BASE;
@@ -104,14 +104,14 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = BS1000_PCIE1_APB_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE1_P0_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE1_P0_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE1_P0_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE1_P0_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE1_P0_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE1_P0_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE1_P1_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE1_P1_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE1_P1_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE1_P1_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE1_P1_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE1_P1_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE2_APB_BASE;
@@ -119,14 +119,14 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = BS1000_PCIE2_APB_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE2_P0_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE2_P0_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE2_P0_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE2_P0_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE2_P0_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE2_P0_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE2_P1_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE2_P1_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE2_P1_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE2_P1_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE2_P1_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE2_P1_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_APB_BASE;
@@ -134,24 +134,24 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = BS1000_PCIE3_APB_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P0_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P0_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P0_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P0_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P0_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P0_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P1_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P1_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P1_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P1_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P1_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P1_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P2_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P2_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P2_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P2_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P2_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P2_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P3_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P3_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P3_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P3_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE3_P3_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE3_P3_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_APB_BASE;
@@ -159,24 +159,24 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = BS1000_PCIE4_APB_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P0_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P0_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P0_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P0_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P0_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P0_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P1_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P1_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P1_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P1_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P1_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P1_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P2_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P2_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P2_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P2_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P2_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P2_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
-  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P3_BASE;
-  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P3_BASE;
-  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P3_SIZE;
+  VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE4_P3_DBI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BS1000_PCIE4_P3_DBI_BASE;
+  VirtualMemoryTable[Index].Length       = BS1000_PCIE4_P3_DBI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = PcdGet64 (PcdSystemMemoryBase);
@@ -184,9 +184,9 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = 0x10000000;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
 
-  VirtualMemoryTable[Index].PhysicalBase = 0xA0000000;
-  VirtualMemoryTable[Index].VirtualBase  = 0xA0000000;
-  VirtualMemoryTable[Index].Length       = PcdGet64 (PcdSystemMemorySize) - 0x20000000;
+  VirtualMemoryTable[Index].PhysicalBase = 0x91000000;
+  VirtualMemoryTable[Index].VirtualBase  = 0x91000000;
+  VirtualMemoryTable[Index].Length       = PcdGet64 (PcdSystemMemorySize) - 0x11000000;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
 
   VirtualMemoryTable[Index].PhysicalBase = BS1000_PCIE3_P0_MMIO_BASE;

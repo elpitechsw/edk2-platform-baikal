@@ -6,6 +6,7 @@
 #include <Uefi.h>
 #include <Library/DebugLib.h>
 #include <Library/DwI2cLib.h>
+#include <Library/TimerLib.h>
 
 typedef struct {
   UINT32  IcCon;
@@ -91,6 +92,7 @@ I2cTxRx (
   IN   CONST UINTN                 RxBufSize
   )
 {
+  UINT64  ActivityTimestamp;
   EFI_STATUS  Status;
   volatile I2C_CONTROLLER_REGS * CONST  I2cRegs = (volatile I2C_CONTROLLER_REGS * CONST) Base;
   UINTN  RxedSize = 0;
@@ -98,10 +100,10 @@ I2cTxRx (
   UINTN  TxedSize = 0;
   CONST UINT8 * CONST  TxPtr = (UINT8 *) TxBuf;
 
-  ASSERT(I2cRegs != NULL);
-  ASSERT(TargetAddr <= 0x7F);
-  ASSERT(TxBuf != NULL || !TxBufSize);
-  ASSERT(RxBuf != NULL || !RxBufSize);
+  ASSERT (I2cRegs != NULL);
+  ASSERT (TargetAddr <= 0x7F);
+  ASSERT (TxBuf != NULL || !TxBufSize);
+  ASSERT (RxBuf != NULL || !RxBufSize);
 
   I2cRegs->IcEnable    = 0;
   I2cRegs->IcCon       = IC_CON_IC_SLAVE_DISABLE | IC_CON_SPEED | IC_CON_MASTER_MODE;
@@ -112,12 +114,14 @@ I2cTxRx (
   I2cRegs->IcFsSclHcnt = (IC_CLK * MIN_FS_SCL_HIGHTIME) / NANO_TO_MICRO;
   I2cRegs->IcFsSclLcnt = (IC_CLK * MIN_FS_SCL_LOWTIME)  / NANO_TO_MICRO;
   I2cRegs->IcEnable    = IC_ENABLE_ENABLE;
+  ActivityTimestamp    = GetPerformanceCounter ();
 
   for (;;) {
     CONST  UINTN  IcStatus = I2cRegs->IcStatus;
 
     if (RxedSize < RxBufSize && (IcStatus & IC_STATUS_RFNE)) {
       RxPtr[RxedSize++] = I2cRegs->IcDataCmd;
+      ActivityTimestamp = GetPerformanceCounter ();
       continue;
     }
 
@@ -141,8 +145,10 @@ I2cTxRx (
           I2cRegs->IcDataCmd = Stop | IC_DATA_CMD_CMD;
         }
 
+        ActivityTimestamp = GetPerformanceCounter ();
         ++TxedSize;
-      } else if (!(IcStatus & IC_STATUS_MST_ACTIVITY)) {
+      } else if (!(IcStatus & IC_STATUS_MST_ACTIVITY) &&
+                  GetTimeInNanoSecond (GetPerformanceCounter () - ActivityTimestamp) > 100000000) {
         Status = EFI_DEVICE_ERROR;
         break;
       }

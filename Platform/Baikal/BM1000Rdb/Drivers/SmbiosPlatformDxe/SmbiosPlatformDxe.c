@@ -5,6 +5,7 @@
 
 #include <Library/ArmLib.h>
 #include <Library/ArmSmcLib.h>
+#include <Library/BaikalSmbiosLib.h>
 #include <Library/BaikalSpdLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -1329,76 +1330,6 @@ STATIC VOID  *SmbiosTable20 = BAIKAL_SMBIOS_TABLE (
 
 STATIC
 EFI_STATUS
-GetDdrInfo (
-  OUT  BAIKAL_SPD_SMBIOS_INFO * CONST  DdrInfo,
-  IN   CONST INTN                      Num
-  )
-{
-  UINT8   IsHybrid;
-  UINT8  *Spd;
-  INTN    SpdSize;
-
-  SpdSize = SpdGetSize (SpdDdrAddr[Num]);
-  if (SpdSize == 0) {
-    return EFI_NOT_FOUND;
-  }
-
-  Spd = (UINT8 *) AllocateZeroPool (SpdSize);
-  if (Spd == NULL) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: failed to allocate memory for SPD buffer, Status = %r\n",
-      __FUNCTION__,
-      EFI_OUT_OF_RESOURCES
-      ));
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  SpdGetBuf (SpdDdrAddr[Num], Spd, SpdSize);
-
-  if (Spd[2] != 0xC) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: DDR4 DIMM%d is not a DDR4 SDRAM\n",
-      __FUNCTION__,
-      Num
-      ));
-    FreePool (Spd);
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Spd[3] & 0x80) {
-    IsHybrid = 1;
-  }
-
-  if (!SpdIsValid (Spd, SpdSize)) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: DDR4 DIMM%d SPD has invalid CRC\n",
-      __FUNCTION__,
-      Num
-      ));
-    FreePool (Spd);
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (SpdSetSmbiosInfo (Spd, SpdSize, IsHybrid, DdrInfo)) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: DDR4 DIMM%d SPD info is invalid\n",
-      __FUNCTION__,
-      Num
-      ));
-    FreePool (Spd);
-    return EFI_INVALID_PARAMETER;
-  }
-
-  FreePool (Spd);
-  return EFI_SUCCESS;
-}
-
-STATIC
-EFI_STATUS
 GetMemoryRanges (
   OUT  CONST UINT32 ** CONST  Reg,
   OUT  UINTN * CONST          Amount,
@@ -1489,27 +1420,26 @@ SmbiosTable16_17_19_20Init (
 {
   UINTN                    AddressCells;
   UINT16                   DdrAmount;
-  BAIKAL_SPD_SMBIOS_INFO  *DdrInfo;
+  BAIKAL_SMBIOS_DDR_INFO  *DdrInfo;
   UINT8                    DdrPresence = 0;
   UINT8                    Idx;
-  UINT8                    Inc;
   CONST UINT32            *Reg;
   UINT64                  *RegAddr;
   UINTN                    RegAmount;
   UINT64                  *RegSize;
   UINTN                    SizeCells;
+  CONST UINT8             *SpdBuf;
+  INTN                     SpdSize;
   EFI_STATUS               Status;
 
   if (IsMbm ()) {
-    Inc = 2;
     DdrAmount = 2;
   } else {
-    Inc = 1;
     DdrAmount = 4;
   }
 
   // Getting information about DDR
-  DdrInfo = (BAIKAL_SPD_SMBIOS_INFO *) AllocateZeroPool (DdrAmount * sizeof (BAIKAL_SPD_SMBIOS_INFO));
+  DdrInfo = (BAIKAL_SMBIOS_DDR_INFO *) AllocateZeroPool (DdrAmount * sizeof (BAIKAL_SMBIOS_DDR_INFO));
   if (DdrInfo == NULL) {
     DEBUG ((
       EFI_D_ERROR,
@@ -1520,17 +1450,34 @@ SmbiosTable16_17_19_20Init (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  for (Idx = 0; Idx < sizeof (SpdDdrAddr); Idx += Inc) {
-    Status = GetDdrInfo (DdrInfo + Idx / Inc, Idx);
-    if (EFI_ERROR (Status)) {
-      if (Status == EFI_NOT_FOUND) {
-        continue;
-      } else {
-        FreePool (DdrInfo);
-        return Status;
-      }
+  for (Idx = 0; Idx < BAIKAL_SPD_PORT_COUNT; ++Idx) {
+    SpdBuf = SpdGetBuf (Idx);
+    SpdSize = SpdGetSize (Idx);
+
+    if (SpdSize == 0) {
+      continue;
+    }
+
+    if (SmbiosSetDdrInfo (SpdBuf, SpdSize, DdrInfo + DdrAmount / 2 * Idx, NULL, NULL)) {
+      DEBUG ((
+        EFI_D_ERROR,
+        "%a: DDR4 DIMM%d SPD info is invalid\n",
+        __FUNCTION__,
+        Idx
+        ));
+      FreePool (DdrInfo);
+      return EFI_INVALID_PARAMETER;
     } else {
-      DdrPresence |= 1 << Idx / Inc;
+      if (SpdIsDualChannel (Idx)) {
+        BAIKAL_SPD_INFO  *Spd = (BAIKAL_SPD_INFO *) BAIKAL_SPD_DATA_BASE;
+
+        SmbiosSetDdrInfo (SpdBuf, SpdSize, DdrInfo + DdrAmount / 2 * Idx + 1,
+                          &Spd->Extra[Idx].Serial,
+                          Spd->Extra[Idx].Part);
+        DdrPresence |= 1 << (DdrAmount / 2 * Idx + 1);
+        ((SMBIOS_TABLE_TYPE19 *) SmbiosTable19)->PartitionWidth++;
+      }
+      DdrPresence |= 1 << (DdrAmount / 2 * Idx);
       ((SMBIOS_TABLE_TYPE19 *) SmbiosTable19)->PartitionWidth++;
     }
   }
@@ -1647,11 +1594,11 @@ SmbiosTable16_17_19_20Init (
       } else if (Cc == 1 && Id == 24) {
         PtrString = "Kingston";
       } else if (Cc || Id) {
-        CHAR8  HexValue[5];
-        AsciiValueToStringS (HexValue, 5, RADIX_HEX, DdrInfo[Idx].ManufacturerId & 0xFF, 4);
-        CopyMem (Manufacturer + 6, HexValue, 4);
-        AsciiValueToStringS (HexValue, 5, RADIX_HEX, (DdrInfo[Idx].ManufacturerId >> 8) & 0xFF, 4);
-        CopyMem (Manufacturer + 16, HexValue, 4);
+        CHAR8  HexValue[3];
+        AsciiValueToStringS (HexValue, 3, RADIX_HEX, DdrInfo[Idx].ManufacturerId & 0xFF, 2);
+        CopyMem (Manufacturer + 8, HexValue, 2);
+        AsciiValueToStringS (HexValue, 3, RADIX_HEX, (DdrInfo[Idx].ManufacturerId >> 8) & 0xFF, 2);
+        CopyMem (Manufacturer + 18, HexValue, 2);
         PtrString = Manufacturer;
       }
 
@@ -1689,9 +1636,6 @@ SmbiosTable16_17_19_20Init (
       Table17.MaximumVoltage = DdrInfo[Idx].Voltage;
       Table17.ConfiguredVoltage = DdrInfo[Idx].Voltage;
       Table17.ModuleManufacturerID = DdrInfo[Idx].ManufacturerId;
-      Table17.ModuleProductID = DdrInfo[Idx].ProductId;
-      Table17.MemorySubsystemControllerManufacturerID = DdrInfo[Idx].SubsystemManufacturerId;
-      Table17.MemorySubsystemControllerProductID = DdrInfo[Idx].SubsystemProductId;
       Table17.VolatileSize = DdrInfo[Idx].Size;
 
       Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &Table17, PtrBuf, ARRAY_SIZE (PtrBuf));

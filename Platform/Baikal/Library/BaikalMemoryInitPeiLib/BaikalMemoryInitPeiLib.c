@@ -77,20 +77,20 @@ MemoryPeim (
     EFI_RESOURCE_SYSTEM_MEMORY,
     ResourceAttributes,
     0x90000000,
-    0x10000000
+    0x1000000
     );
 
   BuildMemoryAllocationHob (
     0x90000000,
-    0x10000000,
+    0x1000000,
     EfiReservedMemoryType
     );
 
   BuildResourceDescriptorHob (
     EFI_RESOURCE_SYSTEM_MEMORY,
     ResourceAttributes,
-    0xA0000000,
-    PcdGet64 (PcdSystemMemorySize) - 0x20000000
+    0x91000000,
+    PcdGet64 (PcdSystemMemorySize) - 0x11000000
     );
 
   // Build Memory Allocation Hob

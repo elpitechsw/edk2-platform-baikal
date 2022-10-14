@@ -26,6 +26,7 @@
 [LibraryClasses]
   ArmLib
   ArmSmcLib
+  BaikalSmbiosLib
   BaikalSpdLib
   MemoryAllocationLib
   PrintLib

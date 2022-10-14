@@ -15,13 +15,13 @@ NumBlocks     = 0x100
 #
 # Implement the Linux kernel header layout so that the loader will identify
 # it as something bootable, and execute it with a FDT pointer in x0 or r2.
-# This area will be reused to store a copy of the FDT so round it up to 64 KiB.
+# This area will be reused to store a copy of the FDT so round it up to 256 KiB.
 #
-0x00000000|0x00010000
+0x00000000|0x00040000
 DATA = {
   0x01, 0x00, 0x00, 0x10,                         # code0: adr x1, .
-  0xff, 0x3f, 0x00, 0x14,                         # code1: b 0x10000
-  0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, # text_offset: 512 KB
+  0xff, 0xff, 0x00, 0x14,                         # code1: b 0x40000
+  0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, # text_offset: 1 MB
   0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, # image_size: 2 MB
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # flags
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # res2
@@ -31,7 +31,7 @@ DATA = {
   0x00, 0x00, 0x00, 0x00                          # res5
 }
 
-0x00010000|0x00140000
+0x00040000|0x00140000
 gArmTokenSpaceGuid.PcdFvBaseAddress|gArmTokenSpaceGuid.PcdFvSize
 FV = FVMAIN_COMPACT
 
@@ -198,6 +198,7 @@ READ_LOCK_STATUS   = TRUE
 
   # Network
 !include NetworkPkg/Network.fdf.inc
+  INF Platform/Baikal/BM1000Rdb/Drivers/XGmacDxe/XGmacDxe.inf
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
@@ -274,6 +275,13 @@ READ_LOCK_STATUS   = TRUE
   FILE DRIVER = $(NAMED_GUID) {
     DXE_DEPEX  DXE_DEPEX                Optional $(INF_OUTPUT)/$(MODULE_NAME).depex
     PE32       PE32                     $(INF_OUTPUT)/$(MODULE_NAME).efi
+    UI         STRING="$(MODULE_NAME)"  Optional
+  }
+
+[Rule.Common.DXE_DRIVER.BINARY]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX  DXE_DEPEX Optional       |.depex
+    PE32       PE32                     |.efi
     UI         STRING="$(MODULE_NAME)"  Optional
   }
 

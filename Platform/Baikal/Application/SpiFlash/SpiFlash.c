@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -40,9 +40,9 @@ SpiFlashMain (
   }
 
   if (ShellParameters->Argc != 3 ||
-      !StrCmp(ShellParameters->Argv[1], L"-?") ||
-      !StrCmp(ShellParameters->Argv[1], L"-h") ||
-      !StrCmp(ShellParameters->Argv[1], L"-H")) {
+      !StrCmp (ShellParameters->Argv[1], L"-?") ||
+      !StrCmp (ShellParameters->Argv[1], L"-h") ||
+      !StrCmp (ShellParameters->Argv[1], L"-H")) {
     Print (L"Flash a file to SPI Flash.\n");
     Print (L"\n");
     Print (L"SPIFLASH offset filepath\n");
@@ -69,10 +69,14 @@ SpiFlashMain (
     return EFI_NOT_FOUND;
   }
 
-  FlashAddr = ShellStrToUintn (ShellParameters->Argv[1]);
-  if (FlashAddr % 512) {
-    Print (L"SpiFlash: incorrect start address.\n");
-    return EFI_UNSUPPORTED;
+  if (ShellParameters->Argv[1][0] == '-') {
+    FlashAddr = 0 - ShellStrToUintn (&ShellParameters->Argv[1][1]);
+  } else {
+    FlashAddr = ShellStrToUintn (ShellParameters->Argv[1]);
+    if (FlashAddr % 512) {
+      Print (L"SpiFlash: incorrect start address.\n");
+      return EFI_UNSUPPORTED;
+    }
   }
 
   FileName = ShellParameters->Argv[2];
@@ -81,7 +85,6 @@ SpiFlashMain (
                             &FileHandle,
                             EFI_FILE_MODE_READ
                             );
-
   if (EFI_ERROR (Status)) {
     Print (L"SpiFlash: file %s is not found.\n", FileName);
     return Status;
@@ -114,6 +117,9 @@ SpiFlashMain (
 
   ShellProtocol->CloseFile (FileHandle);
 
+  Print (L"SpiFlash: unlocking...\n");
+  BaikalSmcFlashLock (0);
+
   Print (L"SpiFlash: erasing...\n");
   Err = BaikalSmcFlashErase (FlashAddr, FileSize);
   if (Err) {
@@ -141,6 +147,9 @@ SpiFlashMain (
     Print (L"SpiFlash: error %d\n", Err);
     goto Exit;
   }
+
+  Print (L"SpiFlash: locking...\n");
+  BaikalSmcFlashLock (1);
 
   if (CompareMem (FileBuf, FlashBuf, FileSize) == 0) {
     Print (L"SpiFlash: success.\n");

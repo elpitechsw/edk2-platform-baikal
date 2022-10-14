@@ -24,6 +24,7 @@
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
   Silicon/Baikal/Baikal.dec
+  Silicon/Baikal/BM1000/BM1000.dec
 
 [LibraryClasses]
   ArmLib

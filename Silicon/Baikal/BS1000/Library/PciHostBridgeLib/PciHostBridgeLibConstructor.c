@@ -22,8 +22,8 @@
 #define BS1000_PCIE_APB_PE_LINK_DBG2                   0xB4
 #define BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_L0    0x11
 #define BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK  0x3F
-#define BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINK_UP      BIT6
-#define BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINK_UP      BIT7
+#define BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP       BIT6
+#define BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP       BIT7
 
 #define BS1000_PCIE_PF0_TYPE1_HDR_TYPE1_CLASS_CODE_REV_ID_REG                        0x008
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CAPABILITIES_REG                               0x07C
@@ -31,13 +31,11 @@
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CAPABILITIES_REG_MAX_WIDTH_SHIFT               4
 
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG                        0x080
+#define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_RETRAIN_LINK           BIT5
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_BITS        (0xF << 16)
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_SHIFT       16
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_BITS   (0x3F << 20)
 #define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT  20
-
-#define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG                      0x0A0
-#define BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG_TRGT_LNK_SPEED_BITS  0xF
 
 #define BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF                                0x710
 #define BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_BITS              (0x3F << 16)
@@ -46,7 +44,6 @@
 #define BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X4                (0x07 << 16)
 #define BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X8                (0x0F << 16)
 #define BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X16               (0x1F << 16)
-#define BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X32               (0x3F << 16)
 
 #define BS1000_PCIE_PF0_PORT_LOGIC_GEN2_CTRL_OFF                                     0x80C
 #define BS1000_PCIE_PF0_PORT_LOGIC_GEN2_CTRL_OFF_NUM_OF_LANES_BITS                   (0x1F << 8)
@@ -313,37 +310,37 @@ STATIC CONST EFI_PHYSICAL_ADDRESS  mPcieApbBases[] = {
 };
 
 CONST EFI_PHYSICAL_ADDRESS  mPcieDbiBases[] = {
-  BS1000_PCIE0_P0_BASE,
-  BS1000_PCIE0_P1_BASE,
-  BS1000_PCIE1_P0_BASE,
-  BS1000_PCIE1_P1_BASE,
-  BS1000_PCIE2_P0_BASE,
-  BS1000_PCIE2_P1_BASE,
-  BS1000_PCIE3_P0_BASE,
-  BS1000_PCIE3_P1_BASE,
-  BS1000_PCIE3_P2_BASE,
-  BS1000_PCIE3_P3_BASE,
-  BS1000_PCIE4_P0_BASE,
-  BS1000_PCIE4_P1_BASE,
-  BS1000_PCIE4_P2_BASE,
-  BS1000_PCIE4_P3_BASE
+  BS1000_PCIE0_P0_DBI_BASE,
+  BS1000_PCIE0_P1_DBI_BASE,
+  BS1000_PCIE1_P0_DBI_BASE,
+  BS1000_PCIE1_P1_DBI_BASE,
+  BS1000_PCIE2_P0_DBI_BASE,
+  BS1000_PCIE2_P1_DBI_BASE,
+  BS1000_PCIE3_P0_DBI_BASE,
+  BS1000_PCIE3_P1_DBI_BASE,
+  BS1000_PCIE3_P2_DBI_BASE,
+  BS1000_PCIE3_P3_DBI_BASE,
+  BS1000_PCIE4_P0_DBI_BASE,
+  BS1000_PCIE4_P1_DBI_BASE,
+  BS1000_PCIE4_P2_DBI_BASE,
+  BS1000_PCIE4_P3_DBI_BASE
 };
 
 STATIC CONST UINTN  mPcieDbiSizes[] = {
-  BS1000_PCIE0_P0_SIZE,
-  BS1000_PCIE0_P1_SIZE,
-  BS1000_PCIE1_P0_SIZE,
-  BS1000_PCIE1_P1_SIZE,
-  BS1000_PCIE2_P0_SIZE,
-  BS1000_PCIE2_P1_SIZE,
-  BS1000_PCIE3_P0_SIZE,
-  BS1000_PCIE3_P1_SIZE,
-  BS1000_PCIE3_P2_SIZE,
-  BS1000_PCIE3_P3_SIZE,
-  BS1000_PCIE4_P0_SIZE,
-  BS1000_PCIE4_P1_SIZE,
-  BS1000_PCIE4_P2_SIZE,
-  BS1000_PCIE4_P3_SIZE
+  BS1000_PCIE0_P0_DBI_SIZE,
+  BS1000_PCIE0_P1_DBI_SIZE,
+  BS1000_PCIE1_P0_DBI_SIZE,
+  BS1000_PCIE1_P1_DBI_SIZE,
+  BS1000_PCIE2_P0_DBI_SIZE,
+  BS1000_PCIE2_P1_DBI_SIZE,
+  BS1000_PCIE3_P0_DBI_SIZE,
+  BS1000_PCIE3_P1_DBI_SIZE,
+  BS1000_PCIE3_P2_DBI_SIZE,
+  BS1000_PCIE3_P3_DBI_SIZE,
+  BS1000_PCIE4_P0_DBI_SIZE,
+  BS1000_PCIE4_P1_DBI_SIZE,
+  BS1000_PCIE4_P2_DBI_SIZE,
+  BS1000_PCIE4_P3_DBI_SIZE
 };
 
 STATIC CONST EFI_PHYSICAL_ADDRESS  mPcieMmioBases[] = {
@@ -405,6 +402,7 @@ STATIC EFI_PHYSICAL_ADDRESS   mPcieIoBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePa
 STATIC EFI_PHYSICAL_ADDRESS   mPcieIoMins[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieIoSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC EFI_PHYSICAL_ADDRESS   mPcieMemBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+STATIC EFI_PHYSICAL_ADDRESS   mPcieMemMins[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieMemSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC PCI_ROOT_BRIDGE       *mPcieRootBridges;
 STATIC UINTN                  mPcieRootBridgesNum;
@@ -456,12 +454,12 @@ PciHostBridgeLibCfgWindow (
   ASSERT ((PciBase & (SIZE_64KB - 1)) == 0);
   ASSERT ((Size    & (SIZE_64KB - 1)) == 0);
 
-  if (PcieDbiBase == BS1000_PCIE0_P0_BASE ||
-      PcieDbiBase == BS1000_PCIE0_P1_BASE ||
-      PcieDbiBase == BS1000_PCIE1_P0_BASE ||
-      PcieDbiBase == BS1000_PCIE1_P1_BASE ||
-      PcieDbiBase == BS1000_PCIE2_P0_BASE ||
-      PcieDbiBase == BS1000_PCIE2_P1_BASE) {
+  if (PcieDbiBase == BS1000_PCIE0_P0_DBI_BASE ||
+      PcieDbiBase == BS1000_PCIE0_P1_DBI_BASE ||
+      PcieDbiBase == BS1000_PCIE1_P0_DBI_BASE ||
+      PcieDbiBase == BS1000_PCIE1_P1_DBI_BASE ||
+      PcieDbiBase == BS1000_PCIE2_P0_DBI_BASE ||
+      PcieDbiBase == BS1000_PCIE2_P1_DBI_BASE) {
     CpuBase &= 0x7FFFFFFFFF;
   } else {
     CpuBase &= 0xFFFFFFFFFF;
@@ -531,6 +529,7 @@ PciHostBridgeLibConstructor (
 
   // Acquire PCIe RC related data from FDT
   for (Node = 0, Iter = 0; Iter < ARRAY_SIZE (mEfiPciRootBridgeDevicePaths);) {
+    INTN         ApbRegIdx = -1, CfgRegIdx = -1, DbiRegIdx = -1;
     CONST VOID  *Prop;
     UINT32       PropSize;
 
@@ -543,15 +542,45 @@ PciHostBridgeLibConstructor (
       continue;
     }
 
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reg-names", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize > 0) {
+      UINTN         RegIdx;
+      CONST CHAR8  *StrPtr = Prop;
+
+      for (RegIdx = 0; PropSize > 0; ++RegIdx) {
+        CONST UINTN  StrSize = AsciiStrSize (StrPtr);
+
+        ASSERT (StrSize <= PropSize);
+
+        if (AsciiStrCmp (StrPtr, "dbi") == 0) {
+          DbiRegIdx = RegIdx;
+        } else if (AsciiStrCmp (StrPtr, "apb") == 0) {
+          ApbRegIdx = RegIdx;
+        } else if (AsciiStrCmp (StrPtr, "config") == 0) {
+          CfgRegIdx = RegIdx;
+        }
+
+        PropSize -= StrSize;
+        StrPtr   += StrSize;
+      }
+
+      if (ApbRegIdx == -1 || CfgRegIdx == -1 || DbiRegIdx == -1) {
+        continue;
+      }
+    } else {
+      continue;
+    }
+
     if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
-        PropSize == 48) {
-      // TODO: parse "reg-names" to make "reg" values position independent
-      CONST EFI_PHYSICAL_ADDRESS  DbiBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
-      CONST UINTN                 DbiSize = SwapBytes64 (((CONST UINT64 *) Prop)[1]);
-      CONST EFI_PHYSICAL_ADDRESS  ApbBase = SwapBytes64 (((CONST UINT64 *) Prop)[2]);
-      CONST UINTN                 ApbSize = SwapBytes64 (((CONST UINT64 *) Prop)[3]);
-      CONST EFI_PHYSICAL_ADDRESS  CfgBase = SwapBytes64 (((CONST UINT64 *) Prop)[4]);
-      CONST UINTN                 CfgSize = SwapBytes64 (((CONST UINT64 *) Prop)[5]);
+        PropSize >= 48 && (PropSize % 16) == 0) {
+      CONST EFI_PHYSICAL_ADDRESS  DbiBase = SwapBytes64 (((CONST UINT64 *) Prop)[DbiRegIdx * 2]);
+#if !defined(MDEPKG_NDEBUG)
+      CONST UINTN                 DbiSize = SwapBytes64 (((CONST UINT64 *) Prop)[DbiRegIdx * 2 + 1]);
+      CONST EFI_PHYSICAL_ADDRESS  ApbBase = SwapBytes64 (((CONST UINT64 *) Prop)[ApbRegIdx * 2]);
+      CONST UINTN                 ApbSize = SwapBytes64 (((CONST UINT64 *) Prop)[ApbRegIdx * 2 + 1]);
+#endif
+      CONST EFI_PHYSICAL_ADDRESS  CfgBase = SwapBytes64 (((CONST UINT64 *) Prop)[CfgRegIdx * 2]);
+      CONST UINTN                 CfgSize = SwapBytes64 (((CONST UINT64 *) Prop)[CfgRegIdx * 2 + 1]);
 
       for (PcieIdx = 0; PcieIdx < ARRAY_SIZE (mEfiPciRootBridgeDevicePaths); ++PcieIdx) {
         if (DbiBase == mPcieDbiBases[PcieIdx]) {
@@ -579,6 +608,10 @@ PciHostBridgeLibConstructor (
     if (FdtClient->GetNodeProperty (FdtClient, Node, "ranges", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize > 0 && (PropSize % 28) == 0) {
       UINTN  Entry;
+
+      mPcieIoMins[PcieIdx]  = MAX_UINT64;
+      mPcieMemMins[PcieIdx] = MAX_UINT64;
+
       for (Entry = 0; Entry < PropSize / 28; ++Entry) {
         CONST UINTN           Flags = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
         EFI_PHYSICAL_ADDRESS  PciBase;
@@ -602,6 +635,7 @@ PciHostBridgeLibConstructor (
           mPcieIoBases[PcieIdx] = CpuBase;
           mPcieIoSizes[PcieIdx] = Size;
         } else if (Flags & RANGES_FLAG_MEM) {
+          mPcieMemMins[PcieIdx]  = PciBase;
           mPcieMemBases[PcieIdx] = CpuBase;
           mPcieMemSizes[PcieIdx] = Size;
         }
@@ -644,17 +678,18 @@ PciHostBridgeLibConstructor (
     lPcieRootBridge->DmaAbove4G = TRUE;
     lPcieRootBridge->NoExtendedConfigSpace = FALSE;
     lPcieRootBridge->ResourceAssigned      = FALSE;
-    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM |
-                                             EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
+    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
 
     lPcieRootBridge->Bus.Base          = 0;
     lPcieRootBridge->Bus.Limit         = mPcieCfgSizes[PcieIdx] / SIZE_1MB - 1;
     lPcieRootBridge->Io.Base           = mPcieIoMins[PcieIdx];
     lPcieRootBridge->Io.Limit          = mPcieIoMins[PcieIdx] + mPcieIoSizes[PcieIdx] - 1;
-    lPcieRootBridge->Mem.Base          = MAX_UINT64;
-    lPcieRootBridge->Mem.Limit         = 0;
-    lPcieRootBridge->MemAbove4G.Base   = mPcieMemBases[PcieIdx];
-    lPcieRootBridge->MemAbove4G.Limit  = mPcieMemBases[PcieIdx] + mPcieMemSizes[PcieIdx] - 1;
+    lPcieRootBridge->Io.Translation    = mPcieIoMins[PcieIdx] - mPcieIoBases[PcieIdx];
+    lPcieRootBridge->Mem.Base          = mPcieMemMins[PcieIdx];
+    lPcieRootBridge->Mem.Limit         = mPcieMemMins[PcieIdx] + mPcieMemSizes[PcieIdx] - 1;
+    lPcieRootBridge->Mem.Translation   = mPcieMemMins[PcieIdx] - mPcieMemBases[PcieIdx];
+    lPcieRootBridge->MemAbove4G.Base   = MAX_UINT64;
+    lPcieRootBridge->MemAbove4G.Limit  = 0;
     lPcieRootBridge->PMem.Base         = MAX_UINT64;
     lPcieRootBridge->PMem.Limit        = 0;
     lPcieRootBridge->PMemAbove4G.Base  = MAX_UINT64;
@@ -677,8 +712,6 @@ PciHostBridgeLibConstructor (
       PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X8;
     } else if (PcieNumLanes[PcieIdx] == 16) {
       PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X16;
-    } else if (PcieNumLanes[PcieIdx] == 32) {
-      PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X32;
     } else {
       PciePortLinkCapableLanesVal = 0;
     }
@@ -731,8 +764,7 @@ PciHostBridgeLibConstructor (
       mPcieDbiBases[PcieIdx],
       0,
       mPcieCfgBases[PcieIdx],
-      // See AcpiPlatformDxe/Iort.c for implications of using 0 here instead of encoding the bus
-      0,
+      0, // See AcpiPlatformDxe/Iort.c for implications of using 0 here instead of encoding the bus
       mPcieCfgSizes[PcieIdx] >= SIZE_2MB ? SIZE_2MB : mPcieCfgSizes[PcieIdx],
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
@@ -749,18 +781,18 @@ PciHostBridgeLibConstructor (
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
       );
 
-    // Region 2: MMIO64 range
+    // Region 2: MEM
     PciHostBridgeLibCfgWindow (
       mPcieDbiBases[PcieIdx],
       2,
-      lPcieRootBridge->MemAbove4G.Base,
-      lPcieRootBridge->MemAbove4G.Base,
-      lPcieRootBridge->MemAbove4G.Limit - lPcieRootBridge->MemAbove4G.Base + 1,
+      mPcieMemBases[PcieIdx],
+      lPcieRootBridge->Mem.Base,
+      lPcieRootBridge->Mem.Limit - lPcieRootBridge->Mem.Base + 1,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_MEM,
       0
       );
 
-    // Region 3: port I/O range
+    // Region 3: I/O
     PciHostBridgeLibCfgWindow (
       mPcieDbiBases[PcieIdx],
       3,
@@ -771,18 +803,16 @@ PciHostBridgeLibConstructor (
       0
       );
 
-    // Force PCIE_CAP_TARGET_LINK_SPEED to Gen1
-    MmioAndThenOr32 (
-       mPcieDbiBases[PcieIdx] +
-       BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG,
-      ~BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG_TRGT_LNK_SPEED_BITS,
-       1
-      );
-
     MmioOr32 (
       mPcieApbBases[PcieIdx] +
       BS1000_PCIE_APB_PE_GEN_CTRL3,
       BS1000_PCIE_APB_PE_GEN_CTRL3_LTSSM_EN
+      );
+
+    MmioOr32 (
+      mPcieDbiBases[PcieIdx] +
+      BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG,
+      BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_RETRAIN_LINK
       );
 
     // Wait for link
@@ -796,13 +826,13 @@ PciHostBridgeLibConstructor (
           ComponentExists = TRUE;
           DEBUG ((
             EFI_D_INFO,
-            "PcieRoot(0x%x|%a)[%03u ms: LTSSM:0x%02x SMLH:%u RDLH:%u]: link partner detected\n",
+            "PcieRoot(0x%x|%a)[%03ums: LTSSM:0x%02x SMLH%c RDLH%c]: link partner detected\n",
             PcieIdx,
             mPcieNames[PcieIdx],
             (GetTimeInNanoSecond (PerformanceCounter) - TimeStart) / 1000000,
             PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK,
-            !!(PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINK_UP),
-            !!(PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINK_UP)
+            PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP ? '+' : '-',
+            PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP ? '+' : '-'
             ));
         } else if (GetTimeInNanoSecond (PerformanceCounter) - TimeStart > 50000000) {
           // According to PCI Express Base Specification device must enter LTSSM detect state within 20 ms of reset
@@ -813,18 +843,17 @@ PciHostBridgeLibConstructor (
       if (ComponentExists) {
         if (((PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK) ==
                                   BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_L0) &&
-             (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINK_UP) &&
-             (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINK_UP)) {
+             (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP) &&
+             (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP)) {
 #if !defined(MDEPKG_NDEBUG)
           CONST UINT32  PcieLnkStat = MmioRead32 (
                                         mPcieDbiBases[PcieIdx] +
                                         BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG
                                         );
+          CONST CHAR8  *LinkSpeedString;
           CONST UINTN   LinkSpeedVector = (PcieLnkStat &
                                             BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_BITS) >>
                                             BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_LINK_SPEED_SHIFT;
-          CONST CHAR8  *LinkSpeedString;
-
           if (LinkSpeedVector == 1) {
             LinkSpeedString = "2.5";
           } else if (LinkSpeedVector == 2) {
@@ -833,21 +862,19 @@ PciHostBridgeLibConstructor (
             LinkSpeedString = "8.0";
           } else if (LinkSpeedVector == 4) {
             LinkSpeedString = "16.0";
-          } else if (LinkSpeedVector == 5) {
-            LinkSpeedString = "32.0";
           } else {
             LinkSpeedString = "???";
           }
 
           DEBUG ((
             EFI_D_INFO,
-            "PcieRoot(0x%x|%a)[%03u ms: LTSSM:0x%02x SMLH:%u RDLH:%u]: link %a GT/s, x%u\n",
+            "PcieRoot(0x%x|%a)[%03ums: LTSSM:0x%02x SMLH%c RDLH%c]: link %a GT/s, x%u",
             PcieIdx,
             mPcieNames[PcieIdx],
             (GetTimeInNanoSecond (PerformanceCounter) - TimeStart) / 1000000,
             PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK,
-            !!(PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINK_UP),
-            !!(PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINK_UP),
+            PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP ? '+' : '-',
+            PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP ? '+' : '-',
             LinkSpeedString,
             (PcieLnkStat & BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_BITS) >>
               BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT
@@ -859,8 +886,14 @@ PciHostBridgeLibConstructor (
             // Device appears to filter CFG0 requests, so the 64 KiB granule for the iATU
             // isn't a problem. We don't have to ignore fn > 0 or shift MCFG by 0x8000.
             //
-            DEBUG ((EFI_D_INFO, "PcieRoot(0x%x|%a): CFG0 filtering seems functional\n", PcieIdx, mPcieNames[PcieIdx]));
+#if !defined(MDEPKG_NDEBUG)
+            DEBUG ((EFI_D_INFO, ", Cfg0Filter+\n"));
+#endif
             mPcieCfg0FilteringWorks |= 1 << PcieIdx;
+          } else {
+#if !defined(MDEPKG_NDEBUG)
+            DEBUG ((EFI_D_INFO, ", Cfg0Filter-\n"));
+#endif
           }
 
           break;
@@ -868,13 +901,13 @@ PciHostBridgeLibConstructor (
           // Wait up to 100 ms for link up
           DEBUG ((
             EFI_D_INFO,
-            "PcieRoot(0x%x|%a)[%03u ms: LTSSM:0x%02x SMLH:%u RDLH:%u]: link is inactive\n",
+            "PcieRoot(0x%x|%a)[%03ums: LTSSM:0x%02x SMLH%c RDLH%c]: link is inactive\n",
             PcieIdx,
             mPcieNames[PcieIdx],
             (GetTimeInNanoSecond (PerformanceCounter) - TimeStart) / 1000000,
             PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK,
-            !!(PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINK_UP),
-            !!(PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINK_UP)
+            PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP ? '+' : '-',
+            PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP ? '+' : '-'
             ));
 
           //
@@ -906,8 +939,8 @@ PciHostBridgeLibGetLink (
   CONST UINT32  PcieApbPeLinkDbg2 = MmioRead32 (mPcieApbBases[PcieIdx] + BS1000_PCIE_APB_PE_LINK_DBG2);
   return ((PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK) ==
                                BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_L0) &&
-          (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINK_UP) &&
-          (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINK_UP);
+          (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP) &&
+          (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP);
 }
 
 PCI_ROOT_BRIDGE *

@@ -7,8 +7,8 @@
 #include <IndustryStandard/IoRemappingTable.h>
 #include <Library/PcdLib.h>
 
+#include <BM1000.h>
 #include <Platform/ConfigVars.h>
-#include <Platform/Pcie.h>
 
 #include "AcpiPlatform.h"
 

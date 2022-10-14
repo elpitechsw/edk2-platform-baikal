@@ -46,10 +46,10 @@
   *_*_*_ASLPP_FLAGS = -DELP_$(BOARD_VER) -DELPITECH
 !endif
 
-[BuildOptions.AARCH64.EDKII.DXE_CORE, BuildOptions.AARCH64.EDKII.DXE_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_APPLICATION]
+[BuildOptions.common.EDKII.DXE_CORE, BuildOptions.common.EDKII.DXE_DRIVER, BuildOptions.common.EDKII.UEFI_DRIVER, BuildOptions.common.EDKII.UEFI_APPLICATION]
   GCC:*_*_AARCH64_DLINK_FLAGS = -z common-page-size=0x1000
 
-[BuildOptions.AARCH64.EDKII.DXE_RUNTIME_DRIVER]
+[BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER]
   GCC:*_*_AARCH64_DLINK_FLAGS = -z common-page-size=0x10000
 
 [LibraryClasses.AARCH64.SEC, LibraryClasses.AARCH64.DXE_CORE, LibraryClasses.AARCH64.DXE_DRIVER, LibraryClasses.AARCH64.DXE_RUNTIME_DRIVER, LibraryClasses.AARCH64.UEFI_APPLICATION, LibraryClasses.AARCH64.UEFI_DRIVER]
@@ -63,8 +63,9 @@
   ArmPlatformStackLib|ArmPlatformPkg/Library/ArmPlatformStackLib/ArmPlatformStackLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
+  BaikalSmbiosLib|Platform/Baikal/Library/BaikalSmbiosLib/BaikalSmbiosLib.inf
   BaikalSmcLib|Platform/Baikal/Library/BaikalSmcLib/BaikalSmcLib.inf
-  BaikalSpdLib|Platform/Baikal/Library/BaikalSpdLib/BaikalSpdLib.inf
+  BaikalSpdLib|Platform/Baikal/BM1000Rdb/Library/BaikalSpdLib/BaikalSpdLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibOptDxe/BaseMemoryLibOptDxe.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
@@ -156,7 +157,6 @@
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
-  #PeCoffExtraActionLib|ArmPkg/Library/DebugPeCoffExtraActionLib/DebugPeCoffExtraActionLib.inf
 !endif
 
 [LibraryClasses.AARCH64.DXE_CORE]
@@ -299,6 +299,7 @@
 
   # Network
 !include NetworkPkg/Network.dsc.inc
+  Platform/Baikal/BM1000Rdb/Drivers/XGmacDxe/XGmacDxe.inf
   Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
@@ -352,10 +353,7 @@
       gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|FALSE
   }
 
-!if $(BUILD_UEFI_APPS) == TRUE
   Platform/Baikal/Application/SpiFlash/SpiFlash.inf
-  Platform/Baikal/Application/SpiFlashImage/SpiFlashImage.inf
-!endif
 
 [PcdsFeatureFlag.common]
   gArmTokenSpaceGuid.PcdRelocateVectorTable|FALSE
@@ -377,8 +375,7 @@
   gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x80000000
 
 [PcdsFixedAtBuild.common]
-  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x4000
-  gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase|0x4007C000
+  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x20000
   gArmTokenSpaceGuid.PcdGicDistributorBase|0x2D000000
   gArmTokenSpaceGuid.PcdGicRedistributorsBase|0x2D100000
   gArmTokenSpaceGuid.PcdVFPEnabled|1
@@ -432,7 +429,7 @@
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiReservedMemoryType|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode|150
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData|300
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|32
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|39
 !if $(TARGET) == RELEASE
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0

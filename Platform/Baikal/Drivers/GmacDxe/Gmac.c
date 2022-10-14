@@ -3,7 +3,6 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <Library/BaikalSpdLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/NetLib.h>
@@ -85,19 +84,88 @@ GmacDxeDriverEntry (
     FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
     if (FdtStatus == EFI_SUCCESS && PropSize == 16) {
       BOOLEAN                      DtMacAddrSetRequest = FALSE;
+      BOOLEAN                      DmaCoherent;
       GMAC_ETH_DEVPATH            *EthDevPath;
       volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (((CONST UINT64 *) Prop)[0]);
       EFI_HANDLE                  *Handle;
       EFI_MAC_ADDRESS              MacAddr;
-      VOID                        *Snp;
       EFI_PHYSICAL_ADDRESS         ResetGpioBase;
       INTN                         ResetGpioPin;
       INTN                         ResetPolarity;
+      VOID                        *Snp;
+      BOOLEAN                      Tx2AddDiv2 = FALSE;
+      EFI_PHYSICAL_ADDRESS         Tx2ClkChCtlAddr = 0;
+      INT32                        PhyAddr = -1;
+      INT32                        ClkCsr = 4;
+      BOOLEAN                      RgmiiRxId;
+      BOOLEAN                      RgmiiTxId;
 
       Status = gBS->AllocatePool (EfiBootServicesData, sizeof (GMAC_ETH_DEVPATH), (VOID **) &EthDevPath);
       if (EFI_ERROR (Status)) {
         DEBUG ((EFI_D_ERROR, "%a: unable to allocate EthDevPath, Status: %r\n", __FUNCTION__, Status));
         return Status;
+      }
+
+      if (FdtClient->GetNodeProperty (FdtClient, Node, "dma-coherent", &Prop, &PropSize) == EFI_SUCCESS) {
+        DmaCoherent = TRUE;
+      } else {
+        DmaCoherent = FALSE;
+      }
+
+      if (FdtClient->GetNodeProperty (FdtClient, Node, "clock-names", &Prop, &PropSize) == EFI_SUCCESS) {
+        UINTN         ClkNameIdx = 0;
+        CONST CHAR8  *ClkNamePtr = Prop;
+
+        while (ClkNamePtr < (CHAR8 *) Prop + PropSize) {
+          if (!AsciiStrCmp (ClkNamePtr, "tx2_clk")) {
+            if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize > 0 && (PropSize % 4) == 0) {
+              UINT32        ClkPhandleIdx = 0;
+              CONST UINT32 *ClkPhandlePtr = Prop;
+
+              for (;;) {
+                INT32  ClkNode;
+
+                if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*ClkPhandlePtr), &ClkNode) == EFI_SUCCESS) {
+                  if (ClkPhandleIdx == ClkNameIdx) {
+                    CONST UINT32  Tx2ClkChNum = SwapBytes32 (*(ClkPhandlePtr + 1));
+
+                    if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "cmu-id", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 4) {
+                      Tx2ClkChCtlAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]) + 0x20 + Tx2ClkChNum * 0x10;
+                    } else if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 4) {
+                      Tx2ClkChCtlAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]) + Tx2ClkChNum * 0x10;
+                    }
+
+                    break;
+                  } else if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "#clock-cells", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 4) {
+                    ClkPhandleIdx++;
+                    ClkPhandlePtr += 1 + SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+                  } else {
+                    break;
+                  }
+                } else {
+                  break;
+                }
+              }
+            }
+
+            break;
+          } else {
+            ClkNameIdx++;
+            ClkNamePtr += AsciiStrLen (ClkNamePtr) + 1;
+          }
+        }
+      }
+
+      if (FdtClient->GetNodeProperty (FdtClient, Node, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
+        CONST CHAR8  *CompatiblePtr = Prop;
+        while (CompatiblePtr < (CHAR8 *) Prop + PropSize) {
+          if (!AsciiStrCmp (CompatiblePtr, "baikal,bs1000-gmac")) {
+            Tx2AddDiv2 = TRUE;
+            break;
+          } else {
+            CompatiblePtr += AsciiStrLen (CompatiblePtr) + 1;
+          }
+        }
       }
 
       FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "mac-address", &Prop, &PropSize);
@@ -193,6 +261,29 @@ GmacDxeDriverEntry (
         ResetGpioPin  = 0;
       }
 
+      if (FdtClient->GetNodeProperty (FdtClient, Node, "phy-handle", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 4) {
+        INT32  PhyNode;
+        if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (((CONST UINT32 *) Prop)[0]), &PhyNode) == EFI_SUCCESS &&
+            FdtClient->GetNodeProperty   (FdtClient, PhyNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 4) {
+          PhyAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+        }
+      }
+
+      if (FdtClient->GetNodeProperty (FdtClient, Node, "phy-mode", &Prop, &PropSize) == EFI_SUCCESS) {
+        if (!AsciiStrCmp (Prop, "rgmii-id")) {
+          RgmiiRxId = TRUE;
+          RgmiiTxId = TRUE;
+        }
+        else if (!AsciiStrCmp (Prop, "rgmii-rxid")) {
+          RgmiiRxId = TRUE;
+          RgmiiTxId = FALSE;
+        }
+        else if (!AsciiStrCmp (Prop, "rgmii-txid")) {
+          RgmiiRxId = FALSE;
+          RgmiiTxId = TRUE;
+        }
+      }
+
       EthDevPath->MacAddrDevPath.Header.Type    = MESSAGING_DEVICE_PATH;
       EthDevPath->MacAddrDevPath.Header.SubType = MSG_MAC_ADDR_DP;
       EthDevPath->MacAddrDevPath.IfType         = NET_IFTYPE_ETHERNET;
@@ -200,11 +291,18 @@ GmacDxeDriverEntry (
       SetDevicePathNodeLength (&EthDevPath->MacAddrDevPath, sizeof (MAC_ADDR_DEVICE_PATH));
       SetDevicePathEndNode (&EthDevPath->End);
 
-      Status = GmacSnpInstanceCtor (
+      Status = GmacSnpInstanceConstructor (
                  GmacRegs,
+		 DmaCoherent,
+		 Tx2ClkChCtlAddr,
+		 Tx2AddDiv2,
                  ResetGpioBase,
                  ResetGpioPin,
                  ResetPolarity,
+		 PhyAddr,
+		 ClkCsr,
+		 RgmiiRxId,
+		 RgmiiTxId,
                  &EthDevPath->MacAddrDevPath.MacAddress,
                  &Snp,
                  &Handle
@@ -231,7 +329,7 @@ GmacDxeDriverEntry (
           __FUNCTION__,
           Status
           ));
-        GmacSnpInstanceDtor (Snp);
+        GmacSnpInstanceDestructor (Snp);
         gBS->FreePool (EthDevPath);
         return Status;
       }

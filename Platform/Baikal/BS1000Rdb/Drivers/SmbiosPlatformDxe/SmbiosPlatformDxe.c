@@ -4,9 +4,10 @@
 **/
 
 #include <Library/ArmLib.h>
-#include <Library/BaikalSpdLib.h>
+#include <Library/BaikalSmbiosLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrcLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
@@ -1270,17 +1271,53 @@ STATIC VOID  *SmbiosTable20 = BAIKAL_SMBIOS_TABLE (
 STATIC SPD_CLIENT_PROTOCOL  *SpdClient;
 
 STATIC
+UINT16
+SpdGetCrc16 (
+  IN  CONST UINT8 * CONST  SpdBuf
+  )
+{
+  return SpdBuf[0] | (SpdBuf[1] << 8);
+}
+
+STATIC
+INTN
+SpdIsValid (
+  IN  CONST UINT8 * CONST  SpdBuf,
+  IN  CONST UINTN          Size
+  )
+{
+  INTN  Result = 0;
+
+  if (!SpdBuf || Size < 128) {
+    return 0;
+  }
+
+  if (Size >= 128) {
+    Result = SpdGetCrc16 (SpdBuf + 126) == Crc16 (SpdBuf, 126, 0);
+  }
+
+  if (Size >= 256) {
+    Result &= SpdGetCrc16 (SpdBuf + 254) == Crc16 (SpdBuf + 128, 126, 0);
+  }
+
+  if (Size >= 320) {
+    Result &= SpdGetCrc16 (SpdBuf + 318) == Crc16 (SpdBuf + 256, 62, 0);
+  }
+
+  return Result;
+}
+
+STATIC
 EFI_STATUS
 GetDdrInfo (
-  OUT  BAIKAL_SPD_SMBIOS_INFO * CONST  DdrInfo,
+  OUT  BAIKAL_SMBIOS_DDR_INFO * CONST  DdrInfo,
   IN   CONST INTN                      Num
   )
 {
-  UINT8         IsHybrid;
   CONST UINT8  *Spd;
   INTN          SpdSize;
 
-  Spd = SpdClient->GetData(Num);
+  Spd = SpdClient->GetData (Num);
 
   switch (*Spd & 0x07) {
   case 1:
@@ -1304,20 +1341,6 @@ GetDdrInfo (
     return EFI_NOT_FOUND;
   }
 
-  if (Spd[2] != 0xC) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: DDR4 DIMM%d is not a DDR4 SDRAM\n",
-      __FUNCTION__,
-      Num
-      ));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Spd[3] & 0x80) {
-    IsHybrid = 1;
-  }
-
   if (!SpdIsValid (Spd, SpdSize)) {
     DEBUG ((
       EFI_D_ERROR,
@@ -1328,7 +1351,7 @@ GetDdrInfo (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (SpdSetSmbiosInfo (Spd, SpdSize, IsHybrid, DdrInfo)) {
+  if (SmbiosSetDdrInfo (Spd, SpdSize, DdrInfo, NULL, NULL)) {
     DEBUG ((
       EFI_D_ERROR,
       "%a: DDR4 DIMM%d SPD info is invalid\n",
@@ -1432,7 +1455,7 @@ SmbiosTable16_17_19_20Init (
   )
 {
   UINTN                    AddressCells;
-  BAIKAL_SPD_SMBIOS_INFO  *DdrInfo;
+  BAIKAL_SMBIOS_DDR_INFO  *DdrInfo;
   UINT16                   DdrPresence = 0;
   UINT8                    Idx;
   CONST UINT32            *Reg;
@@ -1454,7 +1477,7 @@ SmbiosTable16_17_19_20Init (
   }
 
   // Getting information about DDR
-  DdrInfo = (BAIKAL_SPD_SMBIOS_INFO *) AllocateZeroPool (SMBIOS_DIMM_NUM * sizeof (BAIKAL_SPD_SMBIOS_INFO));
+  DdrInfo = (BAIKAL_SMBIOS_DDR_INFO *) AllocateZeroPool (SMBIOS_DIMM_NUM * sizeof (BAIKAL_SMBIOS_DDR_INFO));
   if (DdrInfo == NULL) {
     DEBUG ((
       EFI_D_ERROR,
@@ -1589,11 +1612,11 @@ SmbiosTable16_17_19_20Init (
       } else if (Cc == 1 && Id == 24) {
         PtrString = "Kingston";
       } else if (Cc || Id) {
-        CHAR8  HexValue[5];
-        AsciiValueToStringS (HexValue, 5, RADIX_HEX, DdrInfo[Idx].ManufacturerId & 0xFF, 4);
-        CopyMem (Manufacturer + 6, HexValue, 4);
-        AsciiValueToStringS (HexValue, 5, RADIX_HEX, (DdrInfo[Idx].ManufacturerId >> 8) & 0xFF, 4);
-        CopyMem (Manufacturer + 16, HexValue, 4);
+        CHAR8  HexValue[3];
+        AsciiValueToStringS (HexValue, 3, RADIX_HEX, DdrInfo[Idx].ManufacturerId & 0xFF, 2);
+        CopyMem (Manufacturer + 8, HexValue, 2);
+        AsciiValueToStringS (HexValue, 3, RADIX_HEX, (DdrInfo[Idx].ManufacturerId >> 8) & 0xFF, 2);
+        CopyMem (Manufacturer + 18, HexValue, 2);
         PtrString = Manufacturer;
       }
 
@@ -1631,9 +1654,6 @@ SmbiosTable16_17_19_20Init (
       Table17.MaximumVoltage = DdrInfo[Idx].Voltage;
       Table17.ConfiguredVoltage = DdrInfo[Idx].Voltage;
       Table17.ModuleManufacturerID = DdrInfo[Idx].ManufacturerId;
-      Table17.ModuleProductID = DdrInfo[Idx].ProductId;
-      Table17.MemorySubsystemControllerManufacturerID = DdrInfo[Idx].SubsystemManufacturerId;
-      Table17.MemorySubsystemControllerProductID = DdrInfo[Idx].SubsystemProductId;
       Table17.VolatileSize = DdrInfo[Idx].Size;
 
       Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &Table17, PtrBuf, ARRAY_SIZE (PtrBuf));

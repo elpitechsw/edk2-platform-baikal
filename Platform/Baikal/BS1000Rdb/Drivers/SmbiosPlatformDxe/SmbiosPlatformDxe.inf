@@ -25,7 +25,8 @@
 
 [LibraryClasses]
   ArmLib
-  BaikalSpdLib
+  BaikalSmbiosLib
+  CrcLib
   MemoryAllocationLib
   PrintLib
   UefiDriverEntryPoint

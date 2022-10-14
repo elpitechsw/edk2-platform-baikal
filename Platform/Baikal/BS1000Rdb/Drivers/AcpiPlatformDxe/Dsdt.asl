@@ -107,9 +107,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     // PVT_CLUSTER2
     Device(PVC2) {
       Name(_HID, "PRP0001")
-      Name(_UID, 0x0c030000)
+      Name(_UID, 0x0C030000)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x0c030000, 0x1000)
+        Memory32Fixed(ReadWrite, 0x0C030000, 0x1000)
       })
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
@@ -167,9 +167,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     // PVT_CLUSTER6
     Device(PVC6) {
       Name(_HID, "PRP0001")
-      Name(_UID, 0x1c030000)
+      Name(_UID, 0x1C030000)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x1c030000, 0x1000)
+        Memory32Fixed(ReadWrite, 0x1C030000, 0x1000)
       })
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
@@ -227,9 +227,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     // PVT_CLUSTER10
     Device(PVCA) {
       Name(_HID, "PRP0001")
-      Name(_UID, 0x2c030000)
+      Name(_UID, 0x2C030000)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x2c030000, 0x1000)
+        Memory32Fixed(ReadWrite, 0x2C030000, 0x1000)
       })
       Name(_DSD, Package() {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
@@ -273,9 +273,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     // PVT_PCIE1
     Device(PVP1) {
       Name(_HID, "PRP0001")
-      Name(_UID, 0x3c030000)
+      Name(_UID, 0x3C030000)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x3c030000, 0x1000)
+        Memory32Fixed(ReadWrite, 0x3C030000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 238 }
       })
       Name(_DSD, Package() {
@@ -321,9 +321,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     // PVT_PCIE4
     Device(PVP4) {
       Name(_HID, "PRP0001")
-      Name(_UID, 0x4c030000)
+      Name(_UID, 0x4C030000)
       Name(_CRS, ResourceTemplate() {
-        Memory32Fixed(ReadWrite, 0x4c030000, 0x1000)
+        Memory32Fixed(ReadWrite, 0x4C030000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 376 }
       })
       Name(_DSD, Package() {
@@ -494,17 +494,22 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(QSP2) {
       Name(_HID, "HISI0173")
       Name(_UID, One)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX1.STA1)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00C30000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 96 }
       })
     }
 
-#if 0
     // ESPI
     Device(ESPI) {
       Name(_HID, "PRP0001")
       Name(_UID, 0x00C40000)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX2.STA1)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00C40000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 102 }
@@ -516,7 +521,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
-#endif
 
     // GPIO32
     Device(GP32) {
@@ -544,6 +548,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(GP16) {
       Name(_HID, "APMC0D07")
       Name(_UID, 0x00C60000)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX2.STA0)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00C60000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 83 }
@@ -566,6 +573,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(GP81) {
       Name(_HID, "APMC0D07")
       Name(_UID, 0x00C70000)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX0.STA0)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00C70000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 84 }
@@ -588,6 +598,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(GP82) {
       Name(_HID, "APMC0D07")
       Name(_UID, 0x00C80000)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX1.STA0)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00C80000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 85 }
@@ -657,11 +670,13 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
       })
     }
 
-#if 0
     // SMBUS_I2C5
     Device(I2C5) {
       Name(_HID, "APMC0D0F")
       Name(_UID, 3)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX0.STA1)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00CC0000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 100 }
@@ -679,6 +694,9 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(I2C6) {
       Name(_HID, "APMC0D0F")
       Name(_UID, 4)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX0.STA1)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00CD0000, 0x1000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 101 }
@@ -691,12 +709,14 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         }
       })
     }
-#endif
 
     // UART_S
     Device(COMS) {
-      Name(_HID, "APMC0D08")
+      Name(_HID, "HISI0031")
       Name(_UID, Zero)
+      Method (_STA, 0, Serialized) {
+        Return (\_SB.MUX0.STA1)
+      }
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00E00000, 0x100)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 92 }
@@ -706,7 +726,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         Package() {
           Package() { "reg-shift", 2 },
           Package() { "reg-io-width", 4 },
-          Package() { "clock-frequency", 8000000 }
+          Package() { "clock-frequency", 7273800 }
         }
       })
     }
@@ -733,7 +753,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(GMC0) {
       Name(_HID, "PRP0001")
       Name(_UID, 0x00A20000)
-      Name(_CCA, One)
+      Name(_CCA, Zero)
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00A20000, 0x10000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 108 }
@@ -756,7 +776,7 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
     Device(GMC1) {
       Name(_HID, "PRP0001")
       Name(_UID, 0x00A30000)
-      Name(_CCA, One)
+      Name(_CCA, Zero)
       Name(_CRS, ResourceTemplate() {
         Memory32Fixed(ReadWrite, 0x00A30000, 0x10000)
         Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive) { 109 }
@@ -772,6 +792,71 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
 
       Device(GPHY) {
         Name(_ADR, Zero)
+      }
+    }
+
+    Device(MUXC) {
+      Name(_HID, "BKLE0002")
+      Name(_UID, Zero)
+    }
+
+    Device(MUX0) {
+      Name(_HID, "BKLE0003")
+      Name(_UID, Zero)
+      Name(MUX, Package() { ^MUXC, 0 })
+      Name(DEV0, Package() { ^GP81 })
+      Name(DEV1, Package() { ^COMS, I2C5, I2C6 })
+      Name(STA0, Zero)
+      Name(STA1, Zero)
+      Method (INIT, 1, Serialized) {
+        If (LEqual (Arg0, Zero))
+        {
+          Store (0xF, STA0)
+        }
+        Else
+        {
+          Store (0xF, STA1)
+        }
+      }
+    }
+
+    Device(MUX1) {
+      Name(_HID, "BKLE0003")
+      Name(_UID, One)
+      Name(MUX, Package() { ^MUXC, 1 })
+      Name(DEV0, Package() { ^GP82 })
+      Name(DEV1, Package() { ^QSP2 })
+      Name(STA0, Zero)
+      Name(STA1, Zero)
+      Method (INIT, 1, Serialized) {
+        If (LEqual (Arg0, Zero))
+        {
+          Store (0xF, STA0)
+        }
+        Else
+        {
+          Store (0xF, STA1)
+        }
+      }
+    }
+
+    Device(MUX2) {
+      Name(_HID, "BKLE0003")
+      Name(_UID, 2)
+      Name(MUX, Package() { ^MUXC, 2 })
+      Name(DEV0, Package() { ^GP16 })
+      Name(DEV1, Package() { ^ESPI })
+      Name(STA0, Zero)
+      Name(STA1, Zero)
+      Method (INIT, 1, Serialized) {
+        If (LEqual (Arg0, Zero))
+        {
+          Store (0xF, STA0)
+        }
+        Else
+        {
+          Store (0xF, STA1)
+        }
       }
     }
   }

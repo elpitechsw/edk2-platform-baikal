@@ -3,7 +3,7 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <Platform/Pcie.h>
+#include <BM1000.h>
 
 #include "AcpiPlatform.h"
 
@@ -13,9 +13,6 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
   External (\_SB.CRU0, DeviceObj)
   External (\_SB.GPIO, DeviceObj)
   External (\_SB.GPIO.GPIP, DeviceObj)
-  External (\_SB.STA0, FieldUnitObj)
-  External (\_SB.STA1, FieldUnitObj)
-  External (\_SB.STA2, FieldUnitObj)
 
   Scope (_SB_) {
     // PCIe0 (x4 #0)
@@ -27,14 +24,12 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE0_SEGMENT)
       Name (_BBN, Zero)
 
-      Method (_STA, 0, Serialized) {
-        if ((\_SB.STA0 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                         BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
-          Return (0x0)
-        }
-
-        Return (0xF)
-      }
+      Name (_PRT, Package() {
+        Package() { 0x0000FFFF, 0, Zero, Zero },
+        Package() { 0x0000FFFF, 1, Zero, Zero },
+        Package() { 0x0000FFFF, 2, Zero, Zero },
+        Package() { 0x0000FFFF, 3, Zero, Zero }
+      })
 
       Method (_CRS, 0, Serialized) {
         Name (RBUF, ResourceTemplate () {
@@ -43,9 +38,10 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
           PROD_IO_BUF(02)
         })
 
-        QRES_BUF_SET(01, BM1000_PCIE0_MMIO32_BASE,  BM1000_PCIE0_MMIO32_SIZE, 0)
-        QRES_BUF_SET(02, BM1000_PCIE0_PORTIO_MIN,   BM1000_PCIE0_PORTIO_SIZE,
-                         BM1000_PCIE0_PORTIO_BASE - BM1000_PCIE0_PORTIO_MIN)
+        QRES_BUF_SET(01, BAIKAL_ACPI_PCIE0_MEM_MIN, BAIKAL_ACPI_PCIE0_MEM_SIZE,
+                         BAIKAL_ACPI_PCIE0_MEM_BASE - BAIKAL_ACPI_PCIE0_MEM_MIN)
+        QRES_BUF_SET(02, BAIKAL_ACPI_PCIE_IO_MIN, BAIKAL_ACPI_PCIE_IO_SIZE,
+                         BAIKAL_ACPI_PCIE0_IO_BASE - BAIKAL_ACPI_PCIE_IO_MIN)
 
         Return (RBUF)
       }
@@ -59,14 +55,14 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
         Method (_CRS, 0, Serialized) {
           Name (RBUF, ResourceTemplate () {
             CONS_MEM_BUF(01)
-            Memory32Fixed (ReadWrite, BM1000_PCIE0_DBI_BASE, BM1000_PCIE0_DBI_SIZE)
+            Memory32Fixed (ReadWrite, BAIKAL_ACPI_PCIE0_DBI_BASE, BAIKAL_ACPI_PCIE_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 458, 461 }
 #if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined(ELPITECH)
             GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 6 }
 #endif
           })
 
-          QRES_BUF_SET(01, BM1000_PCIE0_CFG_BASE, BM1000_PCIE0_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE0_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }
@@ -85,14 +81,12 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE1_SEGMENT)
       Name (_BBN, Zero)
 
-      Method (_STA, 0, Serialized) {
-        if ((\_SB.STA1 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                         BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
-          Return (0x0)
-        }
-
-        Return (0xF)
-      }
+      Name (_PRT, Package() {
+        Package() { 0x0000FFFF, 0, Zero, Zero },
+        Package() { 0x0000FFFF, 1, Zero, Zero },
+        Package() { 0x0000FFFF, 2, Zero, Zero },
+        Package() { 0x0000FFFF, 3, Zero, Zero }
+      })
 
       Method (_CRS, 0, Serialized) {
         Name (RBUF, ResourceTemplate () {
@@ -101,9 +95,10 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
           PROD_IO_BUF(02)
         })
 
-        QRES_BUF_SET(01, BM1000_PCIE1_MMIO32_BASE,  BM1000_PCIE1_MMIO32_SIZE, 0)
-        QRES_BUF_SET(02, BM1000_PCIE1_PORTIO_MIN,   BM1000_PCIE1_PORTIO_SIZE,
-                         BM1000_PCIE1_PORTIO_BASE - BM1000_PCIE1_PORTIO_MIN)
+        QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_MEM_MIN, BAIKAL_ACPI_PCIE1_MEM_SIZE,
+                         BAIKAL_ACPI_PCIE1_MEM_BASE - BAIKAL_ACPI_PCIE1_MEM_MIN)
+        QRES_BUF_SET(02, BAIKAL_ACPI_PCIE_IO_MIN, BAIKAL_ACPI_PCIE_IO_SIZE,
+                         BAIKAL_ACPI_PCIE1_IO_BASE - BAIKAL_ACPI_PCIE_IO_MIN)
 
         Return (RBUF)
       }
@@ -117,11 +112,11 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
         Method (_CRS, 0, Serialized) {
           Name (RBUF, ResourceTemplate () {
             CONS_MEM_BUF(01)
-            Memory32Fixed (ReadWrite, BM1000_PCIE1_DBI_BASE, BM1000_PCIE1_DBI_SIZE)
+            Memory32Fixed (ReadWrite, BAIKAL_ACPI_PCIE1_DBI_BASE, BAIKAL_ACPI_PCIE_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
           })
 
-          QRES_BUF_SET(01, BM1000_PCIE1_CFG_BASE, BM1000_PCIE1_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }
@@ -141,14 +136,12 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE2_SEGMENT)
       Name (_BBN, Zero)
 
-      Method (_STA, 0, Serialized) {
-        if ((\_SB.STA2 & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                         BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
-          Return (0x0)
-        }
-
-        Return (0xF)
-      }
+      Name (_PRT, Package() {
+        Package() { 0x0000FFFF, 0, Zero, Zero },
+        Package() { 0x0000FFFF, 1, Zero, Zero },
+        Package() { 0x0000FFFF, 2, Zero, Zero },
+        Package() { 0x0000FFFF, 3, Zero, Zero }
+      })
 
       Method (_CRS, 0, Serialized) {
         Name (RBUF, ResourceTemplate () {
@@ -157,9 +150,10 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
           PROD_IO_BUF(02)
         })
 
-        QRES_BUF_SET(01, BM1000_PCIE2_MMIO32_BASE,  BM1000_PCIE2_MMIO32_SIZE, 0)
-        QRES_BUF_SET(02, BM1000_PCIE2_PORTIO_MIN,   BM1000_PCIE2_PORTIO_SIZE,
-                         BM1000_PCIE2_PORTIO_BASE - BM1000_PCIE2_PORTIO_MIN)
+        QRES_BUF_SET(01, BAIKAL_ACPI_PCIE2_MEM_MIN, BAIKAL_ACPI_PCIE2_MEM_SIZE,
+                         BAIKAL_ACPI_PCIE2_MEM_BASE - BAIKAL_ACPI_PCIE2_MEM_MIN)
+        QRES_BUF_SET(02, BAIKAL_ACPI_PCIE_IO_MIN, BAIKAL_ACPI_PCIE_IO_SIZE,
+                         BAIKAL_ACPI_PCIE2_IO_BASE - BAIKAL_ACPI_PCIE_IO_MIN)
 
         Return (RBUF)
       }
@@ -173,14 +167,14 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
         Method (_CRS, 0, Serialized) {
           Name (RBUF, ResourceTemplate () {
             CONS_MEM_BUF(01)
-            Memory32Fixed (ReadWrite, BM1000_PCIE2_DBI_BASE, BM1000_PCIE2_DBI_SIZE)
+            Memory32Fixed (ReadWrite, BAIKAL_ACPI_PCIE2_DBI_BASE, BAIKAL_ACPI_PCIE_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
 #if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined(ELPITECH)
             GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
 #endif
           })
 
-          QRES_BUF_SET(01, BM1000_PCIE2_CFG_BASE, BM1000_PCIE2_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE2_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }

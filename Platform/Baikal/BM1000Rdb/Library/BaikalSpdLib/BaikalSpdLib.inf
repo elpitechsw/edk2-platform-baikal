@@ -19,6 +19,3 @@
 [Packages]
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
-
-[LibraryClasses]
-  CrcLib

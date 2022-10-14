@@ -1,104 +1,23 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <Library/BaikalSpdLib.h>
+#include <Library/BaikalSmbiosLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/CrcLib.h>
-
-#define DIMM_SPD_DATA_BASE  0x8000FA00
-
-CONST UINT8 SpdDdrAddr[BAIKAL_SPD_DDR_ADDR_LENGTH] = {0x50, 0x51, 0x52, 0x53};
-
-INTN
-SpdGetSize (
-  IN  CONST UINTN  TargetAddr
-  )
-{
-  UINT8  *SpdPtr = (UINT8 *) DIMM_SPD_DATA_BASE;
-
-  if (TargetAddr > SpdDdrAddr[1]) {
-    SpdPtr += 512;
-  }
-
-  switch (*SpdPtr & 0x07) {
-  case 1:
-    return 128;
-  case 2:
-    return 256;
-  case 3:
-    return 384;
-  case 4:
-    return 512;
-  }
-
-  return 0;
-}
-
-INTN
-SpdGetBuf (
-  IN   CONST UINTN   TargetAddr,
-  OUT  VOID * CONST  RxBuf,
-  IN   CONST UINTN   RxBufSize
-  )
-{
-  UINT8  *SpdPtr = (UINT8 *) DIMM_SPD_DATA_BASE;
-
-  if (TargetAddr > SpdDdrAddr[1]) {
-    SpdPtr += 512;
-  }
-
-  CopyMem (RxBuf, SpdPtr, RxBufSize);
-
-  return 0;
-}
-
-STATIC
-UINT16
-SpdGetCrc16 (
-  IN  CONST UINT8 * CONST  SpdBuf
-  )
-{
-  return SpdBuf[0] | (SpdBuf[1] << 8);
-}
-
-INTN
-SpdIsValid (
-  IN  CONST VOID * CONST  Buf,
-  IN  CONST UINTN         Size
-  )
-{
-  INTN                 Result = 0;
-  CONST UINT8 * CONST  SpdBuf = Buf;
-
-  if (Size < 128) {
-    return 0;
-  }
-
-  if (Size >= 128) {
-    Result = SpdGetCrc16 (SpdBuf + 126) == Crc16 (SpdBuf, 126, 0);
-  }
-
-  if (Size >= 256) {
-    Result &= SpdGetCrc16 (SpdBuf + 254) == Crc16 (SpdBuf + 128, 126, 0);
-  }
-
-  if (Size >= 320) {
-    Result &= SpdGetCrc16 (SpdBuf + 318) == Crc16 (SpdBuf + 256, 62, 0);
-  }
-
-  return Result;
-}
 
 STATIC
 UINT64
-SpdGetCapacity (
+SmbiosGetSpdCapacity (
   IN  CONST UINT8 * CONST  SpdBuf
   )
 {
   UINT64  SdramCapacityPerDie;
   UINT64  Total;
+
+  if (!SpdBuf) {
+    return 0;
+  }
 
   // SDRAM capacity in MiB
   switch (SpdBuf[4] & 0xF) {
@@ -174,16 +93,15 @@ SpdGetCapacity (
 }
 
 INTN
-SpdSetSmbiosInfo (
-  IN      CONST VOID * CONST              Buf,
-  IN      CONST UINT16                    Size,
-  IN      CONST UINT8                     IsHybrid,
-  IN OUT  BAIKAL_SPD_SMBIOS_INFO * CONST  Info
+SmbiosSetDdrInfo (
+  IN      CONST UINT8 * CONST             SpdBuf,
+  IN      CONST UINTN                     Size,
+  IN OUT  BAIKAL_SMBIOS_DDR_INFO * CONST  Info,
+  IN      CONST UINT32 * CONST            Serial,
+  IN      CONST UINT8 * CONST             PartNumber
   )
 {
-  CONST UINT8 * CONST  SpdBuf = Buf;
-
-  Info->Size = SpdGetCapacity (SpdBuf);
+  Info->Size = SmbiosGetSpdCapacity (SpdBuf);
   if (!Info->Size) {
     return -1;
   }
@@ -220,20 +138,20 @@ SpdSetSmbiosInfo (
   Info->DataWidth = 8 << (SpdBuf[13] & 0x7);
   Info->ExtensionWidth = (SpdBuf[13] & 0x18) ? 8 : 0;
 
-  if (Size >= 199 && IsHybrid) {
-    Info->ProductId = *(UINT16 *) &SpdBuf[192];
-    Info->SubsystemManufacturerId = *(UINT16 *) &SpdBuf[194];
-    Info->SubsystemProductId = *(UINT16 *) &SpdBuf[196];
-  } else {
-    Info->ProductId = 0;
-    Info->SubsystemManufacturerId = 0;
-    Info->SubsystemProductId = 0;
-  }
-
   if (Size >= 349) {
     Info->ManufacturerId = *(UINT16 *) &SpdBuf[320];
-    Info->SerialNumber = *(UINT32 *) &SpdBuf[325];
-    CopyMem (&Info->PartNumber, &SpdBuf[329], sizeof (Info->PartNumber));
+
+    if (Serial) {
+      Info->SerialNumber = *Serial;
+    } else {
+      Info->SerialNumber = *(UINT32 *) &SpdBuf[325];
+    }
+
+    if (PartNumber) {
+      CopyMem (&Info->PartNumber, PartNumber, sizeof (Info->PartNumber));
+    } else {
+      CopyMem (&Info->PartNumber, &SpdBuf[329], sizeof (Info->PartNumber));
+    }
   } else {
     Info->ManufacturerId = 0;
     Info->SerialNumber = 0;
