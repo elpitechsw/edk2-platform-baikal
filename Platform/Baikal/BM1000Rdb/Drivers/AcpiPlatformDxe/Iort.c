@@ -67,7 +67,7 @@ typedef struct {
     /* UINT32  NumIds          */                                 \
     0xFFFF,                                                       \
     /* UINT32  OutputBase      */                                 \
-    ((RealSegment + 1) << 16) + (RidBus << 8),                    \
+    (RealSegment << 16) + (RidBus << 8),                    \
     /* UINT32  OutputReference */                                 \
     OFFSET_OF (BAIKAL_ACPI_IORT, Its),                            \
     /* UINT32  Flags           */                                 \
@@ -123,17 +123,14 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     // Thus RIDBus is 0.
     //
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE0_SEGMENT,
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
-                             0),
+                             0, 0),
 #ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE1_SEGMENT,
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
-                             0),
+                             1, 0),
 #endif
 #ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE2_SEGMENT,
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
-                             0),
+                             2, 0),
 #endif
 
     //
@@ -142,44 +139,32 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     // switches on them.
     //
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 2),
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
-                             2),
+                             0, 2),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 3),
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
-                             3),
+                             0, 3),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 4),
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
-                             4),
+                             0, 4),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 5),
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
-                             5),
+                             0, 5),
 #ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 2),
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
-                             2),
+                             1, 2),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 3),
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
-                             3),
+                             1, 3),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 4),
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
-                             4),
+                             1, 4),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 5),
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
-                             5),
+                             1, 5),
 #endif
 #ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 2),
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
-                             2),
+                             2, 2),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 3),
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
-                             3),
+                             2, 3),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 4),
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
-                             4),
+                             2, 4),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 5),
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
-                             5),
+                             2, 5),
 #endif
   }
 };

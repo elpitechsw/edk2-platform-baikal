@@ -7,7 +7,7 @@
 
 #include "AcpiPlatform.h"
 
-#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, 0x0, 0, 0xFF, 0, 0x100)
+#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, 0x0, 1, 0xFF, 0, 0xFF)
 
 DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
   External (\_SB.CRU0, DeviceObj)
@@ -62,7 +62,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
 #endif
           })
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE0_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE0_CFG_BASE + 0x100000, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }
@@ -116,7 +116,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
           })
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_CFG_BASE + 0x100000, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }
@@ -174,7 +174,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
 #endif
           })
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE2_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE2_CFG_BASE + 0x100000, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }
