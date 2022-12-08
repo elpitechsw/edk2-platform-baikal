@@ -272,6 +272,9 @@
   # USB
   Silicon/Baikal/BS1000/Drivers/NonDiscoverableEhciDxe/NonDiscoverableEhciDxe.inf
   Silicon/Baikal/BS1000/Drivers/NonDiscoverableOhciDxe/NonDiscoverableOhciDxe.inf
+!if $(BAIKAL_ELP) == TRUE
+  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+!endif
   MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
   MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
