@@ -10,7 +10,7 @@
 #define BAIKAL_SPD_MAX_SIZE    512
 #define BAIKAL_SPD_PORT_COUNT  2
 
-#pragma pack(1)
+#pragma pack (push, 1)
 typedef struct {
   CONST UINT8  Buf[BAIKAL_SPD_MAX_SIZE * BAIKAL_SPD_PORT_COUNT];
   struct {
@@ -18,8 +18,14 @@ typedef struct {
     CONST UINT8   Part[20];
   }  Extra[BAIKAL_SPD_PORT_COUNT];
   CONST UINT8  IsDualChannel[BAIKAL_SPD_PORT_COUNT];
-}  BAIKAL_SPD_INFO;
-#pragma pack()
+  CONST UINT32 ConfiguredSpeed[BAIKAL_SPD_PORT_COUNT];
+} BAIKAL_SPD_INFO;
+#pragma pack (pop)
+
+UINTN
+SpdGetConfiguredSpeed (
+  IN  CONST UINTN  Port
+  );
 
 INTN
 SpdIsDualChannel (

@@ -85,10 +85,8 @@ extern EFI_STATUS PpttInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS SpcrInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 
 STATIC BAIKAL_ACPI_INIT_FUNCTION  AcpiTableInit[] = {
-  &CsrtInit,
   &Dbg2Init,
   &DsdtInit,
-  &FacsInit,
   &FadtInit,
   &GtdtInit,
   &IortInit,

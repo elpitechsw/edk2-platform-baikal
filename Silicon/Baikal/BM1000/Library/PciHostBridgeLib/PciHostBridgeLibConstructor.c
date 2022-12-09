@@ -217,7 +217,6 @@ PciHostBridgeLibCfgWindow (
     BM1000_PCIE_PF0_PORT_LOGIC_IATU_VIEWPORT_OFF_REGION_DIR_OUTBOUND | RegionIdx
     );
 
-  ArmDataMemoryBarrier ();
   MmioWrite32 (
     PcieDbiBase + BM1000_PCIE_PF0_PORT_LOGIC_IATU_LWR_BASE_ADDR_OFF_OUTBOUND_0,
     (UINT32)(CpuBase & 0xFFFFFFFF)
@@ -755,7 +754,7 @@ PciHostBridgeLibConstructor (
       0
       );
 
-    // Force PCIE_CAP_TARGET_LINK_SPEED to Gen1
+    // Force PCIE_CAP_TARGET_LINK_SPEED to 2.5 GT/s
     MmioAndThenOr32 (
        mPcieDbiBases[PcieIdx] +
        BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG,
@@ -909,7 +908,7 @@ PciHostBridgeLibConstructor (
             PcieGprStat & BM1000_PCIE_GPR_STATUS_SMLH_LINKUP ? '+' : '-',
             PcieGprStat & BM1000_PCIE_GPR_STATUS_RDLH_LINKUP ? '+' : '-',
             (PcieGprStat & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) == 0x03 ?
-              "polling compliance" : "pre detect quiet"
+              "Polling.Compliance" : "Pre.Detect.Quiet"
             ));
 
           MmioAnd32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), ~BM1000_PCIE_GPR_GENCTL_LTSSM_EN);

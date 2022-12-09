@@ -37,12 +37,12 @@ typedef struct {
   UINT64                 Size;
 } BAIKAL_SD_PRIVATE_DATA;
 
-STATIC  EFI_PHYSICAL_ADDRESS    Base;
-STATIC  EFI_PHYSICAL_ADDRESS    PhysicalBuffer;
-STATIC  EFI_HANDLE              mBaikalSdBlockHandle;
-STATIC  BAIKAL_SD_PRIVATE_DATA  mBaikalSd;
+STATIC EFI_PHYSICAL_ADDRESS  Base;
+STATIC EFI_PHYSICAL_ADDRESS  PhysicalBuffer;
 
-STATIC CONST BAIKAL_SD_DEVICE_PATH  mDevicePath = {
+STATIC EFI_HANDLE                   mBaikalSdBlockHandle;
+STATIC BAIKAL_SD_PRIVATE_DATA       mBaikalSd;
+STATIC CONST BAIKAL_SD_DEVICE_PATH  mBaikalSdDevicePath = {
   {
     {
       HARDWARE_DEVICE_PATH,
@@ -249,12 +249,11 @@ InstallBlock (
 {
   EFI_STATUS  Status;
 
-  /* Misc */
+  // Misc
   mBaikalSd.Size                   = TotalSize;
   mBaikalSd.Signature              = SIGNATURE_32 ('M', 'S', 'H', 'C');
-  mBaikalSd.DevicePath             = mDevicePath;
+  mBaikalSd.DevicePath             = mBaikalSdDevicePath;
 
-  /* BlockIo */
   mBaikalSd.BlockIo.Media          = &mBaikalSd.Media;
   mBaikalSd.BlockIo.Revision       = EFI_BLOCK_IO_PROTOCOL_REVISION;
   mBaikalSd.BlockIo.Reset          = Reset;
@@ -262,7 +261,6 @@ InstallBlock (
   mBaikalSd.BlockIo.WriteBlocks    = WriteBlocks;
   mBaikalSd.BlockIo.FlushBlocks    = FlushBlocks;
 
-  /* Media */
   mBaikalSd.Media.MediaPresent     = TRUE;
   mBaikalSd.Media.RemovableMedia   = FALSE;
   mBaikalSd.Media.LogicalPartition = FALSE;

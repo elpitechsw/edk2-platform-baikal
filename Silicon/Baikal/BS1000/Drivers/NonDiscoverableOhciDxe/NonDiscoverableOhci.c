@@ -19,8 +19,10 @@ NonDiscoverableOhciEntryPoint (
 {
   EFI_STATUS  Status;
 
+#ifdef ELPITECH
   GpioOutSet(BS1000_GPIO32_BASE, 6);
   GpioDirSet(BS1000_GPIO32_BASE, 6);
+#endif
 
   Status = RegisterNonDiscoverableMmioDevice (
              NonDiscoverableDeviceTypeOhci,

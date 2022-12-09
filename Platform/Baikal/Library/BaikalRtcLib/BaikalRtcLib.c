@@ -26,6 +26,9 @@
 STATIC EFI_PHYSICAL_ADDRESS  I2cBase;
 STATIC UINTN                 RtcAddr;
 
+STATIC CONST CHAR16  mTimeZoneVariableName[] = L"RtcTimeZone";
+STATIC CONST CHAR16  mDaylightVariableName[] = L"RtcDaylight";
+
 enum {
   RTC_TYPE_UNKNOWN,
   RTC_TYPE_ABEOZ9,
@@ -69,17 +72,19 @@ LibGetTime (
   OUT  EFI_TIME_CAPABILITIES  *Capabilities
   )
 {
-  UINT8  Buf[10];
-  INTN   I2cDataSize;
-  INTN   I2cRxedSize;
-  UINT8  RegisterAddr;
-  UINT8  *TimeDateBcds;
+  UINT8       Buf[10];
+  INTN        I2cDataSize;
+  INTN        I2cRxedSize;
+  UINT8       RegisterAddr;
+  UINTN       Size;
+  EFI_STATUS  Status;
+  UINT8       *TimeDateBcds;
 
   if (Time == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (EfiAtRuntime()) {
+  if (EfiAtRuntime ()) {
     return EFI_UNSUPPORTED;
   }
 
@@ -93,6 +98,83 @@ LibGetTime (
     TimeDateBcds = &Buf[3];
   } else {
     return EFI_DEVICE_ERROR;
+  }
+
+  // Get the current time zone information from non-volatile storage
+  Size   = sizeof (Time->TimeZone);
+  Status = EfiGetVariable (
+             (CHAR16 *)mTimeZoneVariableName,
+             &gEfiCallerIdGuid,
+             NULL,
+             &Size,
+             (VOID *)&(Time->TimeZone)
+             );
+
+  if (EFI_ERROR (Status)) {
+    if (Status != EFI_NOT_FOUND) {
+      return Status;
+    }
+
+    // The time zone variable does not exist in non-volatile storage, so create it.
+    Time->TimeZone = EFI_UNSPECIFIED_TIMEZONE;
+    Status = EfiSetVariable (
+               (CHAR16 *)mTimeZoneVariableName,
+               &gEfiCallerIdGuid,
+               EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+               Size,
+               (VOID *)&(Time->TimeZone)
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "LibGetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+        mTimeZoneVariableName,
+        Status
+        ));
+      return Status;
+    }
+  } else {
+    // Check TimeZone bounds: -1440 to 1440 or 2047
+    if (  ((Time->TimeZone < -1440) || (Time->TimeZone > 1440))
+       && (Time->TimeZone != EFI_UNSPECIFIED_TIMEZONE))
+    {
+      Time->TimeZone = EFI_UNSPECIFIED_TIMEZONE;
+    }
+  }
+
+  // Get the current daylight information from non-volatile storage
+  Size   = sizeof (Time->Daylight);
+  Status = EfiGetVariable (
+             (CHAR16 *)mDaylightVariableName,
+             &gEfiCallerIdGuid,
+             NULL,
+             &Size,
+             (VOID *)&(Time->Daylight)
+             );
+
+  if (EFI_ERROR (Status)) {
+    if (Status != EFI_NOT_FOUND) {
+      return Status;
+    }
+
+    // The daylight variable does not exist in non-volatile storage, so create it.
+    Time->Daylight = 0;
+    Status = EfiSetVariable (
+               (CHAR16 *)mDaylightVariableName,
+               &gEfiCallerIdGuid,
+               EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+               Size,
+               (VOID *)&(Time->Daylight)
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "LibGetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+        mDaylightVariableName,
+        Status
+        ));
+      return Status;
+    }
   }
 
   I2cRxedSize = I2cTxRx (
@@ -150,8 +232,6 @@ LibGetTime (
   // Not supported
   Time->Pad1       = 0;
   Time->Nanosecond = 0;
-  Time->TimeZone   = 0;
-  Time->Daylight   = 0;
   Time->Pad2       = 0;
 
   if (!IsTimeValid (Time)) {
@@ -200,14 +280,15 @@ LibSetTime (
   IN  EFI_TIME  *Time
   )
 {
-  UINT8  Buf[8];
-  INTN   I2cRxedSize;
+  UINT8       Buf[8];
+  INTN        I2cRxedSize;
+  EFI_STATUS  Status;
 
   if (Time == NULL || !IsTimeValid (Time)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (EfiAtRuntime()) {
+  if (EfiAtRuntime ()) {
     return EFI_UNSUPPORTED;
   }
 
@@ -231,6 +312,42 @@ LibSetTime (
   Buf[4] = Bin2Bcd (Time->Day);
   Buf[6] = Bin2Bcd (Time->Month);
   Buf[7] = Bin2Bcd (Time->Year - 2000);
+
+  // Save the current time zone information into non-volatile storage
+  Status = EfiSetVariable (
+             (CHAR16 *)mTimeZoneVariableName,
+             &gEfiCallerIdGuid,
+             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+             sizeof (Time->TimeZone),
+             (VOID *)&(Time->TimeZone)
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "LibSetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+      mTimeZoneVariableName,
+      Status
+      ));
+    return Status;
+  }
+
+  // Save the current daylight information into non-volatile storage
+  Status = EfiSetVariable (
+             (CHAR16 *)mDaylightVariableName,
+             &gEfiCallerIdGuid,
+             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+             sizeof (Time->Daylight),
+             (VOID *)&(Time->Daylight)
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "LibSetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+      mDaylightVariableName,
+      Status
+      ));
+    return Status;
+  }
 
   I2cRxedSize = I2cTxRx (
                   I2cBase,

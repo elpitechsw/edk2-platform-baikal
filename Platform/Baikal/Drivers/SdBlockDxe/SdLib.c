@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -25,9 +25,8 @@
 #define BAIKAL_SMC_PLAT_CMU_CLKCH_ROUND_RATE  10
 #define BAIKAL_CLKCH_MSHC                     19
 
-
-#define INIT_CLOCK (300*1000)
-#define DEFAULT_CLOCK (25*1000*1000)
+#define INIT_CLOCK     (300 * 1000)
+#define DEFAULT_CLOCK  (25 * 1000 * 1000)
 
 #define WAIT(X) ({               \
   EFI_STATUS  Ret = EFI_SUCCESS; \

@@ -17,8 +17,8 @@
   XGmac.c
 
 [Packages]
-  MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
+  MdePkg/MdePkg.dec
 
 [LibraryClasses]
   IoLib

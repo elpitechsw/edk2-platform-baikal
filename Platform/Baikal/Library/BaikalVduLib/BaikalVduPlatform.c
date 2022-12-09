@@ -1,7 +1,7 @@
 /** @file
   This file contains Baikal VDU driver functions
 
-  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2019 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
   Parts of this file were based on sources as follows:
@@ -177,10 +177,12 @@ STATIC UINT32 mActiveDisplayModes = 0;
   @retval FALSE                  LVDS is disabled in the FDT.
 **/
 BOOLEAN
-LvdsEnabled (VOID)
+LvdsEnabled (
+  VOID
+  )
 {
-  return (mFdtDisplayModeInitialized &&
-          mFdtDisplayMode.LvdsPorts > 0);
+  return mFdtDisplayModeInitialized &&
+         mFdtDisplayMode.LvdsPorts > 0;
 }
 
 /** Helper function to get the total number of modes supported.
@@ -192,7 +194,9 @@ LvdsEnabled (VOID)
 **/
 STATIC
 UINT32
-GetMaxSupportedMode (VOID)
+GetMaxSupportedMode (
+  VOID
+  )
 {
   UINT32  MaxMode;
 
@@ -536,7 +540,7 @@ ParseEdidData (
   return TRUE;
 }
 
-/** Video mode related PCD setting helper function 
+/** Video mode related PCD setting helper function
 
   @param[in]  Width        Width of the screen
   @param[in]  Height       Height of the screen
@@ -565,7 +569,9 @@ SetVideoModePcds (
 **/
 STATIC
 EFI_STATUS
-InitializeDisplay (VOID)
+InitializeDisplay (
+  VOID
+  )
 {
   UINT32                    Index;
   EFI_GRAPHICS_PIXEL_FORMAT PixelFormat;
@@ -775,7 +781,9 @@ LcdPlatformGetVram (
   @retval UINT32             Mode Number.
 **/
 UINT32
-LcdPlatformGetMaxMode (VOID)
+LcdPlatformGetMaxMode (
+  VOID
+  )
 {
   InitializeDisplay ();
 
@@ -784,7 +792,7 @@ LcdPlatformGetMaxMode (VOID)
 
 EFI_STATUS
 LcdPlatformSetMode (
-  IN UINT32 ModeNumber
+  IN UINT32  ModeNumber
   )
 {
   EFI_STATUS    Status;
@@ -801,6 +809,7 @@ LcdPlatformSetMode (
     FixedPcdGet32 (PcdHdmiRefFrequency),
     DisplayMode->OscFreq
     );
+
   BaikalSetVduFrequency (
     LCRU_LVDS,
     FixedPcdGet32 (PcdLvdsRefFrequency),
@@ -840,7 +849,10 @@ LcdPlatformQueryMode (
   Info->HorizontalResolution = DisplayMode->Horizontal.Resolution;
   Info->VerticalResolution = DisplayMode->Vertical.Resolution;
   Info->PixelsPerScanLine = DisplayMode->Horizontal.Resolution;
-
+  Info->PixelInformation.RedMask = 0;
+  Info->PixelInformation.GreenMask = 0;
+  Info->PixelInformation.BlueMask = 0;
+  Info->PixelInformation.ReservedMask = 0;
   Info->PixelFormat = FixedPcdGet32 (PcdGopPixelFormat);
 
   return EFI_SUCCESS;

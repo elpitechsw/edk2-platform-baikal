@@ -444,20 +444,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         })
       }
 
-      Device(PR52) {
-        Name(_HID, "PRP0001")
-        Name(_UID, 0x20250052)
-        Name(_CRS, ResourceTemplate() {
-          I2CSerialBusV2(0x52, ControllerInitiated, 400000, AddressingMode7Bit, "\\_SB.I2C0")
-        })
-        Name(_DSD, Package() {
-          ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-          Package() {
-            Package() { "compatible", "tp,bm_mitx_hwmon" }
-          }
-        })
-      }
-
       Device(PR53) {
         Name(_HID, "PRP0001")
         Name(_UID, 0x20250053)
@@ -473,19 +459,6 @@ DefinitionBlock("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1) {
         })
       }
 
-      Device(PR54) {
-        Name(_HID, "PRP0001")
-        Name(_UID, 0x20250054)
-        Name(_CRS, ResourceTemplate() {
-          I2CSerialBusV2(0x54, ControllerInitiated, 400000, AddressingMode7Bit, "\\_SB.I2C0")
-        })
-        Name(_DSD, Package() {
-          ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-          Package() {
-            Package() { "compatible", "tp,tp_serio" }
-          }
-        })
-      }
 #elif defined(BAIKAL_DBM10)
       Device(PR56) {
         Name(_HID, "PRP0001")

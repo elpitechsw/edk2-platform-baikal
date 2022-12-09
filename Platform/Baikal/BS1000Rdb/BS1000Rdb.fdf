@@ -126,8 +126,8 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
-  INF Platform/Baikal/Drivers/BaikalSpiFvDxe/BaikalSpiFvDxe.inf
-  INF Platform/Baikal/Drivers/BaikalSpiBlockDxe/BaikalSpiBlockDxe.inf
+  INF Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
+  INF Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
 
   # PI DXE Drivers producing Architectural Protocols (EFI Services)
   INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
@@ -203,9 +203,6 @@ READ_LOCK_STATUS   = TRUE
   # USB
   INF Silicon/Baikal/BS1000/Drivers/NonDiscoverableEhciDxe/NonDiscoverableEhciDxe.inf
   INF Silicon/Baikal/BS1000/Drivers/NonDiscoverableOhciDxe/NonDiscoverableOhciDxe.inf
-!if $(BAIKAL_ELP) == TRUE
-  INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
-!endif
   INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf

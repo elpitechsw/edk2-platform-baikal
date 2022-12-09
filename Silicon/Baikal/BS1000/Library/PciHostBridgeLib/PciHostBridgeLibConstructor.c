@@ -679,7 +679,7 @@ PciHostBridgeLibConstructor (
     lPcieRootBridge->DmaAbove4G = TRUE;
     lPcieRootBridge->NoExtendedConfigSpace = FALSE;
     lPcieRootBridge->ResourceAssigned      = FALSE;
-    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
+    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_MEM64_DECODE | EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
 
     lPcieRootBridge->Bus.Base          = 0;
     lPcieRootBridge->Bus.Limit         = mPcieCfgSizes[PcieIdx] / SIZE_1MB - 1;
@@ -703,6 +703,7 @@ PciHostBridgeLibConstructor (
       ~BS1000_PCIE_APB_PE_GEN_CTRL3_LTSSM_EN
       );
 
+#ifdef ELPITECH
     EFI_PHYSICAL_ADDRESS GpioBase = 0;
     INTN                 ResetGpio;
     switch (PcieIdx) {
@@ -757,6 +758,7 @@ PciHostBridgeLibConstructor (
       GpioOutSet(GpioBase, ResetGpio);
       GpioDirSet(GpioBase, ResetGpio);
     }
+#endif
 
     if (PcieNumLanes[PcieIdx] == 1) {
       PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X1;

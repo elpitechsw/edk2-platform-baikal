@@ -7,32 +7,25 @@
 
 [Defines]
   INF_VERSION                    = 0x0001001B
-  BASE_NAME                      = BaikalSpiFvDxe
-  FILE_GUID                      = 1A484C42-45FB-4E5A-8D0B-052161EB6A63
-  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  BASE_NAME                      = SmcFlashBlockIoDxe
+  FILE_GUID                      = 056F5434-D13C-45A1-A784-513B959037D2
+  MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = BaikalSpiFvDxeInitialize
+  ENTRY_POINT                    = SmcFlashBlockIoDxeInitialize
 
 [Sources]
-  Fv.c
+  SmcFlashBlockIoDxe.c
 
 [Packages]
-  ArmPkg/ArmPkg.dec
-  ArmPlatformPkg/ArmPlatformPkg.dec
-  MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
-  BaikalSmcLib
   BaseLib
-  DebugLib
-  DxeServicesTableLib
-  SerialPortLib
-  UefiBootServicesTableLib
+  SmcFlashLib
   UefiDriverEntryPoint
   UefiLib
-  UefiRuntimeLib
 
 [FixedPcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
@@ -59,4 +52,8 @@
   gEfiVariableGuid
 
 [Depex]
-  TRUE
+  #
+  # Must be loaded before VariableRuntimeDxe in case empty flash needs populating with default values
+  #
+  gEfiVariableArchProtocolGuid AND
+  gEfiVariableWriteArchProtocolGuid

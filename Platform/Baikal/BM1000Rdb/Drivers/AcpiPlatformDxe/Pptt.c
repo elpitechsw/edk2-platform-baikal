@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -93,7 +93,7 @@
   }                                                                             \
 }
 
-#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity)  {                 \
+#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity, Id)  {             \
   /* UINT8                                         Type             */ \
   EFI_ACPI_6_4_PPTT_TYPE_CACHE,                                        \
   /* UINT8                                         Length           */ \
@@ -101,7 +101,16 @@
   /* UINT8                                         Reserved[2]      */ \
   { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE },                  \
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_FLAGS       Flags            */ \
-  {},                                                                  \
+  {                                                                    \
+    EFI_ACPI_6_4_PPTT_CACHE_SIZE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_NUMBER_OF_SETS_VALID,                            \
+    EFI_ACPI_6_4_PPTT_ASSOCIATIVITY_VALID,                             \
+    EFI_ACPI_6_4_PPTT_ALLOCATION_TYPE_VALID,                           \
+    EFI_ACPI_6_4_PPTT_CACHE_TYPE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_WRITE_POLICY_VALID,                              \
+    EFI_ACPI_6_4_PPTT_LINE_SIZE_VALID,                                 \
+    EFI_ACPI_6_4_PPTT_CACHE_ID_VALID                                   \
+  },                                                                   \
   /* UINT32                                        NextLevelOfCache */ \
   0,                                                                   \
   /* UINT32                                        Size             */ \
@@ -113,7 +122,9 @@
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_ATTRIBUTES  Attributes       */ \
   {},                                                                  \
   /* UINT16                                        LineSize         */ \
-  64                                                                   \
+  64,                                                                  \
+  /* UINT32                                        CacheId          */ \
+  Id                                                                   \
 }
 
 #pragma pack(1)
@@ -181,10 +192,10 @@ STATIC BAIKAL_ACPI_PPTT  Pptt = {
     BAIKAL_PPTT_CORE_NODE (7, 3)
   },
   {
-    BAIKAL_PPTT_CACHE_NODE (0x800000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x100000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x8000, 2),
-    BAIKAL_PPTT_CACHE_NODE (0xC000, 3)
+    BAIKAL_PPTT_CACHE_NODE (0x800000, 16, 1),
+    BAIKAL_PPTT_CACHE_NODE (0x100000, 16, 2),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 3),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 4)
   }
 };
 #pragma pack()

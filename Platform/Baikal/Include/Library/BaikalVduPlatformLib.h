@@ -1,7 +1,7 @@
 /** @file
   Header file with LcdPlatformLib function prototypes and constants for Baikal VDU
 
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
   Parts of this file were based on sources as follows:
@@ -31,7 +31,7 @@
 #define BAIKAL_VGA_V_FRONT_PORCH          10
 #define BAIKAL_VGA_V_BACK_PORCH           33
 
-#define HDMI_PHY_VGA_OPMODE               0x00b3
+#define HDMI_PHY_VGA_OPMODE               0x00B3
 #define HDMI_PHY_VGA_CURRENT              0x0000
 #define HDMI_PHY_VGA_GMP                  0x0000
 #define HDMI_PHY_VGA_TXTER                0x0004
@@ -49,7 +49,7 @@
 #define BAIKAL_SVGA_V_FRONT_PORCH         1
 #define BAIKAL_SVGA_V_BACK_PORCH          23
 
-#define HDMI_PHY_SVGA_OPMODE              0x00b3
+#define HDMI_PHY_SVGA_OPMODE              0x00B3
 #define HDMI_PHY_SVGA_CURRENT             0x0000
 #define HDMI_PHY_SVGA_GMP                 0x0000
 #define HDMI_PHY_SVGA_TXTER               0x0004
@@ -122,7 +122,7 @@
 #define BAIKAL_SXGA_V_BACK_PORCH          38
 
 #define HDMI_PHY_SXGA_OPMODE              0x0051
-#define HDMI_PHY_SXGA_CURRENT             0x001b
+#define HDMI_PHY_SXGA_CURRENT             0x001B
 #define HDMI_PHY_SXGA_GMP                 0x0002
 #define HDMI_PHY_SXGA_TXTER               0x0004
 #define HDMI_PHY_SXGA_VLEVCTRL            0x0232
@@ -140,7 +140,7 @@
 #define BAIKAL_WSXGA_V_BACK_PORCH         21
 
 #define HDMI_PHY_WSXGA_OPMODE             0x0051
-#define HDMI_PHY_WSXGA_CURRENT            0x001b
+#define HDMI_PHY_WSXGA_CURRENT            0x001B
 #define HDMI_PHY_WSXGA_GMP                0x0002
 #define HDMI_PHY_WSXGA_TXTER              0x0004
 #define HDMI_PHY_WSXGA_VLEVCTRL           0x0232
@@ -158,7 +158,7 @@
 #define BAIKAL_UXGA_V_BACK_PORCH          46
 
 #define HDMI_PHY_UXGA_OPMODE              0x0051
-#define HDMI_PHY_UXGA_CURRENT             0x001b
+#define HDMI_PHY_UXGA_CURRENT             0x001B
 #define HDMI_PHY_UXGA_GMP                 0x0002
 #define HDMI_PHY_UXGA_TXTER               0x0004
 #define HDMI_PHY_UXGA_VLEVCTRL            0x0230
@@ -176,7 +176,7 @@
 #define BAIKAL_HD_V_BACK_PORCH            36
 
 #define HDMI_PHY_HD_OPMODE                0x0051
-#define HDMI_PHY_HD_CURRENT               0x001b
+#define HDMI_PHY_HD_CURRENT               0x001B
 #define HDMI_PHY_HD_GMP                   0x0002
 #define HDMI_PHY_HD_TXTER                 0x0004
 #define HDMI_PHY_HD_VLEVCTRL              0x0230
@@ -286,4 +286,4 @@ LcdPlatformGetLvdsInfo (
   OUT  UINT32  *LvdsOutBpp
   );
 
-#endif /* BAIKAL_VDU_PLATFORM_LIB_H_ */
+#endif // BAIKAL_VDU_PLATFORM_LIB_H_

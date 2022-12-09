@@ -19,10 +19,10 @@
   PciHostBridgeLibConstructor.c
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   ArmPkg/ArmPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
-  Platform/Baikal/Baikal.dec
   Silicon/Baikal/BS1000/BS1000.dec
   Silicon/Baikal/Baikal.dec
 

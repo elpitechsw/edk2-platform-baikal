@@ -90,7 +90,6 @@ InstallHiiPages (
   return EFI_SUCCESS;
 }
 
-
 STATIC
 EFI_STATUS
 SetupVariables (

@@ -36,9 +36,10 @@ IsNodeEnabled (
   ASSERT (mDeviceTreeBase != NULL);
 
   //
-  // A missing status property implies "ok" so ignore any errors that
-  // may occur here. If the status property is present, check whether
-  // it is set to "ok" or "okay", anything else is treated as "disabled".
+  // Lack of a status property should be treated as if the property
+  // existed with the value of "okay" (see "Devicetree Specification").
+  // If the status property is present, check whether it is set to "ok"
+  // or "okay". Anything else is treated as "disabled".
   //
   Status = fdt_getprop (mDeviceTreeBase, Node, "status", &Len);
   if (Status == NULL) {

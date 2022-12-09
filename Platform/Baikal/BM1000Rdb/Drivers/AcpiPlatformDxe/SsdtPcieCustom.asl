@@ -7,7 +7,7 @@
 
 #include "AcpiPlatform.h"
 
-#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed, PosDecode, 0x0, 1, 0xFF, 0, 0xFF)
+#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x1, 0xFF, 0x0, 0xFF)
 
 DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
   External (\_SB.CRU0, DeviceObj)
@@ -20,7 +20,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE0_SEGMENT)
-      Name (_CCA, One)
+      Name (_CCA, Zero)
       Name (_SEG, BAIKAL_ACPI_PCIE0_SEGMENT)
       Name (_BBN, Zero)
 
@@ -32,18 +32,22 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       })
 
       Method (_CRS, 0, Serialized) {
-        Name (RBUF, ResourceTemplate () {
+        Store (ResourceTemplate () {
           BUS_RES
-          PROD_MEM_BUF(01)
-          PROD_IO_BUF(02)
-        })
+          QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
+                       BAIKAL_ACPI_PCIE0_MEM_BASE,
+                       BAIKAL_ACPI_PCIE0_MEM_MAX,
+                       BAIKAL_ACPI_PCIE_MEM_OFFSET,
+                       BAIKAL_ACPI_PCIE0_MEM_SIZE)
+          QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,
+                   BAIKAL_ACPI_PCIE_IO_BASE,
+                   BAIKAL_ACPI_PCIE_IO_MAX,
+                   BAIKAL_ACPI_PCIE0_IO_OFFSET,
+                   BAIKAL_ACPI_PCIE_IO_SIZE,,,,
+                   TypeTranslation)
+        }, Local0)
 
-        QRES_BUF_SET(01, BAIKAL_ACPI_PCIE0_MEM_MIN, BAIKAL_ACPI_PCIE0_MEM_SIZE,
-                         BAIKAL_ACPI_PCIE0_MEM_BASE - BAIKAL_ACPI_PCIE0_MEM_MIN)
-        QRES_BUF_SET(02, BAIKAL_ACPI_PCIE_IO_MIN, BAIKAL_ACPI_PCIE_IO_SIZE,
-                         BAIKAL_ACPI_PCIE0_IO_BASE - BAIKAL_ACPI_PCIE_IO_MIN)
-
-        Return (RBUF)
+        Return (Local0)
       }
 
       Name (NUML, 4)
@@ -53,18 +57,20 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Device (RES0) {
         Name (_ADR, Zero)
         Method (_CRS, 0, Serialized) {
-          Name (RBUF, ResourceTemplate () {
-            CONS_MEM_BUF(01)
-            Memory32Fixed (ReadWrite, BAIKAL_ACPI_PCIE0_DBI_BASE, BAIKAL_ACPI_PCIE_DBI_SIZE)
+          Store (ResourceTemplate () {
+            QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
+                         BAIKAL_ACPI_PCIE0_CFG_BASE,
+                         BAIKAL_ACPI_PCIE0_CFG_MAX,
+                         BAIKAL_ACPI_PCIE_CFG_OFFSET,
+                         BAIKAL_ACPI_PCIE_CFG_SIZE)
+            Memory32Fixed (ReadWrite, BM1000_PCIE0_DBI_BASE, BM1000_PCIE0_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 458, 461 }
 #if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined(ELPITECH)
             GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 6 }
 #endif
-          })
+          }, Local0)
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE0_CFG_BASE + 0x100000, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
-
-          Return (RBUF)
+          Return (Local0)
         }
       }
 
@@ -77,7 +83,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE1_SEGMENT)
-      Name (_CCA, One)
+      Name (_CCA, Zero)
       Name (_SEG, BAIKAL_ACPI_PCIE1_SEGMENT)
       Name (_BBN, Zero)
 
@@ -89,18 +95,22 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       })
 
       Method (_CRS, 0, Serialized) {
-        Name (RBUF, ResourceTemplate () {
+        Store (ResourceTemplate () {
           BUS_RES
-          PROD_MEM_BUF(01)
-          PROD_IO_BUF(02)
-        })
+          QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
+                       BAIKAL_ACPI_PCIE1_MEM_BASE,
+                       BAIKAL_ACPI_PCIE1_MEM_MAX,
+                       BAIKAL_ACPI_PCIE_MEM_OFFSET,
+                       BAIKAL_ACPI_PCIE1_MEM_SIZE)
+          QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,
+                   BAIKAL_ACPI_PCIE_IO_BASE,
+                   BAIKAL_ACPI_PCIE_IO_MAX,
+                   BAIKAL_ACPI_PCIE1_IO_OFFSET,
+                   BAIKAL_ACPI_PCIE_IO_SIZE,,,,
+                   TypeTranslation)
+        }, Local0)
 
-        QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_MEM_MIN, BAIKAL_ACPI_PCIE1_MEM_SIZE,
-                         BAIKAL_ACPI_PCIE1_MEM_BASE - BAIKAL_ACPI_PCIE1_MEM_MIN)
-        QRES_BUF_SET(02, BAIKAL_ACPI_PCIE_IO_MIN, BAIKAL_ACPI_PCIE_IO_SIZE,
-                         BAIKAL_ACPI_PCIE1_IO_BASE - BAIKAL_ACPI_PCIE_IO_MIN)
-
-        Return (RBUF)
+        Return (Local0)
       }
 
       Name (NUML, 4)
@@ -110,13 +120,17 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Device (RES0) {
         Name (_ADR, Zero)
         Method (_CRS, 0, Serialized) {
-          Name (RBUF, ResourceTemplate () {
-            CONS_MEM_BUF(01)
-            Memory32Fixed (ReadWrite, BAIKAL_ACPI_PCIE1_DBI_BASE, BAIKAL_ACPI_PCIE_DBI_SIZE)
+          Store (ResourceTemplate () {
+            QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
+                         BAIKAL_ACPI_PCIE1_CFG_BASE,
+                         BAIKAL_ACPI_PCIE1_CFG_MAX,
+                         BAIKAL_ACPI_PCIE_CFG_OFFSET,
+                         BAIKAL_ACPI_PCIE_CFG_SIZE)
+            Memory32Fixed (ReadWrite, BM1000_PCIE1_DBI_BASE, BM1000_PCIE1_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
-          })
+          }, Local0)
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_CFG_BASE + 0x100000, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
+          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
 
           Return (RBUF)
         }
@@ -132,7 +146,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE2_SEGMENT)
-      Name (_CCA, One)
+      Name (_CCA, Zero)
       Name (_SEG, BAIKAL_ACPI_PCIE2_SEGMENT)
       Name (_BBN, Zero)
 
@@ -144,18 +158,22 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       })
 
       Method (_CRS, 0, Serialized) {
-        Name (RBUF, ResourceTemplate () {
+        Store (ResourceTemplate () {
           BUS_RES
-          PROD_MEM_BUF(01)
-          PROD_IO_BUF(02)
-        })
+          QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
+                       BAIKAL_ACPI_PCIE2_MEM_BASE,
+                       BAIKAL_ACPI_PCIE2_MEM_MAX,
+                       BAIKAL_ACPI_PCIE_MEM_OFFSET,
+                       BAIKAL_ACPI_PCIE2_MEM_SIZE)
+          QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,
+                   BAIKAL_ACPI_PCIE_IO_BASE,
+                   BAIKAL_ACPI_PCIE_IO_MAX,
+                   BAIKAL_ACPI_PCIE2_IO_OFFSET,
+                   BAIKAL_ACPI_PCIE_IO_SIZE,,,,
+                   TypeTranslation)
+        }, Local0)
 
-        QRES_BUF_SET(01, BAIKAL_ACPI_PCIE2_MEM_MIN, BAIKAL_ACPI_PCIE2_MEM_SIZE,
-                         BAIKAL_ACPI_PCIE2_MEM_BASE - BAIKAL_ACPI_PCIE2_MEM_MIN)
-        QRES_BUF_SET(02, BAIKAL_ACPI_PCIE_IO_MIN, BAIKAL_ACPI_PCIE_IO_SIZE,
-                         BAIKAL_ACPI_PCIE2_IO_BASE - BAIKAL_ACPI_PCIE_IO_MIN)
-
-        Return (RBUF)
+        Return (Local0)
       }
 
       Name (NUML, 8)
@@ -165,18 +183,20 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Device (RES0) {
         Name (_ADR, Zero)
         Method (_CRS, 0, Serialized) {
-          Name (RBUF, ResourceTemplate () {
-            CONS_MEM_BUF(01)
-            Memory32Fixed (ReadWrite, BAIKAL_ACPI_PCIE2_DBI_BASE, BAIKAL_ACPI_PCIE_DBI_SIZE)
+          Store (ResourceTemplate () {
+            QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
+                         BAIKAL_ACPI_PCIE2_CFG_BASE,
+                         BAIKAL_ACPI_PCIE2_CFG_MAX,
+                         BAIKAL_ACPI_PCIE_CFG_OFFSET,
+                         BAIKAL_ACPI_PCIE_CFG_SIZE)
+            Memory32Fixed (ReadWrite, BM1000_PCIE2_DBI_BASE, BM1000_PCIE2_DBI_SIZE)
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 410, 413 }
 #if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined(ELPITECH)
             GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 3 }
 #endif
-          })
+          }, Local0)
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE2_CFG_BASE + 0x100000, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
-
-          Return (RBUF)
+          Return (Local0)
         }
       }
 

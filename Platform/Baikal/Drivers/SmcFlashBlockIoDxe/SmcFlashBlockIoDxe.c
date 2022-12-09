@@ -1,20 +1,18 @@
 /** @file
-  FV block I/O protocol driver for SPI flash
-
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>
 #include <Guid/SystemNvDataGuid.h>
 #include <Guid/VariableFormat.h>
-#include <Library/BaikalSmcLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
+#include <Library/SmcFlashLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
@@ -22,30 +20,31 @@
 #include <Protocol/BlockIo.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 
-#define BAIKAL_SPI_PRIVATE_DATA_SIGNATURE  SIGNATURE_32 ('B', 'S', 'P', 'I')
-#define BAIKAL_SPI_PRIVATE_FROM_BLKIO(a)   CR (a, BAIKAL_SPI_PRIVATE_DATA, BlockIo, BAIKAL_SPI_PRIVATE_DATA_SIGNATURE)
+#define SMC_FLASH_PRIVATE_DATA_SIGNATURE  SIGNATURE_32 ('B', 'S', 'M', 'C')
+#define SMC_FLASH_PRIVATE_FROM_BLKIO(a)   CR (a, SMC_FLASH_PRIVATE_DATA, BlockIo, SMC_FLASH_PRIVATE_DATA_SIGNATURE)
+
 #define DIVIDE_ROUND_UP(x,n)  (((x) + (n) - 1) / (n))
 #define FAT_BLOCK_SIZE  512
 
 typedef struct {
   VENDOR_DEVICE_PATH        Vendor;
   EFI_DEVICE_PATH_PROTOCOL  End;
-} BAIKAL_SPI_DEVICE_PATH;
+} SMC_FLASH_DEVICE_PATH;
 
-typedef struct _BAIKAL_SPI_PRIVATE_DATA {
-  UINTN                   Signature;
-  EFI_BLOCK_IO_PROTOCOL   BlockIo;
-  EFI_BLOCK_IO_MEDIA      Media;
-  BAIKAL_SPI_DEVICE_PATH  DevicePath;
-  UINT64                  Size;
-} BAIKAL_SPI_PRIVATE_DATA;
+typedef struct {
+  UINTN                  Signature;
+  EFI_BLOCK_IO_PROTOCOL  BlockIo;
+  EFI_BLOCK_IO_MEDIA     Media;
+  SMC_FLASH_DEVICE_PATH  DevicePath;
+  UINT64                 Size;
+} SMC_FLASH_PRIVATE_DATA;
 
 STATIC UINT32  SectorSize;
 STATIC UINT32  SectorCount;
 
-EFI_HANDLE mBaikalSpiBlockHandle;
-BAIKAL_SPI_PRIVATE_DATA mBaikalSpi;
-BAIKAL_SPI_DEVICE_PATH dp0 = {
+STATIC EFI_HANDLE              mSmcFlashBlockIoHandle;
+STATIC SMC_FLASH_PRIVATE_DATA  mSmcFlash;
+STATIC SMC_FLASH_DEVICE_PATH   mSmcFlashBlockIoDevicePath = {
   {
     {
       HARDWARE_DEVICE_PATH,
@@ -69,11 +68,9 @@ BAIKAL_SPI_DEVICE_PATH dp0 = {
   }
 };
 
-/*
-*==================================================
-* EFI_BLOCK_IO_PROTOCOL
-*==================================================
-*/
+//
+// EFI_BLOCK_IO_PROTOCOL
+//
 
 /**
   Reset the Block Device.
@@ -87,9 +84,9 @@ BAIKAL_SPI_DEVICE_PATH dp0 = {
 **/
 EFI_STATUS
 EFIAPI
-BaikalSpiBlkIoReset (
+SmcFlashBlockIoReset (
   IN EFI_BLOCK_IO_PROTOCOL  *This,
-  IN BOOLEAN                 ExtendedVerification
+  IN BOOLEAN                ExtendedVerification
   )
 {
   return EFI_SUCCESS;
@@ -121,27 +118,27 @@ BaikalSpiBlkIoReset (
 **/
 EFI_STATUS
 EFIAPI
-BaikalSpiBlkIoReadBlocks (
-  IN EFI_BLOCK_IO_PROTOCOL  *This,
-  IN UINT32                  MediaId,
-  IN EFI_LBA                 Lba,
-  IN UINTN                   BufferSize,
-  OUT VOID                  *Buffer
+SmcFlashBlockIoReadBlocks (
+  IN  EFI_BLOCK_IO_PROTOCOL  *This,
+  IN  UINT32                  MediaId,
+  IN  EFI_LBA                 Lba,
+  IN  UINTN                   BufferSize,
+  OUT VOID                   *Buffer
   )
 {
-  BAIKAL_SPI_PRIVATE_DATA  *PrivateData;
-  UINTN                     NumberOfBlocks;
-  UINTN                     SpiOffset;
+  SMC_FLASH_PRIVATE_DATA  *PrivateData;
+  UINTN                    NumberOfBlocks;
+  UINTN                    FlashOffset;
 
   if (Buffer == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   if (BufferSize == 0) {
-    return EFI_SUCCESS;
+    return EFI_BAD_BUFFER_SIZE;
   }
 
-  PrivateData = BAIKAL_SPI_PRIVATE_FROM_BLKIO (This);
+  PrivateData = SMC_FLASH_PRIVATE_FROM_BLKIO (This);
 
   if (MediaId != PrivateData->Media.MediaId) {
     return EFI_MEDIA_CHANGED;
@@ -160,9 +157,8 @@ BaikalSpiBlkIoReadBlocks (
     return EFI_INVALID_PARAMETER;
   }
 
-  SpiOffset = Lba * FAT_BLOCK_SIZE + FLASH_MAP_BLOCK;
-  BaikalSmcFlashRead (SpiOffset, Buffer, BufferSize);
-
+  FlashOffset = Lba * FAT_BLOCK_SIZE + FLASH_MAP_BLOCK;
+  SmcFlashRead (FlashOffset, Buffer, BufferSize);
   return EFI_SUCCESS;
 }
 
@@ -192,7 +188,7 @@ BaikalSpiBlkIoReadBlocks (
 **/
 EFI_STATUS
 EFIAPI
-BaikalSpiBlkIoWriteBlocks (
+SmcFlashBlockIoWriteBlocks (
   IN EFI_BLOCK_IO_PROTOCOL  *This,
   IN UINT32                  MediaId,
   IN EFI_LBA                 Lba,
@@ -200,19 +196,25 @@ BaikalSpiBlkIoWriteBlocks (
   IN VOID                   *Buffer
   )
 {
-  BAIKAL_SPI_PRIVATE_DATA  *PrivateData;
-  UINTN                     NumberOfBlocks;
-  EFI_STATUS                Ret = EFI_DEVICE_ERROR;
+  SMC_FLASH_PRIVATE_DATA  *PrivateData;
+  UINTN                   NumberOfBlocks;
+  UINTN                   FlashOffset;
+  UINTN                   Adr;
+  UINTN                   Offset;
+  UINTN                   TotalSize;
+  UINTN                   Cnt;
+  UINTN                   Size;
+  VOID                    *Buf;
 
   if (Buffer == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   if (BufferSize == 0) {
-    return EFI_SUCCESS;
+    return EFI_BAD_BUFFER_SIZE;
   }
 
-  PrivateData = BAIKAL_SPI_PRIVATE_FROM_BLKIO (This);
+  PrivateData = SMC_FLASH_PRIVATE_FROM_BLKIO (This);
 
   if (MediaId != PrivateData->Media.MediaId) {
     return EFI_MEDIA_CHANGED;
@@ -235,29 +237,28 @@ BaikalSpiBlkIoWriteBlocks (
     return EFI_INVALID_PARAMETER;
   }
 
-  UINTN SpiOffset  = Lba * FAT_BLOCK_SIZE  + FLASH_MAP_BLOCK;
-  UINTN adr = (SpiOffset / SectorSize) * SectorSize;
-  UINTN offset = SpiOffset - adr;
-  UINTN total_size = offset + BufferSize;
-  UINTN cnt = DIVIDE_ROUND_UP (total_size, SectorSize);
-  UINTN size = cnt * SectorSize;
+  FlashOffset = Lba * FAT_BLOCK_SIZE + FLASH_MAP_BLOCK;
+  Adr = (FlashOffset / SectorSize) * SectorSize;
+  Offset = FlashOffset - Adr;
+  TotalSize = Offset + BufferSize;
+  Cnt = DIVIDE_ROUND_UP (TotalSize, SectorSize);
+  Size = Cnt * SectorSize;
 
-  VOID *buf = AllocatePool (size);
-  if (!buf) {
+  Buf = AllocatePool (Size);
+  if (Buf == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  BaikalSmcFlashRead (adr, buf, size);
-  CopyMem (buf + offset,Buffer, BufferSize);
-  BaikalSmcFlashErase (adr, size);
-  BaikalSmcFlashWrite (adr, buf, size);
-  Ret = EFI_SUCCESS;
+  SmcFlashRead (Adr, Buf, Size);
+  CopyMem (Buf + Offset, Buffer, BufferSize);
+  SmcFlashErase (Adr, Size);
+  SmcFlashWrite (Adr, Buf, Size);
 
-  if (buf) {
-    FreePool (buf);
+  if (Buf != NULL) {
+    FreePool (Buf);
   }
 
-  return Ret;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -272,8 +273,8 @@ BaikalSpiBlkIoWriteBlocks (
 **/
 EFI_STATUS
 EFIAPI
-BaikalSpiBlkIoFlushBlocks (
-  IN EFI_BLOCK_IO_PROTOCOL        *This
+SmcFlashBlockIoFlushBlocks (
+  IN EFI_BLOCK_IO_PROTOCOL  *This
   )
 {
   return EFI_SUCCESS;
@@ -282,39 +283,36 @@ BaikalSpiBlkIoFlushBlocks (
 //
 // The EFI_BLOCK_IO_PROTOCOL instances that is installed onto the handle
 //
-EFI_BLOCK_IO_PROTOCOL
-mBaikalSpiBlockIoProtocol = {
+EFI_BLOCK_IO_PROTOCOL  mSmcFlashBlockIoProtocol = {
   EFI_BLOCK_IO_PROTOCOL_REVISION,
   (EFI_BLOCK_IO_MEDIA *) 0,
-  BaikalSpiBlkIoReset,
-  BaikalSpiBlkIoReadBlocks,
-  BaikalSpiBlkIoWriteBlocks,
-  BaikalSpiBlkIoFlushBlocks
+  SmcFlashBlockIoReset,
+  SmcFlashBlockIoReadBlocks,
+  SmcFlashBlockIoWriteBlocks,
+  SmcFlashBlockIoFlushBlocks
 };
 
-/**
- * Install
- **/
 EFI_STATUS
 EFIAPI
-InstallBlock (
+SmcFlashInstallBlock (
   VOID
   )
 {
-  EFI_STATUS Status;
+  SMC_FLASH_PRIVATE_DATA  *PrivateData = &mSmcFlash;
+  EFI_BLOCK_IO_PROTOCOL   *BlockIo;
+  EFI_BLOCK_IO_MEDIA      *Media;
+  EFI_STATUS              Status;
 
-  /* Block */
-  BAIKAL_SPI_PRIVATE_DATA  *PrivateData = &mBaikalSpi;
-  EFI_BLOCK_IO_PROTOCOL    *BlockIo;
-  EFI_BLOCK_IO_MEDIA       *Media;
-
-  BlockIo  = &PrivateData->BlockIo;
-  Media    = &PrivateData->Media;
+  BlockIo = &PrivateData->BlockIo;
+  Media   = &PrivateData->Media;
 
   PrivateData->Size = SectorSize * SectorCount - FLASH_MAP_BLOCK;
-  PrivateData->Signature = BAIKAL_SPI_PRIVATE_DATA_SIGNATURE;
+  PrivateData->Signature = SMC_FLASH_PRIVATE_DATA_SIGNATURE;
+  if (PrivateData->Size < FAT_BLOCK_SIZE) {
+    return EFI_NO_MEDIA;
+  }
 
-  CopyMem (BlockIo, &mBaikalSpiBlockIoProtocol, sizeof (EFI_BLOCK_IO_PROTOCOL));
+  CopyMem (BlockIo, &mSmcFlashBlockIoProtocol, sizeof (EFI_BLOCK_IO_PROTOCOL));
 
   BlockIo->Media          = Media;
   Media->RemovableMedia   = FALSE;
@@ -324,37 +322,37 @@ InstallBlock (
   Media->WriteCaching     = FALSE;
   Media->BlockSize        = FAT_BLOCK_SIZE;
   Media->LastBlock        = DivU64x32 (PrivateData->Size + FAT_BLOCK_SIZE - 1, FAT_BLOCK_SIZE) - 1;
-  PrivateData->DevicePath = dp0;
+  PrivateData->DevicePath = mSmcFlashBlockIoDevicePath;
 
-  /* Install */
+  if (Media->LastBlock < 1) {
+    return EFI_NO_MEDIA;
+  }
+
   Status = gBS->InstallMultipleProtocolInterfaces (
-    &mBaikalSpiBlockHandle,
-    &gEfiDevicePathProtocolGuid,
-    &mBaikalSpi.DevicePath,
-    &gEfiBlockIoProtocolGuid,
-    &mBaikalSpi.BlockIo,
-    NULL
-  );
+                  &mSmcFlashBlockIoHandle,
+                  &gEfiDevicePathProtocolGuid,
+                  &mSmcFlash.DevicePath,
+                  &gEfiBlockIoProtocolGuid,
+                  &mSmcFlash.BlockIo,
+                  NULL
+                  );
   ASSERT_EFI_ERROR (Status);
 
   return Status;
 }
 
-/**
- * Initialize
- **/
 EFI_STATUS
 EFIAPI
-BaikalSpiBlockDxeInitialize (
-  IN EFI_HANDLE         ImageHandle,
+SmcFlashBlockIoDxeInitialize (
+  IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  BaikalSmcFlashInfo (&SectorSize, &SectorCount);
+  SmcFlashInfo (&SectorSize, &SectorCount);
 
-  Status = InstallBlock ();
+  Status = SmcFlashInstallBlock ();
   if (Status != EFI_SUCCESS) {
     return Status;
   }

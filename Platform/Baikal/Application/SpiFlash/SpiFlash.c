@@ -3,10 +3,10 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <Library/BaikalSmcLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/ShellLib.h>
+#include <Library/SmcFlashLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Protocol/ShellParameters.h>
@@ -118,17 +118,17 @@ SpiFlashMain (
   ShellProtocol->CloseFile (FileHandle);
 
   Print (L"SpiFlash: unlocking...\n");
-  BaikalSmcFlashLock (0);
+  SmcFlashLock (0);
 
   Print (L"SpiFlash: erasing...\n");
-  Err = BaikalSmcFlashErase (FlashAddr, FileSize);
+  Err = SmcFlashErase (FlashAddr, FileSize);
   if (Err) {
     Print (L"SpiFlash: error %d\n", Err);
     goto Exit;
   }
 
   Print (L"SpiFlash: writing...\n");
-  Err = BaikalSmcFlashWrite (FlashAddr, FileBuf, FileSize);
+  Err = SmcFlashWrite (FlashAddr, FileBuf, FileSize);
   if (Err) {
     Print (L"SpiFlash: error %d\n", Err);
     goto Exit;
@@ -142,14 +142,14 @@ SpiFlashMain (
     goto Exit;
   }
 
-  Err = BaikalSmcFlashRead (FlashAddr, FlashBuf, FileSize);
+  Err = SmcFlashRead (FlashAddr, FlashBuf, FileSize);
   if (Err) {
     Print (L"SpiFlash: error %d\n", Err);
     goto Exit;
   }
 
   Print (L"SpiFlash: locking...\n");
-  BaikalSmcFlashLock (1);
+  SmcFlashLock (1);
 
   if (CompareMem (FileBuf, FlashBuf, FileSize) == 0) {
     Print (L"SpiFlash: success.\n");

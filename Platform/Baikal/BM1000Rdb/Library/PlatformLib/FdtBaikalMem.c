@@ -12,7 +12,7 @@
 
 #include <BM1000.h>
 
-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS  36
+#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS  38
 
 /**
   Return the Virtual Memory Map of your platform
@@ -69,6 +69,11 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].Length       = BM1000_GPIO32_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
+  VirtualMemoryTable[Index].PhysicalBase = BM1000_SPI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BM1000_SPI_BASE;
+  VirtualMemoryTable[Index].Length       = BM1000_SPI_SIZE;
+  VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
   VirtualMemoryTable[Index].PhysicalBase = BM1000_UART1_BASE;
   VirtualMemoryTable[Index].VirtualBase  = BM1000_UART1_BASE;
   VirtualMemoryTable[Index].Length       = BM1000_UART1_SIZE;
@@ -97,6 +102,11 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].PhysicalBase = BM1000_SMBUS2_BASE;
   VirtualMemoryTable[Index].VirtualBase  = BM1000_SMBUS2_BASE;
   VirtualMemoryTable[Index].Length       = BM1000_SMBUS2_SIZE;
+  VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+  VirtualMemoryTable[Index].PhysicalBase = BM1000_ESPI_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BM1000_ESPI_BASE;
+  VirtualMemoryTable[Index].Length       = BM1000_ESPI_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = BM1000_USB2_BASE;

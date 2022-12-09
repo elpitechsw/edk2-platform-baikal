@@ -1,20 +1,18 @@
 /** @file
-  FV block I/O protocol driver for SPI flash
-
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>
 #include <Guid/SystemNvDataGuid.h>
 #include <Guid/VariableFormat.h>
-#include <Library/BaikalSmcLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
+#include <Library/SmcFlashLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
@@ -25,9 +23,9 @@
 typedef struct {
   VENDOR_DEVICE_PATH        Vendor;
   EFI_DEVICE_PATH_PROTOCOL  End;
-} BAIKAL_FV_DEVICE_PATH;
+} SMC_FLASH_FVB_DEVICE_PATH;
 
-STATIC BAIKAL_FV_DEVICE_PATH  dp1 = {
+STATIC SMC_FLASH_FVB_DEVICE_PATH  mSmcFlashFvbDevicePath = {
   {
     {
       HARDWARE_DEVICE_PATH,
@@ -56,7 +54,7 @@ typedef struct {
   UINT32  SectorCount;
 } FLASH_INFO;
 
-STATIC EFI_HANDLE     mBaikalSpiFvHandle;
+STATIC EFI_HANDLE     mSmcFlashFvbHandle;
 STATIC FLASH_INFO    *mFlashInfo;
 STATIC EFI_EVENT      mVirtualAddressChangeEvent;
 STATIC VOID          *mNvStorageBase;
@@ -82,9 +80,9 @@ STATIC CONST UINT64   mNvStorageSize =
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeGetAttributes (
-  IN   CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
-  OUT        EFI_FVB_ATTRIBUTES_2                 *Attributes
+SmcFlashFvbGetAttributes (
+  IN  CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
+  OUT       EFI_FVB_ATTRIBUTES_2                 *Attributes
   )
 {
   *Attributes = EFI_FVB2_READ_ENABLED_CAP  | // Reads may be enabled
@@ -122,9 +120,9 @@ BaikalSpiFvDxeGetAttributes (
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeSetAttributes (
-  IN      CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
-  IN OUT        EFI_FVB_ATTRIBUTES_2                 *Attributes
+SmcFlashFvbSetAttributes (
+  IN     CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
+  IN OUT       EFI_FVB_ATTRIBUTES_2                 *Attributes
   )
 {
   return EFI_SUCCESS; // Ignore for now
@@ -149,9 +147,9 @@ BaikalSpiFvDxeSetAttributes (
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeGetPhysicalAddress (
-  IN   CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
-  OUT        EFI_PHYSICAL_ADDRESS                 *Address
+SmcFlashFvbGetPhysicalAddress (
+  IN  CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
+  OUT       EFI_PHYSICAL_ADDRESS                 *Address
   )
 {
   *Address = (EFI_PHYSICAL_ADDRESS) mNvStorageBase;
@@ -184,11 +182,11 @@ BaikalSpiFvDxeGetPhysicalAddress (
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeGetBlockSize (
-  IN   CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
-  IN         EFI_LBA                               Lba,
-  OUT        UINTN                                *BlockSize,
-  OUT        UINTN                                *NumberOfBlocks
+SmcFlashFvbGetBlockSize (
+  IN  CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
+  IN        EFI_LBA                              Lba,
+  OUT       UINTN                                *BlockSize,
+  OUT       UINTN                                *NumberOfBlocks
   )
 {
   *BlockSize = mFlashInfo->SectorSize;
@@ -245,21 +243,20 @@ BaikalSpiFvDxeGetBlockSize (
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeRead (
+SmcFlashFvbRead (
   IN     CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
-  IN           EFI_LBA                               Lba,
-  IN           UINTN                                 Offset,
+  IN           EFI_LBA                              Lba,
+  IN           UINTN                                Offset,
   IN OUT       UINTN                                *NumBytes,
   IN OUT       UINT8                                *Buffer
   )
 {
-  UINTN   LocalOffset = Lba * mFlashInfo->SectorSize + Offset;
+  UINTN  LocalOffset = Lba * mFlashInfo->SectorSize + Offset;
   VOID   *Ram = (VOID *) (LocalOffset + (UINTN) mNvStorageBase);
-  UINTN   Adr = LocalOffset + FLASH_MAP_VAR;
+  UINTN  Adr = LocalOffset + FLASH_MAP_VAR;
 
-  BaikalSmcFlashRead (Adr, Ram, *NumBytes); // Flash -> RAM
+  SmcFlashRead (Adr, Ram, *NumBytes); // Flash -> RAM
   CopyMem (Buffer, Ram, *NumBytes); // RAM -> Buffer
-
   return EFI_SUCCESS;
 }
 
@@ -323,22 +320,21 @@ BaikalSpiFvDxeRead (
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeWrite (
-  IN      CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
-  IN            EFI_LBA                               Lba,
-  IN            UINTN                                 Offset,
-  IN OUT        UINTN                                *NumBytes,
-  IN            UINT8                                *Buffer
+SmcFlashFvbWrite (
+  IN     CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
+  IN           EFI_LBA                              Lba,
+  IN           UINTN                                Offset,
+  IN OUT       UINTN                                *NumBytes,
+  IN           UINT8                                *Buffer
   )
 {
-  UINTN   LocalOffset = Lba * mFlashInfo->SectorSize + Offset;
+  UINTN  LocalOffset = Lba * mFlashInfo->SectorSize + Offset;
   VOID   *Ram = (VOID *) (LocalOffset + (UINTN) mNvStorageBase);
-  UINTN   Adr = LocalOffset + FLASH_MAP_VAR;
+  UINTN  Adr = LocalOffset + FLASH_MAP_VAR;
 
   // Copy the data we just wrote to the in-memory copy of the firmware volume
   CopyMem (Ram, Buffer, *NumBytes); // Buffer -> RAM
-  BaikalSmcFlashWrite (Adr, Ram, *NumBytes); // RAM -> Flash
-
+  SmcFlashWrite (Adr, Ram, *NumBytes); // RAM -> Flash
   return EFI_SUCCESS;
 }
 
@@ -394,7 +390,7 @@ BaikalSpiFvDxeWrite (
 STATIC
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeErase (
+SmcFlashFvbErase (
   IN  CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
   ...
   )
@@ -414,21 +410,21 @@ BaikalSpiFvDxeErase (
     UINTN   Adr = Offset + FLASH_MAP_VAR;
 
     SetMem64 (Ram, Size, ~0UL); // Erase RAM
-    BaikalSmcFlashErase (Adr, Size); // Erase Flash
+    SmcFlashErase (Adr, Size); // Erase Flash
   }
 
   VA_END (Args);
   return EFI_SUCCESS;
 }
 
-STATIC EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL  mBaikalSpiFvProtocol = {
-  BaikalSpiFvDxeGetAttributes,
-  BaikalSpiFvDxeSetAttributes,
-  BaikalSpiFvDxeGetPhysicalAddress,
-  BaikalSpiFvDxeGetBlockSize,
-  BaikalSpiFvDxeRead,
-  BaikalSpiFvDxeWrite,
-  BaikalSpiFvDxeErase
+STATIC EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL  mSmcFlashFvbProtocol = {
+  SmcFlashFvbGetAttributes,
+  SmcFlashFvbSetAttributes,
+  SmcFlashFvbGetPhysicalAddress,
+  SmcFlashFvbGetBlockSize,
+  SmcFlashFvbRead,
+  SmcFlashFvbWrite,
+  SmcFlashFvbErase
 };
 
 /**
@@ -444,8 +440,8 @@ STATIC
 VOID
 EFIAPI
 ConvertPointerEvent (
-  IN  EFI_EVENT   Event,
-  IN  VOID       *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
   // NonVolatile
@@ -453,21 +449,21 @@ ConvertPointerEvent (
   EfiConvertPointer (0x0, (VOID **) &mFlashInfo);
 
   // Fvb
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.GetAttributes);
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.SetAttributes);
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.GetPhysicalAddress);
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.GetBlockSize);
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.Read);
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.Write);
-  EfiConvertPointer (0x0, (VOID **) &mBaikalSpiFvProtocol.EraseBlocks);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.GetAttributes);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.SetAttributes);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.GetPhysicalAddress);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.GetBlockSize);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.Read);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.Write);
+  EfiConvertPointer (0x0, (VOID **) &mSmcFlashFvbProtocol.EraseBlocks);
 
-  BaikalSmcFlashConvertPointers ();
+  SmcFlashConvertPointers ();
 }
 
 STATIC
 EFI_STATUS
 InitializeFvAndVariableStoreHeaders (
-  IN  VOID  *FvMem
+  IN VOID  *FvMem
   )
 {
   EFI_STATUS                   Status = EFI_SUCCESS;
@@ -482,8 +478,10 @@ InitializeFvAndVariableStoreHeaders (
 
   Headers = (VOID *) AllocateZeroPool (HeadersLength);
 
-  /* FirmwareVolumeHeader->FvLength is declared to have the Variable area AND
-   * the FTW working area AND the FTW Spare contiguous. */
+  //
+  // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND
+  // the FTW working area AND the FTW Spare contiguous.
+  //
   ASSERT (PcdGet32 (PcdFlashNvStorageVariableBase) +
           PcdGet32 (PcdFlashNvStorageVariableSize) ==
           PcdGet32 (PcdFlashNvStorageFtwWorkingBase));
@@ -498,7 +496,7 @@ InitializeFvAndVariableStoreHeaders (
                                    PcdGet32 (PcdFlashNvStorageFtwWorkingSize) +
                                    PcdGet32 (PcdFlashNvStorageFtwSpareSize);
 
-  FirmwareVolumeHeader->Signature = EFI_FVH_SIGNATURE;
+  FirmwareVolumeHeader->Signature  = EFI_FVH_SIGNATURE;
   FirmwareVolumeHeader->Attributes = (EFI_FVB_ATTRIBUTES_2) (
     EFI_FVB2_READ_ENABLED_CAP | // Reads may be enabled
     EFI_FVB2_READ_STATUS      | // Reads are currently enabled
@@ -526,49 +524,51 @@ InitializeFvAndVariableStoreHeaders (
   CopyGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid);
   VariableStoreHeader->Size = PcdGet32 (PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
   VariableStoreHeader->Format = VARIABLE_STORE_FORMATTED;
-  VariableStoreHeader->State = VARIABLE_STORE_HEALTHY;
+  VariableStoreHeader->State  = VARIABLE_STORE_HEALTHY;
 
   CopyMem (FvMem, Headers, HeadersLength);
   FreePool (Headers);
-
   return Status;
 }
 
 STATIC
 EFI_STATUS
 ValidateFvHeader (
-  IN  VOID  *FvMem
+  IN VOID  *FvMem
   )
 {
-  EFI_FIRMWARE_VOLUME_HEADER *header = FvMem;
+  UINT16                       Checksum;
+  EFI_FIRMWARE_VOLUME_HEADER  *Header = FvMem;
+  VARIABLE_STORE_HEADER       *Variable;
+  UINTN                        VariableStoreLength;
 
-  if (header->Revision  != EFI_FVH_REVISION  ||
-      header->Signature != EFI_FVH_SIGNATURE ||
-      header->FvLength  != mNvStorageSize) {
+  if (Header->Revision  != EFI_FVH_REVISION  ||
+      Header->Signature != EFI_FVH_SIGNATURE ||
+      Header->FvLength  != mNvStorageSize) {
     DEBUG ((EFI_D_ERROR, "No Firmware Volume header present\n"));
     return EFI_NOT_FOUND;
   }
 
-  if (!CompareGuid (&header->FileSystemGuid, &gEfiSystemNvDataFvGuid)) {
+  if (!CompareGuid (&Header->FileSystemGuid, &gEfiSystemNvDataFvGuid)) {
     DEBUG ((EFI_D_ERROR, "Firmware Volume Guid non-compatible\n"));
     return EFI_NOT_FOUND;
   }
 
-  UINT16 Checksum = CalculateCheckSum16 ((UINT16 *) header, header->HeaderLength);
+  Checksum = CalculateCheckSum16 ((UINT16 *) Header, Header->HeaderLength);
   if (Checksum != 0) {
     DEBUG ((EFI_D_ERROR, "FV checksum is invalid (Checksum:0x%x)\n", Checksum));
     return EFI_NOT_FOUND;
   }
 
-  VARIABLE_STORE_HEADER *variable = (VOID *) ((UINTN) FvMem + header->HeaderLength);
-  if (!CompareGuid (&variable->Signature, &gEfiVariableGuid) &&
-      !CompareGuid (&variable->Signature, &gEfiAuthenticatedVariableGuid)) {
+  Variable = (VOID *) ((UINTN) FvMem + Header->HeaderLength);
+  if (!CompareGuid (&Variable->Signature, &gEfiVariableGuid) &&
+      !CompareGuid (&Variable->Signature, &gEfiAuthenticatedVariableGuid)) {
     DEBUG ((EFI_D_ERROR, "Variable Store Guid non-compatible\n"));
     return EFI_NOT_FOUND;
   }
 
-  UINTN VariableStoreLength = PcdGet32 (PcdFlashNvStorageVariableSize) - header->HeaderLength;
-  if (variable->Size != VariableStoreLength) {
+  VariableStoreLength = PcdGet32 (PcdFlashNvStorageVariableSize) - Header->HeaderLength;
+  if (Variable->Size != VariableStoreLength) {
     DEBUG ((EFI_D_ERROR, "Variable Store Length does not match\n"));
     return EFI_NOT_FOUND;
   }
@@ -586,27 +586,27 @@ BaikalFvHeader (
   EFI_STATUS  Status;
 
   mNvStorageBase = (VOID *) (PcdGet64 (PcdFlashNvStorageVariableBase64) != 0 ?
-    PcdGet64 (PcdFlashNvStorageVariableBase64) :
-    PcdGet32 (PcdFlashNvStorageVariableBase));
+                             PcdGet64 (PcdFlashNvStorageVariableBase64) :
+                             PcdGet32 (PcdFlashNvStorageVariableBase));
 
   Status = gBS->AllocatePages (
-      AllocateAddress,
-      EfiRuntimeServicesData,
-      EFI_SIZE_TO_PAGES (mNvStorageSize),
-      (EFI_PHYSICAL_ADDRESS *) &mNvStorageBase
-      );
+                  AllocateAddress,
+                  EfiRuntimeServicesData,
+                  EFI_SIZE_TO_PAGES (mNvStorageSize),
+                  (EFI_PHYSICAL_ADDRESS *) &mNvStorageBase
+                  );
   ASSERT_EFI_ERROR (Status);
 
   SetMem64 ((VOID *) mNvStorageBase, mNvStorageSize, ~0UL);
 
   DEBUG ((EFI_D_INFO, "Read headers from flash...\n"));
-  BaikalSmcFlashRead (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
+  SmcFlashRead (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
 
   if (ValidateFvHeader (mNvStorageBase) != EFI_SUCCESS) {
     DEBUG ((EFI_D_ERROR, "Write default headers to flash...\n"));
     InitializeFvAndVariableStoreHeaders (mNvStorageBase);
-    BaikalSmcFlashErase (FLASH_MAP_VAR, mNvStorageSize);
-    BaikalSmcFlashWrite (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
+    SmcFlashErase (FLASH_MAP_VAR, mNvStorageSize);
+    SmcFlashWrite (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
   }
 
   DEBUG ((
@@ -626,7 +626,7 @@ InstallFirmware (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   Status = BaikalFvHeader ();
   if (Status != EFI_SUCCESS) {
@@ -634,23 +634,23 @@ InstallFirmware (
   }
 
   Status = gBS->CreateEventEx (
-    EVT_NOTIFY_SIGNAL,
-    TPL_NOTIFY,
-    ConvertPointerEvent,
-    NULL,
-    &gEfiEventVirtualAddressChangeGuid,
-    &mVirtualAddressChangeEvent
-  );
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  ConvertPointerEvent,
+                  NULL,
+                  &gEfiEventVirtualAddressChangeGuid,
+                  &mVirtualAddressChangeEvent
+                  );
   ASSERT_EFI_ERROR (Status);
 
   Status = gBS->InstallMultipleProtocolInterfaces (
-    &mBaikalSpiFvHandle,
-    &gEfiDevicePathProtocolGuid,
-    &dp1,
-    &gEfiFirmwareVolumeBlockProtocolGuid,
-    &mBaikalSpiFvProtocol,
-    NULL
-  );
+                  &mSmcFlashFvbHandle,
+                  &gEfiDevicePathProtocolGuid,
+                  &mSmcFlashFvbDevicePath,
+                  &gEfiFirmwareVolumeBlockProtocolGuid,
+                  &mSmcFlashFvbProtocol,
+                  NULL
+                  );
   ASSERT_EFI_ERROR (Status);
 
   return Status;
@@ -658,20 +658,20 @@ InstallFirmware (
 
 EFI_STATUS
 EFIAPI
-BaikalSpiFvDxeInitialize (
-  IN EFI_HANDLE         ImageHandle,
+SmcFlashFvbDxeInitialize (
+  IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   Status = gBS->AllocatePool (
-    EfiRuntimeServicesData,
-    sizeof (FLASH_INFO),
-    (VOID **) &mFlashInfo
-  );
+                  EfiRuntimeServicesData,
+                  sizeof (FLASH_INFO),
+                  (VOID **) &mFlashInfo
+                  );
 
-  BaikalSmcFlashInfo (&mFlashInfo->SectorSize, &mFlashInfo->SectorCount);
+  SmcFlashInfo (&mFlashInfo->SectorSize, &mFlashInfo->SectorCount);
 
   Status = InstallFirmware ();
   if (Status != EFI_SUCCESS) {

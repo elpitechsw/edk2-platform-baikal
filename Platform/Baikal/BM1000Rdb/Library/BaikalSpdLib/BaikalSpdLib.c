@@ -5,6 +5,20 @@
 
 #include <Library/BaikalSpdLib.h>
 
+UINTN
+SpdGetConfiguredSpeed (
+  IN  CONST UINTN  Port
+  )
+{
+  BAIKAL_SPD_INFO  *Spd = (BAIKAL_SPD_INFO *) BAIKAL_SPD_DATA_BASE;
+
+  if (Port >= BAIKAL_SPD_PORT_COUNT) {
+    return 0;
+  }
+
+  return Spd->ConfiguredSpeed[Port];
+}
+
 INTN
 SpdIsDualChannel (
   IN  CONST UINTN  Port

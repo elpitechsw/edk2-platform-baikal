@@ -59,19 +59,19 @@
 #define MII_CLK_CSR_SHIFT           2
 #define MII_DATA_MASK               0xFFFF
 
-#define MII_BMCR                    0x00    // Basic mode control register
-#define BMCR_ANRESTART              0x0200  // Auto negotiation restart
-#define BMCR_ISOLATE                0x0400  // Isolate data paths from MII
-#define BMCR_RESET                  0x8000  // Reset to default state
-#define MII_PHY_ID1                 0x02    // PHY ID 1
-#define MII_PHY_ID2                 0x03    // PHY ID 2
+#define MII_BMCR                    0x00   // Basic mode control register
+#define BMCR_ANRESTART              0x0200 // Auto negotiation restart
+#define BMCR_ISOLATE                0x0400 // Isolate data paths from MII
+#define BMCR_RESET                  0x8000 // Reset to default state
+#define MII_PHY_ID1                 0x02   // PHY ID 1
+#define MII_PHY_ID2                 0x03   // PHY ID 2
 
 #define MII_MARVELL_COPPER_PAGE          0x00
 #define MII_MARVELL_MSCR_PAGE            0x02
 #define MII_88E1121_PHY_MSCR_REG         21
 #define MII_88E1121_PHY_MSCR_RX_DELAY    BIT5
 #define MII_88E1121_PHY_MSCR_TX_DELAY    BIT4
-#define MII_88E1121_PHY_MSCR_DELAY_MASK  ((BIT5) | (BIT4))
+#define MII_88E1121_PHY_MSCR_DELAY_MASK  (BIT5 | BIT4)
 #define MII_MARVELL_PHY_PAGE             22
 
 #define MARVELL_PHY_ID_88E1510           0x01410DD0
@@ -960,9 +960,24 @@ GmacSnpMCastIpToMac (
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
+  if (Ipv6) {
+    McastMacAddr->Addr[0] = 0x33;
+    McastMacAddr->Addr[1] = 0x33;
+    McastMacAddr->Addr[2] = Ip->v6.Addr[12];
+    McastMacAddr->Addr[3] = Ip->v6.Addr[13];
+    McastMacAddr->Addr[4] = Ip->v6.Addr[14];
+    McastMacAddr->Addr[5] = Ip->v6.Addr[15];
+  } else {
+    McastMacAddr->Addr[0] = 0x01;
+    McastMacAddr->Addr[1] = 0x00;
+    McastMacAddr->Addr[2] = 0x5E;
+    McastMacAddr->Addr[3] = Ip->v4.Addr[1] & 0x7F;
+    McastMacAddr->Addr[4] = Ip->v4.Addr[2];
+    McastMacAddr->Addr[5] = Ip->v4.Addr[3];
+  }
 
   gBS->RestoreTPL (SavedTpl);
-  return EFI_UNSUPPORTED;
+  return EFI_SUCCESS;
 }
 
 STATIC
@@ -1129,6 +1144,7 @@ GmacSnpShutdown (
   SavedTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
   switch (Snp->Mode->State) {
+  case EfiSimpleNetworkStarted:
   case EfiSimpleNetworkInitialized:
     break;
 
@@ -1141,6 +1157,7 @@ GmacSnpShutdown (
     return EFI_DEVICE_ERROR;
   }
 
+  Snp->Mode->State = EfiSimpleNetworkStarted;
   gBS->RestoreTPL (SavedTpl);
   return EFI_SUCCESS;
 }
@@ -1453,6 +1470,12 @@ GmacSnpTransmit (
     DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
+  }
+
+  if (BufSize < Snp->Mode->MediaHeaderSize) {
+    DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: Transmit BufSize(%u) < MediaHeaderSize(%u)\n", Gmac->Regs, BufSize, Snp->Mode->MediaHeaderSize));
+    gBS->RestoreTPL (SavedTpl);
+    return EFI_BUFFER_TOO_SMALL;
   }
 
   if (HdrSize != 0) {

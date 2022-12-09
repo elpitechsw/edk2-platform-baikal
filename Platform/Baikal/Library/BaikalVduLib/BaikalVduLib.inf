@@ -19,11 +19,11 @@
   BaikalVduPlatform.c
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   ArmPkg/ArmPkg.dec
   ArmPlatformPkg/ArmPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
   BaseLib

@@ -32,7 +32,7 @@ typedef struct {
       sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE) +                \
         sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE),              \
       /* UINT8   Revision      */                                 \
-      3,                                                          \
+      4,                                                          \
       /* UINT32  Identifier    */                                 \
       Segment + 1,                                                \
       /* UINT32  NumIdMappings */                                 \
@@ -41,7 +41,7 @@ typedef struct {
       sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE)                  \
     },                                                            \
     /* UINT32  CacheCoherent     */                               \
-    1,                                                            \
+    0,                                                            \
     /* UINT8   AllocationHints   */                               \
     0,                                                            \
     /* UINT16  Reserved          */                               \
@@ -54,12 +54,12 @@ typedef struct {
     Segment,                                                      \
     /* UINT8   MemoryAddressSize */                               \
     64,                                                           \
-    /* UINT8   Reserved1[3]      */                               \
-    {                                                             \
-      EFI_ACPI_RESERVED_BYTE,                                     \
-      EFI_ACPI_RESERVED_BYTE,                                     \
-      EFI_ACPI_RESERVED_BYTE                                      \
-    }                                                             \
+    /* UINT16  PasidCapabilities */                               \
+    0,                                                            \
+    /* UINT8   Reserved1[1]      */                               \
+    { EFI_ACPI_RESERVED_BYTE },                                   \
+    /* UINT32  Flags             */                               \
+    0                                                             \
   },                                                              \
   {                                                               \
     /* UINT32  InputBase       */                                 \
@@ -80,7 +80,7 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     BAIKAL_ACPI_HEADER (
       EFI_ACPI_6_4_IO_REMAPPING_TABLE_SIGNATURE,
       BAIKAL_ACPI_IORT,
-      3, /* Revision */
+      EFI_ACPI_IO_REMAPPING_TABLE_REVISION_05, /* Revision */
       0x54524F49
       ),
     /* UINT32  NumNodes   */
@@ -123,14 +123,17 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     // Thus RIDBus is 0.
     //
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE0_SEGMENT,
-                             0, 0),
+                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             0),
 #ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE1_SEGMENT,
-                             1, 0),
+                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             0),
 #endif
 #ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE2_SEGMENT,
-                             2, 0),
+                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             0),
 #endif
 
     //
@@ -139,32 +142,44 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     // switches on them.
     //
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 2),
-                             0, 2),
+                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             2),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 3),
-                             0, 3),
+                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             3),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 4),
-                             0, 4),
+                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             4),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 5),
-                             0, 5),
+                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             5),
 #ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 2),
-                             1, 2),
+                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             2),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 3),
-                             1, 3),
+                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             3),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 4),
-                             1, 4),
+                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             4),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 5),
-                             1, 5),
+                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             5),
 #endif
 #ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 2),
-                             2, 2),
+                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             2),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 3),
-                             2, 3),
+                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             3),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 4),
-                             2, 4),
+                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             4),
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 5),
-                             2, 5),
+                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             5),
 #endif
   }
 };
@@ -222,9 +237,9 @@ IortInit (
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.NumIds = 0x7;
+#endif
     *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Iort;
     return EFI_SUCCESS;
-#endif
   }
 
   return EFI_NOT_FOUND;

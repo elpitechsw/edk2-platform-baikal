@@ -9,14 +9,14 @@
 UINTN
 EFIAPI
 CmuClkChGetRate (
-  IN  CONST EFI_PHYSICAL_ADDRESS  ClkChCtlAddr
+  IN EFI_PHYSICAL_ADDRESS  ClkChCtlAddr
   );
 
 VOID
 EFIAPI
 CmuClkChSetRate (
-  IN  CONST EFI_PHYSICAL_ADDRESS  ClkChCtlAddr,
-  IN  CONST UINTN                 ClkChRate
+  IN EFI_PHYSICAL_ADDRESS  ClkChCtlAddr,
+  IN UINTN                 ClkChRate
   );
 
 #endif // CMU_LIB_H_

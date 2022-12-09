@@ -126,7 +126,7 @@ CreateSmbiosTable (
   return Status;
 }
 
-/* BIOS Information table, type 0 */
+// BIOS Information table, type 0
 
 #define BAIKAL_BIOS_DATE  "00/00/0000"
 
@@ -141,14 +141,14 @@ STATIC SMBIOS_TABLE_TYPE0 SmbiosTable0 = {
   2,
   0,
   3,
-  (UINT8) (FixedPcdGet32 (PcdFdSize) - 1) / SIZE_64KB, /* BIOS ROM size */
+  (UINT8) (FixedPcdGet32 (PcdFdSize) - 1) / SIZE_64KB, // BIOS ROM size
   {},
   {
     BIT0, // AcpiIsSupported
     BIT3  // UefiSpecificationSupported
   },
-  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 4) & 0xF), /* System BIOS major revision */
-  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 0) & 0xF), /* System BIOS minor revision */
+  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 4) & 0xF), // System BIOS major revision
+  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 0) & 0xF), // System BIOS minor revision
   0xFF,
   0xFF,
   {}
@@ -206,7 +206,7 @@ SmbiosTable0Init (
   return Status;
 }
 
-/* System Information table, type 1 */
+// System Information table, type 1
 
 #pragma pack(1)
 STATIC SMBIOS_TABLE_TYPE1 SmbiosTable1 = {
@@ -248,7 +248,7 @@ SmbiosTable1Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable1, SmbiosTable1Strings, ARRAY_SIZE (SmbiosTable1Strings));
 }
 
-/* Baseboard Information table, type 2 */
+// Baseboard Information table, type 2
 
 #pragma pack(1)
 STATIC SMBIOS_TABLE_TYPE2 SmbiosTable2 = {
@@ -293,7 +293,7 @@ SmbiosTable2Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable2, SmbiosTable2Strings, ARRAY_SIZE (SmbiosTable2Strings));
 }
 
-/* System Enclosure or Chassis table, type 3 */
+// System Enclosure or Chassis table, type 3
 
 #pragma pack(1)
 typedef struct {
@@ -352,7 +352,7 @@ SmbiosTable3Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable3, NULL, 0);
 }
 
-/* Processor Information table, type 4 */
+// Processor Information table, type 4
 
 #define BAIKAL_PROCESSOR_SOCKET_DESIGNATION  "CPU0"
 #define BAIKAL_PROCESSOR_MANUFACTURER        "Baikal Electronics"
@@ -412,7 +412,7 @@ SmbiosTable4Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable4, NULL, 0);
 }
 
-/* Cache Information tables, type 7 */
+// Cache Information tables, type 7
 
 #pragma pack(1)
 STATIC VOID  *SmbiosTable7[] = {
@@ -555,7 +555,7 @@ SmbiosTable7Init (
   return Status;
 }
 
-/* Port Connector Information tables, type 8 */
+// Port Connector Information tables, type 8
 
 #pragma pack(1)
 STATIC VOID  *SmbiosTable8[] = {
@@ -887,7 +887,7 @@ SmbiosTable8Init (
   return Status;
 }
 
-/* System Slots tables, type 9 */
+// System Slots tables, type 9
 
 #pragma pack(1)
 typedef struct {
@@ -1201,10 +1201,10 @@ SmbiosTable9Init (
   return Status;
 }
 
-/* Physical Memory Array table, type 16 */
-/* Memory Device tables, type 17 */
-/* Memory Array Mapped Address tables, type 19 */
-/* Memory Device Mapped Address tables, type 20 */
+// Physical Memory Array table, type 16
+// Memory Device tables, type 17
+// Memory Array Mapped Address tables, type 19
+// Memory Device Mapped Address tables, type 20
 
 #define SMBIOS_DIMM_NUM  12
 
@@ -1221,7 +1221,7 @@ STATIC VOID  *SmbiosTable16 = BAIKAL_SMBIOS_TABLE (
     MemoryArrayLocationSystemBoard,
     MemoryArrayUseSystemMemory,
     MemoryErrorCorrectionMultiBitEcc,
-    0x30000000, /* DDR4 max 64Gb (x12) */
+    0x30000000, // DDR4 max 64 GiB (x12)
     SMBIOS_HANDLE_PI_RESERVED,
     0,
     0
@@ -1756,7 +1756,7 @@ SmbiosTable16_17_19_20Init (
   return EFI_SUCCESS;
 }
 
-/* System Boot Information table, type 32 */
+// System Boot Information table, type 32
 
 #pragma pack(1)
 STATIC VOID  *SmbiosTable32 = BAIKAL_SMBIOS_TABLE (

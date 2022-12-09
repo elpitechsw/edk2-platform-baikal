@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -100,7 +100,7 @@
   BAIKAL_PPTT_CORE_NODE(Id + 2, ClusterId),          \
   BAIKAL_PPTT_CORE_NODE(Id + 3, ClusterId)
 
-#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity)  {                 \
+#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity, Id)  {             \
   /* UINT8                                         Type             */ \
   EFI_ACPI_6_4_PPTT_TYPE_CACHE,                                        \
   /* UINT8                                         Length           */ \
@@ -108,7 +108,16 @@
   /* UINT8                                         Reserved[2]      */ \
   { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE },                  \
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_FLAGS       Flags            */ \
-  {},                                                                  \
+  {                                                                    \
+    EFI_ACPI_6_4_PPTT_CACHE_SIZE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_NUMBER_OF_SETS_VALID,                            \
+    EFI_ACPI_6_4_PPTT_ASSOCIATIVITY_VALID,                             \
+    EFI_ACPI_6_4_PPTT_ALLOCATION_TYPE_VALID,                           \
+    EFI_ACPI_6_4_PPTT_CACHE_TYPE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_WRITE_POLICY_VALID,                              \
+    EFI_ACPI_6_4_PPTT_LINE_SIZE_VALID,                                 \
+    EFI_ACPI_6_4_PPTT_CACHE_ID_VALID                                   \
+  },                                                                   \
   /* UINT32                                        NextLevelOfCache */ \
   0,                                                                   \
   /* UINT32                                        Size             */ \
@@ -120,7 +129,9 @@
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_ATTRIBUTES  Attributes       */ \
   {},                                                                  \
   /* UINT16                                        LineSize         */ \
-  64                                                                   \
+  64,                                                                  \
+  /* UINT32                                        CacheId          */ \
+  Id                                                                   \
 }
 
 #pragma pack(1)
@@ -200,11 +211,11 @@ STATIC BAIKAL_ACPI_PPTT  Pptt = {
     BAIKAL_PPTT_CORE_NODE_CLUSTER (44, 11)
   },
   {
-    BAIKAL_PPTT_CACHE_NODE (0x2000000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x200000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x80000, 8),
-    BAIKAL_PPTT_CACHE_NODE (0x10000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x10000, 4)
+    BAIKAL_PPTT_CACHE_NODE (0x2000000, 16, 1),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 2),
+    BAIKAL_PPTT_CACHE_NODE (0x80000, 8, 3),
+    BAIKAL_PPTT_CACHE_NODE (0x10000, 16, 4),
+    BAIKAL_PPTT_CACHE_NODE (0x10000, 4, 5)
   }
 };
 #pragma pack()
@@ -264,6 +275,7 @@ PpttInit (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
   CopyMem (&Pptt.Cache[3].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  Pptt.Cache[3].NextLevelOfCache = OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[2]);
 
   CacheAttributes = BAIKAL_PPTT_CACHE_ATTRIBUTES (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_ALLOCATION_READ,
@@ -271,6 +283,7 @@ PpttInit (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
   CopyMem (&Pptt.Cache[4].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  Pptt.Cache[4].NextLevelOfCache = OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[2]);
 
   *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Pptt;
   return EFI_SUCCESS;
