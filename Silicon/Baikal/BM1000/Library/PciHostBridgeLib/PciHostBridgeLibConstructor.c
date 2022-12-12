@@ -35,6 +35,8 @@
 
 #define BM1000_PCIE_GPR_GENCTL_REG(PcieIdx)      (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x08)
 #define BM1000_PCIE_GPR_GENCTL_LTSSM_EN          BIT1
+#define BM1000_PCIE_GPR_GENCTL_DBI2_EN           BIT2
+#define BM1000_PCIE_GPR_GENCTL_PHY_EN            BIT3
 
 #define BM1000_PCIE_GPR_POWERCTL_REG(PcieIdx)    (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x10)
 
@@ -104,6 +106,17 @@
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_LIMIT_ADDR_OFF_OUTBOUND_0                    0x914
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_LWR_TARGET_ADDR_OFF_OUTBOUND_0               0x918
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_UPPER_TARGET_ADDR_OFF_OUTBOUND_0             0x91C
+
+#define BM1000_PCIE_AXI2MGM_LANENUM_REG         0xD04
+#define BM1000_PCIE_AXI2MGM_ADDRCTL_REG         0xD08
+#define PCIE_PHY_REG_ADDRESS_MASK               0xFFFFF
+#define PCIE_PHY_READ_WRITE_FLAG                BIT29
+#define PCIE_PHY_DONE                           BIT30
+#define PCIE_PHY_BUSY                           BIT31
+#define BM1000_PCIE_AXI2MGM_WRITEDATA_REG       0xD0C
+#define BM1000_PCIE_AXI2MGM_READDATA_REG        0xD10
+#define PCIE_PHY_RX_CTLE_CTRL_REG               0x1800B
+#define PCIE_PHY_RX_CTLE_POLE_OVRRD_EN          BIT9
 
 #define RANGES_FLAG_IO   0x01000000
 #define RANGES_FLAG_MEM  0x02000000
@@ -320,6 +333,64 @@ PciHostBridgeLibExitBootServices (
   }
 
   gBS->FreePool (HandleBuffer);
+}
+
+STATIC
+EFI_STATUS
+PciePhyWaitDone (
+  EFI_PHYSICAL_ADDRESS DbiBase
+  )
+{
+  UINT32 Reg;
+  UINT32 Retries;
+
+  for (Retries = 0; Retries < 20; Retries++) {
+    Reg = MmioRead32 (DbiBase + BM1000_PCIE_AXI2MGM_ADDRCTL_REG);
+    if ((Reg & (PCIE_PHY_DONE | PCIE_PHY_BUSY)) == PCIE_PHY_DONE)
+      return EFI_SUCCESS;
+    gBS->Stall (1000000);
+  }
+  return EFI_TIMEOUT;
+}
+
+STATIC
+EFI_STATUS
+PciePhyRead (
+  EFI_PHYSICAL_ADDRESS DbiBase,
+  UINT32               Addr,
+  UINT32               *Data
+  )
+{
+  EFI_STATUS Status;
+
+  MmioWrite32 (DbiBase + BM1000_PCIE_AXI2MGM_LANENUM_REG, 0x1);
+  MmioWrite32 (DbiBase + BM1000_PCIE_AXI2MGM_ADDRCTL_REG, Addr);
+
+  Status = PciePhyWaitDone (DbiBase);
+  if (EFI_ERROR(Status))
+    return Status;
+
+  *Data = MmioRead32 (DbiBase + BM1000_PCIE_AXI2MGM_READDATA_REG);
+  return EFI_SUCCESS;
+}
+
+STATIC
+EFI_STATUS
+PciePhyWrite (
+  EFI_PHYSICAL_ADDRESS DbiBase,
+  UINT32               Addr,
+  UINT32               Mask,
+  UINT16               Data
+  )
+{
+  EFI_STATUS Status;
+
+  MmioWrite32 (DbiBase + BM1000_PCIE_AXI2MGM_LANENUM_REG, Mask);
+  MmioWrite32 (DbiBase + BM1000_PCIE_AXI2MGM_WRITEDATA_REG, Data);
+  MmioWrite32 (DbiBase + BM1000_PCIE_AXI2MGM_ADDRCTL_REG, Addr | PCIE_PHY_READ_WRITE_FLAG);
+
+  Status = PciePhyWaitDone (DbiBase);
+  return Status;
 }
 
 EFI_STATUS
@@ -753,6 +824,27 @@ PciHostBridgeLibConstructor (
       BM1000_PCIE_PF0_PORT_LOGIC_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_IO,
       0
       );
+
+    UINT32 PhyReg;
+    // Configure phy
+    MmioOr32 (
+      BM1000_PCIE_GPR_GENCTL_REG (PcieIdx),
+      BM1000_PCIE_GPR_GENCTL_PHY_EN | BM1000_PCIE_GPR_GENCTL_DBI2_EN
+      );
+    Status = PciePhyRead (
+       mPcieDbiBases[PcieIdx],
+       PCIE_PHY_RX_CTLE_CTRL_REG,
+       &PhyReg
+       );
+    if (Status == EFI_SUCCESS) {
+      PhyReg |= PCIE_PHY_RX_CTLE_POLE_OVRRD_EN;
+      PciePhyWrite (
+        mPcieDbiBases[PcieIdx],
+	PCIE_PHY_RX_CTLE_CTRL_REG,
+	(1 << PcieNumLanes[PcieIdx]) - 1,
+	PhyReg
+	);
+    }
 
     // Force PCIE_CAP_TARGET_LINK_SPEED to 2.5 GT/s
     MmioAndThenOr32 (
