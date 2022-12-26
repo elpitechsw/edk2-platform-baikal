@@ -679,7 +679,7 @@ PciHostBridgeLibConstructor (
     lPcieRootBridge->DmaAbove4G = TRUE;
     lPcieRootBridge->NoExtendedConfigSpace = FALSE;
     lPcieRootBridge->ResourceAssigned      = FALSE;
-    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_MEM64_DECODE | EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
+    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
 
     lPcieRootBridge->Bus.Base          = 0;
     lPcieRootBridge->Bus.Limit         = mPcieCfgSizes[PcieIdx] / SIZE_1MB - 1;
