@@ -28,14 +28,14 @@ SerialPortInitialize (
   UINT8               DataBits;
   EFI_STOP_BITS_TYPE  StopBits;
 
-  BaudRate = (UINTN)FixedPcdGet64 (PcdUartBaudRate);
+  BaudRate = (UINTN)FixedPcdGet64 (PcdSerialBaudRate);
   ReceiveFifoDepth = 0; // Use the default value for FIFO depth
-  Parity   = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartParity);
-  DataBits = FixedPcdGet8 (PcdUartDataBits);
-  StopBits = (EFI_STOP_BITS_TYPE) FixedPcdGet8 (PcdUartStopBits);
+  Parity   = DefaultParity;
+  DataBits = 8;
+  StopBits = DefaultStopBits;
 
   return DwUartInitializePort (
-           (UINTN)FixedPcdGet64 (PcdUartRegisterBase),
+           (UINTN)FixedPcdGet64 (PcdSerialRegisterBase),
            &BaudRate,
            &ReceiveFifoDepth,
            &Parity,
@@ -61,7 +61,7 @@ SerialPortWrite (
   IN UINTN     NumberOfBytes
   )
 {
-  return DwUartWrite ((UINTN)FixedPcdGet64 (PcdUartRegisterBase), Buffer, NumberOfBytes);
+  return DwUartWrite ((UINTN)FixedPcdGet64 (PcdSerialRegisterBase), Buffer, NumberOfBytes);
 }
 
 /**
@@ -81,7 +81,7 @@ SerialPortRead (
   IN  UINTN     NumberOfBytes
 )
 {
-  return DwUartRead ((UINTN)FixedPcdGet64 (PcdUartRegisterBase), Buffer, NumberOfBytes);
+  return DwUartRead ((UINTN)FixedPcdGet64 (PcdSerialRegisterBase), Buffer, NumberOfBytes);
 }
 
 /**
@@ -98,5 +98,37 @@ SerialPortPoll (
   VOID
   )
 {
-  return DwUartPoll ((UINTN)FixedPcdGet64 (PcdUartRegisterBase));
+  return DwUartPoll ((UINTN)FixedPcdGet64 (PcdSerialRegisterBase));
+}
+
+RETURN_STATUS
+EFIAPI
+SerialPortSetControl (
+  IN UINT32  Control
+  )
+{
+  return DwUartSetControl((UINTN)FixedPcdGet64 (PcdSerialRegisterBase), Control);
+}
+
+RETURN_STATUS
+EFIAPI
+SerialPortGetControl (
+  OUT UINT32  *Control
+  )
+{
+  return DwUartGetControl((UINTN)FixedPcdGet64 (PcdSerialRegisterBase), Control);
+}
+
+RETURN_STATUS
+EFIAPI
+SerialPortSetAttributes (
+  IN OUT UINT64              *BaudRate,
+  IN OUT UINT32              *ReceiveFifoDepth,
+  IN OUT UINT32              *Timeout,
+  IN OUT EFI_PARITY_TYPE     *Parity,
+  IN OUT UINT8               *DataBits,
+  IN OUT EFI_STOP_BITS_TYPE  *StopBits
+  )
+{
+  return RETURN_UNSUPPORTED;
 }

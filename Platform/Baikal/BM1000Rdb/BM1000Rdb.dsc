@@ -100,15 +100,12 @@
   MemoryInitPeiLib|Platform/Baikal/Library/BaikalMemoryInitPeiLib/BaikalMemoryInitPeiLib.inf
   NULL|ArmPkg/Library/CompilerIntrinsicsLib/CompilerIntrinsicsLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
-  PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciHostBridgeLib|Silicon/Baikal/BM1000/Library/PciHostBridgeLib/PciHostBridgeLib.inf
-  PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
   PciSegmentLib|Silicon/Baikal/BM1000/Library/PciSegmentLib/PciSegmentLib.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
   PlatformBootManagerLib|Platform/Baikal/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
-  PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
   PlatformPeiLib|Platform/Baikal/Library/PlatformPeiLib/PlatformPeiLib.inf
   PrePiHobListPointerLib|ArmPlatformPkg/Library/PrePiHobListPointerLib/PrePiHobListPointerLib.inf
   PrePiLib|EmbeddedPkg/Library/PrePiLib/PrePiLib.inf
@@ -122,7 +119,7 @@
   ResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
-  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
+  SerialPortLib|Silicon/Baikal/BM1000/Library/DwSerialPortLib/DwSerialPortLib.inf
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   SmcFlashLib|Platform/Baikal/Library/SmcFlashLib/SmcFlashLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf

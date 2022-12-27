@@ -22,11 +22,9 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   Silicon/Baikal/BM1000/BM1000.dec
 
 [Pcd]
-  gBm1000TokenSpaceGuid.PcdUartBaudRate
-  gBm1000TokenSpaceGuid.PcdUartDataBits
-  gBm1000TokenSpaceGuid.PcdUartParity
-  gBm1000TokenSpaceGuid.PcdUartRegisterBase
-  gBm1000TokenSpaceGuid.PcdUartStopBits
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
