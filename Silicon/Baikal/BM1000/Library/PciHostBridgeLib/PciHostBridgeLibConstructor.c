@@ -348,7 +348,7 @@ PciePhyWaitDone (
     Reg = MmioRead32 (DbiBase + BM1000_PCIE_AXI2MGM_ADDRCTL_REG);
     if ((Reg & (PCIE_PHY_DONE | PCIE_PHY_BUSY)) == PCIE_PHY_DONE)
       return EFI_SUCCESS;
-    gBS->Stall (1000000);
+    gBS->Stall (1000);
   }
   return EFI_TIMEOUT;
 }
@@ -940,7 +940,7 @@ PciHostBridgeLibConstructor (
           while (MmioRead32 (mPcieCfgBases[PcieIdx]) == 0) {
             PerformanceCounter = GetPerformanceCounter ();
             MmioWrite32(mPcieCfgBases[PcieIdx], 0xffffffff);
-            gBS->Stall (1000000);
+            gBS->Stall (1000);
             if (((GetTimeInNanoSecond (PerformanceCounter) - TimeStart) / 1000000) > 1000) {
               break;
             }
