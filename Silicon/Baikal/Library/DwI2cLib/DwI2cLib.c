@@ -147,14 +147,18 @@ I2cTxRx (
 
         ActivityTimestamp = GetPerformanceCounter ();
         ++TxedSize;
-      } else if (!(IcStatus & IC_STATUS_MST_ACTIVITY) &&
-                  GetTimeInNanoSecond (GetPerformanceCounter () - ActivityTimestamp) > 100000000) {
+      } else if (GetTimeInNanoSecond (GetPerformanceCounter () - ActivityTimestamp) > 100000000) {
         Status = EFI_DEVICE_ERROR;
+        DEBUG((DEBUG_ERROR, "I2cTxRx send timeout: IcStatus %x, TxedSize %d\n", IcStatus, TxedSize));
         break;
       }
     } else if ( (IcStatus & IC_STATUS_TFE) &&
                !(IcStatus & IC_STATUS_MST_ACTIVITY)) {
       Status = EFI_SUCCESS;
+      break;
+    } else if (GetTimeInNanoSecond (GetPerformanceCounter () - ActivityTimestamp) > 100000000) {
+      Status = EFI_DEVICE_ERROR;
+      DEBUG((DEBUG_ERROR, "I2cTxRx timeout: IcStatus %x, TxedSize %d\n", IcStatus, TxedSize));
       break;
     }
   }
