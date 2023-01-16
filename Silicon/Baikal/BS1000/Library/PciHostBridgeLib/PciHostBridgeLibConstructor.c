@@ -73,6 +73,8 @@
 #define RANGES_FLAG_IO   0x01000000
 #define RANGES_FLAG_MEM  0x02000000
 
+#define PCIE_FLAGS_REVERSED_LANES	0x1
+
 #pragma pack(1)
 typedef struct {
   ACPI_HID_DEVICE_PATH      AcpiDevicePath;
@@ -522,6 +524,11 @@ PciHostBridgeLibConstructor (
   INT32                 Node;
   UINTN                 PcieIdx;
   UINTN                 PcieNumLanes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PciePerstGpios[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PciePerstPolarity[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PcieFlags[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PcieLinkSpeed[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  EFI_PHYSICAL_ADDRESS  PciePerstBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   EFI_STATUS            Status;
   PCI_ROOT_BRIDGE      *lPcieRootBridge;
 
@@ -654,6 +661,41 @@ PciHostBridgeLibConstructor (
       PcieNumLanes[PcieIdx] = 0;
     }
 
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "max-link-speed", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 4) {
+      PcieLinkSpeed[PcieIdx] = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+    } else {
+      PcieLinkSpeed[PcieIdx] = 0;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reset-gpios", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize >= 12) {
+      INT32        PerstGpioPhandle;
+      INT32        PerstGpioNode;
+      PerstGpioPhandle              = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+      PciePerstGpios[PcieIdx]    = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
+      PciePerstPolarity[PcieIdx] = SwapBytes32 (((CONST UINT32 *) Prop)[2]);
+      if ((FdtClient->FindNodeByPhandle (FdtClient, PerstGpioPhandle, &PerstGpioNode) == EFI_SUCCESS) &&
+        (FdtClient->FindParentNode (FdtClient, PerstGpioNode, &PerstGpioNode) == EFI_SUCCESS)) {
+        if (FdtClient->GetNodeProperty (FdtClient, PerstGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+            PropSize == 16) {
+          PciePerstBases[PcieIdx] = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+	} else {
+          PciePerstBases[PcieIdx] = 0;
+	}
+      } else {
+        PciePerstBases[PcieIdx] = 0;
+      }
+    } else {
+      PciePerstBases[PcieIdx] = 0;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reversed-lanes", &Prop, &PropSize) == EFI_SUCCESS) {
+      PcieFlags[PcieIdx] = PCIE_FLAGS_REVERSED_LANES;
+    } else {
+      PcieFlags[PcieIdx] = 0;
+    }
+
     ++mPcieRootBridgesNum;
     ++Iter;
   }
@@ -703,62 +745,18 @@ PciHostBridgeLibConstructor (
       ~BS1000_PCIE_APB_PE_GEN_CTRL3_LTSSM_EN
       );
 
-#ifdef ELPITECH
-    EFI_PHYSICAL_ADDRESS GpioBase = 0;
-    INTN                 ResetGpio;
-    switch (PcieIdx) {
-      case 0: /* PCIe0.P0 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 23;
-	break;
-      case 2: /* PCIe1.P0 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 25;
-	break;
-      case 4: /* PCIe2.P0 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 27;
-	break;
-      case 5: /* PCIe2.P1 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 29;
-	break;
-      case 6: /* PCIe3.P0 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 15;
-	break;
-      case 7: /* PCIe3.P1 */
-        GpioBase = BS1000_GPIO8_1_BASE;
-	ResetGpio = 6;
-	break;
-      case 8: /* PCIe3.P2 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 18;
-	break;
-      case 9: /* PCIe3.P3 */
-        GpioBase = BS1000_GPIO8_1_BASE;
-	ResetGpio = 1;
-	break;
-      case 10: /* PCIe4.P0 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 17;
-	break;
-      case 12: /* PCIe4.P2 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 31;
-	break;
-      case 13: /* PCIe4.P3 */
-        GpioBase = BS1000_GPIO32_BASE;
-	ResetGpio = 21;
-	break;
-      default:
-        GpioBase = 0;
+    if (PciePerstBases[PcieIdx]) { /* assert resets */
+      if (PciePerstPolarity[PcieIdx]) {
+        GpioOutRst (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      } else {
+        GpioOutSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      }
+      GpioDirSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
     }
-    if (GpioBase) {
-      GpioOutSet(GpioBase, ResetGpio);
-      GpioDirSet(GpioBase, ResetGpio);
+
+    if (PcieFlags[PcieIdx] & PCIE_FLAGS_REVERSED_LANES) {
+      MmioWrite32(mPcieApbBases[PcieIdx] + 0x50, 0x40400000);//lane reversal
     }
-#endif
 
     if (PcieNumLanes[PcieIdx] == 1) {
       PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X1;
@@ -860,6 +858,20 @@ PciHostBridgeLibConstructor (
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_IO,
       0
       );
+
+    if (PciePerstBases[PcieIdx]) { /* deassert resets */
+      if (PciePerstPolarity[PcieIdx]) {
+        GpioOutSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      } else {
+        GpioOutRst (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      }
+      GpioDirSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+    }
+
+    if (PcieLinkSpeed[PcieIdx] > 0 && PcieLinkSpeed[PcieIdx] <= 4) {
+      /* Set link speed */
+      MmioAndThenOr32 (mPcieDbiBases[PcieIdx] + 0xa0, ~0x0f, PcieLinkSpeed[PcieIdx]);
+    }
 
     MmioOr32 (
       mPcieApbBases[PcieIdx] +
@@ -1011,10 +1023,8 @@ PciHostBridgeLibGetLink (
   ASSERT (PcieIdx < ARRAY_SIZE (mEfiPciRootBridgeDevicePaths));
 
   CONST UINT32  PcieApbPeLinkDbg2 = MmioRead32 (mPcieApbBases[PcieIdx] + BS1000_PCIE_APB_PE_LINK_DBG2);
-  return ((PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK) ==
-                               BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_L0) &&
-          (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP) &&
-          (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP);
+  return (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_SMLH_LINKUP) &&
+         (PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_RDLH_LINKUP);
 }
 
 PCI_ROOT_BRIDGE *
