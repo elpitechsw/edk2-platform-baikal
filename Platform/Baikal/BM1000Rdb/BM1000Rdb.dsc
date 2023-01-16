@@ -296,11 +296,7 @@
   Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
-!if $(BAIKAL_ELP)
-  Silicon/Baikal/BM1000/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
-!else
   ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
-!endif
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 
