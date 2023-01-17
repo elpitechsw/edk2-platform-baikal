@@ -130,9 +130,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
             Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 434, 437 }
           }, Local0)
 
-          QRES_BUF_SET(01, BAIKAL_ACPI_PCIE1_CFG_BASE, BAIKAL_ACPI_PCIE_CFG_SIZE, 0)
-
-          Return (RBUF)
+          Return (Local0)
         }
       }
 
