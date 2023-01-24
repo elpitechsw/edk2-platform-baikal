@@ -5,6 +5,7 @@
 
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/BaseMemoryLib.h>
 #include "FruInternals.h"
 
 #define COMMON_HEADER_FORMAT_VERSION  0x01
@@ -318,7 +319,7 @@ EFI_STATUS
 FruInternalsMultirecordCheckData (
   IN  CONST UINT8 * CONST               MrecBuf,
   IN  CONST UINTN                       MrecBufSize,
-  IN  CONST MULTIRECORD_HEADER * CONST  MrecHdr
+  IN  CONST MULTIRECORD_HEADER *        MrecHdr
   )
 {
   if ((MrecHdr->Format & 0x07) != MULTIRECORD_FORMAT_VERSION) {
@@ -355,7 +356,7 @@ EFI_STATUS
 FruInternalsMultirecordParseHeader (
   IN   CONST UINT8 * CONST         MrecBuf,
   IN   CONST UINTN                 MrecBufSize,
-  OUT  MULTIRECORD_HEADER * CONST  MrecHdr
+  OUT  MULTIRECORD_HEADER **       MrecHdr
   )
 {
   ASSERT (MrecBuf != NULL);
@@ -376,11 +377,7 @@ FruInternalsMultirecordParseHeader (
     return EFI_CRC_ERROR;
   }
 
-  MrecHdr->TypeId         = MrecBuf[0];
-  MrecHdr->Format         = MrecBuf[1];
-  MrecHdr->Length         = MrecBuf[2];
-  MrecHdr->RecordChecksum = MrecBuf[3];
-  MrecHdr->HeaderChecksum = MrecBuf[4];
+  *MrecHdr = (MULTIRECORD_HEADER *)MrecBuf;
 
   return EFI_SUCCESS;
 }
@@ -424,3 +421,130 @@ FruInternalsTypLenEncReadData (
 
   return EncBuf + EncLen + 1;
 }
+
+EFI_STATUS
+FruInternalsGetMultirecord (
+  IN   CONST UINT8 * CONST    Buf,
+  IN   CONST UINTN            BufSize,
+  IN         UINT8            MrecType,
+  OUT  CONST MULTIRECORD_HEADER **MrecHeader
+  )
+{
+  CONST UINT8         *MrecArea;
+  MULTIRECORD_HEADER  *MrecHdr;
+  EFI_STATUS           Status;
+
+  ASSERT (MrecHeader != NULL);
+
+  Status = FruInternalsMultirecordAreaLocate (Buf, BufSize, &MrecArea);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  MrecHdr = (MULTIRECORD_HEADER *)MrecArea;
+  while (FruInternalsMultirecordParseHeader (
+           MrecArea,
+           (Buf + BufSize) - MrecArea,
+           &MrecHdr
+           ) == EFI_SUCCESS) {
+    if (MrecHdr->TypeId == MrecType) {
+      if (FruInternalsMultirecordCheckData (MrecArea,
+                                            (Buf + BufSize) - MrecArea,
+                                            MrecHdr
+                                            ) == EFI_SUCCESS) {
+        *MrecHeader = MrecHdr;
+        return EFI_SUCCESS;
+      }
+    }
+
+    if (MrecHdr->Format & 0x80) {
+      break;
+    }
+
+    MrecArea += sizeof (MULTIRECORD_HEADER) + MrecHdr->Length;
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+EFI_STATUS
+FruInternalsSetMultirecord (
+  IN   CONST UINT8 * CONST    Buf,
+  IN   CONST UINTN            BufSize,
+  IN         UINT8            MrecType,
+  IN         UINT8            MrecFmt,
+  IN         UINT8            MrecLen,
+  IN         UINTN            OemId,
+  IN   CONST UINT8 *          MrecData
+  )
+{
+  CONST UINT8         *MrecArea;
+  MULTIRECORD_HEADER  *MrecHdr;
+  EFI_STATUS           Status;
+  UINT8               *NewData;
+
+  ASSERT (MrecData != NULL);
+
+  Status = FruInternalsMultirecordAreaLocate (Buf, BufSize, &MrecArea);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  while (FruInternalsMultirecordParseHeader (
+           MrecArea,
+           (Buf + BufSize) - MrecArea,
+           &MrecHdr
+           ) == EFI_SUCCESS) {
+    if (MrecHdr->TypeId == MrecType &&
+        (MrecHdr->Format & 0x7f) == MrecFmt &&
+	(MrecHdr->Length == MrecLen || MrecHdr->Length == MrecLen + 3)) {
+      NewData = (UINT8 *)MrecArea + sizeof (MULTIRECORD_HEADER);
+      if (MrecHdr->Length == MrecLen + 3) {
+        NewData[0] = OemId & 0xff;
+	NewData[1] = (OemId >> 8) & 0xff;
+	NewData[2] = (OemId >> 16) & 0xff;
+        CopyMem(NewData + 3, MrecData, MrecLen);
+      } else {
+        CopyMem(NewData, MrecData, MrecLen);
+      }
+      MrecHdr->RecordChecksum = 256 - CalcChecksum(NewData, MrecHdr->Length);
+      MrecHdr->HeaderChecksum = 256 - CalcChecksum((UINT8 *)MrecHdr, 4);
+
+      return EFI_SUCCESS;
+    }
+
+    if (MrecHdr->Format & 0x80) {
+      break;
+    }
+
+    MrecArea += sizeof (MULTIRECORD_HEADER) + MrecHdr->Length;
+  }
+
+  /* Mrec not found - create new one */
+  if (MrecArea - Buf + 2 * sizeof (MULTIRECORD_HEADER) + MrecHdr->Length + MrecLen + 3 >= BufSize) {
+    DEBUG((DEBUG_ERROR, "%a: No space in FRU buffer\n", __FUNCTION__));
+    return EFI_BUFFER_TOO_SMALL;
+  }
+  MrecHdr->Format &= ~0x80;
+  MrecHdr->HeaderChecksum = 256 - CalcChecksum((UINT8 *)MrecHdr, 4);
+  MrecArea += sizeof (MULTIRECORD_HEADER) + MrecHdr->Length;
+  MrecHdr = (MULTIRECORD_HEADER *)MrecArea;
+  MrecHdr->TypeId = MrecType;
+  MrecHdr->Format = MrecFmt | 0x80;
+  NewData = (UINT8 *)MrecArea + sizeof (MULTIRECORD_HEADER);
+  if (OemId) {
+    NewData[0] = OemId & 0xff;
+    NewData[1] = (OemId >> 8) & 0xff;
+    NewData[2] = (OemId >> 16) & 0xff;
+    CopyMem(NewData + 3, MrecData, MrecLen);
+    MrecHdr->Length = MrecLen + 3;
+  } else {
+    MrecHdr->Length = MrecLen;
+    CopyMem(NewData, MrecData, MrecLen);
+  }
+  MrecHdr->RecordChecksum = 256 - CalcChecksum(NewData, MrecHdr->Length);
+  MrecHdr->HeaderChecksum = 256 - CalcChecksum((UINT8 *)MrecHdr, 4);
+
+  return EFI_SUCCESS;
+}
+
