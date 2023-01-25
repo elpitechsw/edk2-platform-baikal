@@ -41,9 +41,9 @@
   gEfiSimpleNetworkProtocolGuid
   gEuiClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
   gFdtClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
-  gFruClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
 
 [Depex]
   gEfiCpuArchProtocolGuid AND
   gEuiClientProtocolGuid  AND
-  gFdtClientProtocolGuid
+  gFdtClientProtocolGuid  AND
+  gFruClientProtocolGuid
