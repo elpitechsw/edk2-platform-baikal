@@ -36,4 +36,10 @@ typedef struct {
   UINT32  Mode;
 } UART1_VARSTORE_DATA;
 
+typedef struct {
+#define PPOL_OFF          0
+#define PPOL_AUTO         1
+  UINT32  Mode;
+} PPOL_VARSTORE_DATA;
+
 #endif // CONFIG_VARS_H_

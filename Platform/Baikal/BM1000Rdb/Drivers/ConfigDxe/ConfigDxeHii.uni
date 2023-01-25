@@ -34,3 +34,8 @@
 #string STR_UART1_HELP        #language en-US "Set Serdev or Normal UART1 mode."
 #string STR_UART1_NORM        #language en-US "Normal"
 #string STR_UART1_SERDEV      #language en-US "Serdev"
+
+#string STR_PPOL_PROMPT       #language en-US "Power Policy"
+#string STR_PPOL_HELP         #language en-US "Wait for PowerButton or autoboot when power is connected"
+#string STR_PPOL_OFF          #language en-US "Off"
+#string STR_PPOL_AUTO         #language en-US "Auto"

@@ -42,6 +42,11 @@ formset
     name      = Uart1,
     guid      = CONFIG_DXE_FORM_SET_GUID;
 
+  efivarstore PPOL_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = PowerPolicy,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
   form formid = 1,
     title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
     subtitle text = STRING_TOKEN(STR_NULL_STRING);
@@ -78,6 +83,14 @@ formset
       flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
       option text = STRING_TOKEN(STR_UART1_NORM), value = UART1_NORM, flags = 0;
       option text = STRING_TOKEN(STR_UART1_SERDEV),  value = UART1_SERDEV,  flags = DEFAULT;
+    endoneof;
+
+    oneof varid = PowerPolicy.Mode,
+      prompt      = STRING_TOKEN(STR_PPOL_PROMPT),
+      help        = STRING_TOKEN(STR_PPOL_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE,
+      option text = STRING_TOKEN(STR_PPOL_OFF), value = PPOL_OFF, flags = DEFAULT;
+      option text = STRING_TOKEN(STR_PPOL_AUTO),  value = PPOL_AUTO,  flags = 0;
     endoneof;
   endform;
 endformset;
