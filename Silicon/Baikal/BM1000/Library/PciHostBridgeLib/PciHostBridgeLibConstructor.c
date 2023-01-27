@@ -184,8 +184,8 @@ CONST EFI_PHYSICAL_ADDRESS  mPcieDbiBases[] = {
 
 STATIC CONST UINTN  mPcieDbiSizes[] = {
   BM1000_PCIE0_DBI_SIZE,
-  BM1000_PCIE0_DBI_SIZE,
-  BM1000_PCIE1_DBI_SIZE
+  BM1000_PCIE1_DBI_SIZE,
+  BM1000_PCIE2_DBI_SIZE
 };
 
 UINT32                        mPcieCfg0FilteringWorks;
@@ -214,7 +214,7 @@ PciHostBridgeLibCfgWindow (
   IN  CONST UINTN                 EnableFlags
   )
 {
-  ASSERT (RegionIdx <= 3);
+  ASSERT (RegionIdx <= 3 || (PcieDbiBase == BM1000_PCIE2_DBI_BASE && RegionIdx <= 15));
   ASSERT (Type <= 0x1F);
   ASSERT (Size >= SIZE_64KB);
   ASSERT (Size <= SIZE_4GB);

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -42,7 +42,8 @@
   /* UINT32  VGICMaintenanceInterrupt      */                                \
   25,                                                                        \
   /* UINT64  GICRBaseAddress               */                                \
-  FixedPcdGet64 (PcdGicRedistributorsBase) + (0x20000 * CPUInterfaceNumber), \
+  FixedPcdGet64 (PcdGicRedistributorsBase) +                                 \
+    (0x20000 * CPUInterfaceNumber),                                          \
   /* UINT64  MPIDR                         */                                \
   Mpidr,                                                                     \
   /* UINT8   ProcessorPowerEfficiencyClass */                                \

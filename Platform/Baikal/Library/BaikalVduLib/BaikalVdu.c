@@ -56,12 +56,6 @@ LcdIdentifyHdmi (
   VOID
   )
 {
-  DEBUG ((
-    EFI_D_WARN,
-    "Probing ID registers at 0x%lx for Baikal HDMI VDU\n",
-    BAIKAL_VDU_REG_CIR(VDU_HDMI)
-    ));
-
   // Check if this is a Baikal VDU
   if (MmioRead32 (BAIKAL_VDU_REG_CIR(VDU_HDMI)) == BAIKAL_VDU_PERIPH_ID) {
     return EFI_SUCCESS;
@@ -76,12 +70,6 @@ LcdIdentifyLvds (
   VOID
   )
 {
-  DEBUG ((
-    EFI_D_WARN,
-    "Probing ID registers at 0x%lx for Baikal LVDS VDU\n",
-    BAIKAL_VDU_REG_CIR(VDU_LVDS)
-    ));
-
   // Check if this is a Baikal VDU
   if (MmioRead32 (BAIKAL_VDU_REG_CIR(VDU_LVDS)) == BAIKAL_VDU_PERIPH_ID) {
     return EFI_SUCCESS;
@@ -222,9 +210,9 @@ LcdSetTimings (
 
   // Set control register
   LcdControl = BAIKAL_VDU_CR1_DEP | BAIKAL_VDU_CR1_FDW_16_WORDS;
-  if (VduBase == VDU_HDMI)
+  if (VduBase == VDU_HDMI) {
      LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD24;
-  else { // VduBase == VDU_LVDS
+  } else { // VduBase == VDU_LVDS
     if (LvdsEnabled ()) {
       if (LvdsOutBpp == 24) {
         LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD24;
@@ -278,24 +266,24 @@ LcdSetTimings (
 
   if (VduBase == VDU_LVDS) {
     switch (LvdsPorts) {
-      case 4:
-        MmioWrite32 (
-          BAIKAL_VDU_REG_GPIOR(VduBase),
-          BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_QUAD_PORT
-          );
-        break;
-      case 2:
-        MmioWrite32 (
-          BAIKAL_VDU_REG_GPIOR(VduBase),
-          BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_DUAL_PORT
-          );
-        break;
-      case 1:
-        MmioWrite32 (
-          BAIKAL_VDU_REG_GPIOR(VduBase),
-          BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_SNGL_PORT
-          );
-        break;
+    case 4:
+      MmioWrite32 (
+        BAIKAL_VDU_REG_GPIOR(VduBase),
+        BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_QUAD_PORT
+        );
+      break;
+    case 2:
+      MmioWrite32 (
+        BAIKAL_VDU_REG_GPIOR(VduBase),
+        BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_DUAL_PORT
+        );
+      break;
+    case 1:
+      MmioWrite32 (
+        BAIKAL_VDU_REG_GPIOR(VduBase),
+        BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_SNGL_PORT
+        );
+      break;
     }
   }
 
@@ -316,9 +304,9 @@ LcdIdentify (
 {
   if (LcdIdentifyHdmi () == EFI_SUCCESS && LcdIdentifyLvds () == EFI_SUCCESS) {
     return EFI_SUCCESS;
-  } else {
-    return EFI_NOT_FOUND;
   }
+
+  return EFI_NOT_FOUND;
 }
 
 /** Initialize display.

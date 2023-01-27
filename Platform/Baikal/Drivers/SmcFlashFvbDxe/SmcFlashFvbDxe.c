@@ -599,11 +599,11 @@ BaikalFvHeader (
 
   SetMem64 ((VOID *) mNvStorageBase, mNvStorageSize, ~0UL);
 
-  DEBUG ((EFI_D_INFO, "Read headers from flash...\n"));
+  DEBUG ((EFI_D_INFO, "Read headers from flash\n"));
   SmcFlashRead (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
 
   if (ValidateFvHeader (mNvStorageBase) != EFI_SUCCESS) {
-    DEBUG ((EFI_D_ERROR, "Write default headers to flash...\n"));
+    DEBUG ((EFI_D_ERROR, "Write default headers to flash\n"));
     InitializeFvAndVariableStoreHeaders (mNvStorageBase);
     SmcFlashErase (FLASH_MAP_VAR, mNvStorageSize);
     SmcFlashWrite (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);

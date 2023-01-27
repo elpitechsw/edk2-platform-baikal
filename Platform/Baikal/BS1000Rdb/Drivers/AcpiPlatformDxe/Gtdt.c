@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -9,7 +9,8 @@
 #include "AcpiPlatform.h"
 
 #define BAIKAL_GTDT_TIMER_FLAGS  \
-          EFI_ACPI_6_4_GTDT_TIMER_FLAG_TIMER_INTERRUPT_POLARITY
+          EFI_ACPI_6_4_GTDT_TIMER_FLAG_TIMER_INTERRUPT_POLARITY | \
+          EFI_ACPI_6_4_GTDT_TIMER_FLAG_ALWAYS_ON_CAPABILITY
 
 #pragma pack(1)
 typedef EFI_ACPI_6_4_GENERIC_TIMER_DESCRIPTION_TABLE  BAIKAL_ACPI_GTDT;

@@ -9,9 +9,12 @@
 
 #define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x0, 0xFF, 0x0, 0x100)
 
-DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
-  Scope (_SB_) {
-    Device (PCI0) {
+DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
+{
+  Scope (_SB_)
+  {
+    Device (PCI0)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE0_P0_SEGMENT)
@@ -19,15 +22,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE0_P0_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -48,10 +59,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 8)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE0_P0_CFG_BASE,
                          BAIKAL_ACPI_PCIE0_P0_CFG_MAX,
@@ -69,7 +83,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI1) {
+    Device (PCI1)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE0_P1_SEGMENT)
@@ -77,15 +92,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE0_P1_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -106,10 +129,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 8)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE0_P1_CFG_BASE,
                          BAIKAL_ACPI_PCIE0_P1_CFG_MAX,
@@ -127,7 +153,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI2) {
+    Device (PCI2)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE1_P0_SEGMENT)
@@ -135,15 +162,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE1_P0_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -164,10 +199,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 8)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE1_P0_CFG_BASE,
                          BAIKAL_ACPI_PCIE1_P0_CFG_MAX,
@@ -185,7 +223,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI3) {
+    Device (PCI3)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE1_P1_SEGMENT)
@@ -193,15 +232,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE1_P1_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -222,10 +269,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 8)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE1_P1_CFG_BASE,
                          BAIKAL_ACPI_PCIE1_P1_CFG_MAX,
@@ -243,7 +293,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI4) {
+    Device (PCI4)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE2_P0_SEGMENT)
@@ -251,15 +302,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE2_P0_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -280,10 +339,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 8)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE2_P0_CFG_BASE,
                          BAIKAL_ACPI_PCIE2_P0_CFG_MAX,
@@ -301,7 +363,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI5) {
+    Device (PCI5)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE2_P1_SEGMENT)
@@ -309,15 +372,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE2_P1_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -338,10 +409,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 8)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE2_P1_CFG_BASE,
                          BAIKAL_ACPI_PCIE2_P1_CFG_MAX,
@@ -359,7 +433,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI6) {
+    Device (PCI6)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE3_P0_SEGMENT)
@@ -367,15 +442,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE3_P0_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -396,10 +479,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE3_P0_CFG_BASE,
                          BAIKAL_ACPI_PCIE3_P0_CFG_MAX,
@@ -417,7 +503,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI7) {
+    Device (PCI7)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE3_P1_SEGMENT)
@@ -425,15 +512,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE3_P1_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -454,10 +549,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE3_P1_CFG_BASE,
                          BAIKAL_ACPI_PCIE3_P1_CFG_MAX,
@@ -475,7 +573,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI8) {
+    Device (PCI8)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE3_P2_SEGMENT)
@@ -483,15 +582,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE3_P2_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -512,10 +619,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE3_P2_CFG_BASE,
                          BAIKAL_ACPI_PCIE3_P2_CFG_MAX,
@@ -533,7 +643,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCI9) {
+    Device (PCI9)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE3_P3_SEGMENT)
@@ -541,15 +652,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE3_P3_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -570,10 +689,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE3_P3_CFG_BASE,
                          BAIKAL_ACPI_PCIE3_P3_CFG_MAX,
@@ -591,7 +713,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCIA) {
+    Device (PCIA)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE4_P0_SEGMENT)
@@ -599,15 +722,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE4_P0_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -628,10 +759,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE4_P0_CFG_BASE,
                          BAIKAL_ACPI_PCIE4_P0_CFG_MAX,
@@ -649,7 +783,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCIB) {
+    Device (PCIB)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE4_P1_SEGMENT)
@@ -657,15 +792,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE4_P1_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -686,10 +829,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE4_P1_CFG_BASE,
                          BAIKAL_ACPI_PCIE4_P1_CFG_MAX,
@@ -707,7 +853,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCIC) {
+    Device (PCIC)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE4_P2_SEGMENT)
@@ -715,15 +862,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE4_P2_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -744,10 +899,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE4_P2_CFG_BASE,
                          BAIKAL_ACPI_PCIE4_P2_CFG_MAX,
@@ -765,7 +923,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       NATIVE_PCIE_OSC
     }
 
-    Device (PCID) {
+    Device (PCID)
+    {
       Name (_HID, EISAID ("PNP0A08"))
       Name (_CID, EISAID ("PNP0A03"))
       Name (_UID, BAIKAL_ACPI_PCIE4_P3_SEGMENT)
@@ -773,15 +932,23 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (_SEG, BAIKAL_ACPI_PCIE4_P3_SEGMENT)
       Name (_BBN, Zero)
 
-      Name (_PRT, Package() {
+      Method (_STA)
+      {
+        Return (0xF)
+      }
+
+      Name (_PRT, Package()
+      {
         Package() { 0x0000FFFF, 0, Zero, Zero },
         Package() { 0x0000FFFF, 1, Zero, Zero },
         Package() { 0x0000FFFF, 2, Zero, Zero },
         Package() { 0x0000FFFF, 3, Zero, Zero }
       })
 
-      Method (_CRS, 0, Serialized) {
-        Store (ResourceTemplate () {
+      Method (_CRS, 0, Serialized)
+      {
+        Store (ResourceTemplate ()
+        {
           BUS_RES
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE_MEM_BASE,
@@ -802,10 +969,13 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1) {
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      Device (RES0) {
+      Device (RES0)
+      {
         Name (_ADR, Zero)
-        Method (_CRS, 0, Serialized) {
-          Store (ResourceTemplate () {
+        Method (_CRS, 0, Serialized)
+        {
+          Store (ResourceTemplate ()
+          {
             QWordMemory (,, MinFixed, MaxFixed,,, 0x0,
                          BAIKAL_ACPI_PCIE4_P3_CFG_BASE,
                          BAIKAL_ACPI_PCIE4_P3_CFG_MAX,

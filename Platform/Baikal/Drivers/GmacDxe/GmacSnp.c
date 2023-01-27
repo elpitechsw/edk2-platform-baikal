@@ -350,7 +350,10 @@ GmacSnpGetStatus (
     break;
 
   case EfiSimpleNetworkStarted:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpGetStatus: SNP not initialized\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpGetStatus: SNP not initialized\n",
+      Gmac->Regs));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
 
@@ -359,7 +362,12 @@ GmacSnpGetStatus (
     return EFI_NOT_STARTED;
 
   default:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpGetStatus: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpGetStatus: SNP invalid state = %u\n",
+      Gmac->Regs,
+      Snp->Mode->State
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
@@ -611,7 +619,12 @@ GmacSnpInstanceDestructor (
 
   Status = gBS->FreePool (Gmac);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "%a: unable to free GMAC_INSTANCE, Status = %r\n", __FUNCTION__, Status));
+    DEBUG ((
+      EFI_D_ERROR,
+      "%a: unable to free GMAC_INSTANCE, Status = %r\n",
+      __FUNCTION__,
+      Status
+      ));
     return Status;
   }
 
@@ -781,17 +794,30 @@ GmacSnpInitialize (
     break;
 
   case EfiSimpleNetworkInitialized:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpInitialize: SNP already initialized\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpInitialize: SNP already initialized\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_SUCCESS;
 
   case EfiSimpleNetworkStopped:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpInitialize: SNP not started\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpInitialize: SNP not started\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
 
   default:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpInitialize: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpInitialize: SNP invalid state = %u\n",
+      Gmac->Regs,
+      Snp->Mode->State
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
@@ -839,7 +865,11 @@ GmacSnpInitialize (
   }
 
   if (!Limit) {
-    DEBUG ((EFI_D_ERROR, "Gmac(%p)SnpInitialize: GMAC reset not completed\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_ERROR,
+      "Gmac(%p)SnpInitialize: GMAC reset not completed\n",
+      Gmac->Regs
+      ));
     return EFI_DEVICE_ERROR;
   }
 
@@ -1091,17 +1121,30 @@ GmacSnpReceiveFilters (
     break;
 
   case EfiSimpleNetworkStarted:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceiveFilters: SNP not initialized\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpReceiveFilters: SNP not initialized\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
 
   case EfiSimpleNetworkStopped:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceiveFilters: SNP not started\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpReceiveFilters: SNP not started\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
 
   default:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceiveFilters: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpReceiveFilters: SNP invalid state = %u\n",
+      Gmac->Regs,
+      Snp->Mode->State
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
@@ -1208,7 +1251,7 @@ GmacSnpStationAddress (
 
   ASSERT (Snp != NULL);
 
-  DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress()\n", Gmac->Regs));
+  DEBUG ((EFI_D_INFO | EFI_D_NET, "Gmac(%p)SnpStationAddress()\n", Gmac->Regs));
   SavedTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
   switch (Snp->Mode->State) {
@@ -1216,23 +1259,40 @@ GmacSnpStationAddress (
     break;
 
   case EfiSimpleNetworkStarted:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: SNP not initialized\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpStationAddress: SNP not initialized\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
 
   case EfiSimpleNetworkStopped:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: SNP not started\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpStationAddress: SNP not started\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
 
   default:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpStationAddress: SNP invalid state = %u\n",
+      Gmac->Regs,
+      Snp->Mode->State
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
 
   if (Reset) {
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpStationAddress: reset MAC address\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpStationAddress: reset MAC address\n",
+      Gmac->Regs
+      ));
     Snp->Mode->CurrentAddress = Snp->Mode->PermanentAddress;
   } else {
     if (NewMacAddr == NULL) {
@@ -1252,7 +1312,7 @@ GmacSnpStationAddress (
                            Snp->Mode->CurrentAddress.Addr[3] << 24;
 
   DEBUG ((
-    EFI_D_NET,
+    EFI_D_INFO | EFI_D_NET,
     "Gmac(%p)SnpStationAddress: current MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n",
     Gmac->Regs,
     Snp->Mode->CurrentAddress.Addr[0],
@@ -1361,17 +1421,30 @@ GmacSnpReceive ( // Receive a packet from a network interface
     break;
 
   case EfiSimpleNetworkStarted:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: SNP not initialized\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpReceive: SNP not initialized\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
 
   case EfiSimpleNetworkStopped:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: SNP not started\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpReceive: SNP not started\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
 
   default:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpReceive: SNP invalid state = %u\n",
+      Gmac->Regs,
+      Snp->Mode->State
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
@@ -1384,7 +1457,13 @@ GmacSnpReceive ( // Receive a packet from a network interface
       CONST UINTN  FrameLen = (Gmac->Dma->RxDescs[Gmac->RxDescReadIdx].Rdes0 >> RDES0_FL_POS) & RDES0_FL_MSK;
 
       if (*BufSize < FrameLen) {
-        DEBUG ((EFI_D_NET, "Gmac(%p)SnpReceive: receive BufSize(%u) < FrameLen(%u)\n", Gmac->Regs, *BufSize, FrameLen));
+        DEBUG ((
+          EFI_D_INFO | EFI_D_NET,
+          "Gmac(%p)SnpReceive: receive BufSize(%u) < FrameLen(%u)\n",
+          Gmac->Regs,
+          *BufSize,
+          FrameLen
+          ));
         Status = EFI_BUFFER_TOO_SMALL;
       }
 
@@ -1457,23 +1536,42 @@ GmacSnpTransmit (
     break;
 
   case EfiSimpleNetworkStarted:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP not initialized\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpTransmit: SNP not initialized\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
 
   case EfiSimpleNetworkStopped:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP not started\n", Gmac->Regs));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpTransmit: SNP not started\n",
+      Gmac->Regs
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_NOT_STARTED;
 
   default:
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: SNP invalid state = %u\n", Gmac->Regs, Snp->Mode->State));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpTransmit: SNP invalid state = %u\n",
+      Gmac->Regs,
+      Snp->Mode->State
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_DEVICE_ERROR;
   }
 
   if (BufSize < Snp->Mode->MediaHeaderSize) {
-    DEBUG ((EFI_D_NET, "Gmac(%p)SnpTransmit: Transmit BufSize(%u) < MediaHeaderSize(%u)\n", Gmac->Regs, BufSize, Snp->Mode->MediaHeaderSize));
+    DEBUG ((
+      EFI_D_INFO | EFI_D_NET,
+      "Gmac(%p)SnpTransmit: Transmit BufSize(%u) < MediaHeaderSize(%u)\n",
+      Gmac->Regs,
+      BufSize,
+      Snp->Mode->MediaHeaderSize
+      ));
     gBS->RestoreTPL (SavedTpl);
     return EFI_BUFFER_TOO_SMALL;
   }
@@ -1481,7 +1579,7 @@ GmacSnpTransmit (
   if (HdrSize != 0) {
     if (HdrSize != Snp->Mode->MediaHeaderSize) {
       DEBUG ((
-        EFI_D_NET,
+        EFI_D_INFO | EFI_D_NET,
         "Gmac(%p)SnpTransmit: HdrSize(%u) != Snp->Mode->MediaHeaderSize(%u)\n",
         Gmac->Regs,
         HdrSize,
@@ -1493,7 +1591,7 @@ GmacSnpTransmit (
 
     if (DstAddr == NULL || Protocol == NULL) {
       DEBUG ((
-        EFI_D_NET,
+        EFI_D_INFO | EFI_D_NET,
         "Gmac(%p)SnpTransmit: Hdr DstAddr(%p) or Protocol(%p) is NULL\n",
         Gmac->Regs,
         DstAddr,
