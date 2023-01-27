@@ -26,6 +26,7 @@
 
 [LibraryClasses]
   I2cLib
+  PrintLib
   TimeBaseLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
