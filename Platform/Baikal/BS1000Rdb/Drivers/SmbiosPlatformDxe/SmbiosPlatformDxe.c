@@ -17,7 +17,11 @@
 #include <Protocol/Smbios.h>
 #include <Protocol/SpdClient.h>
 
+#ifdef ELPITECH
+STATIC CHAR8  BaikalModel[] = "ET-113";
+#else
 STATIC CHAR8  BaikalModel[] = "DBS";
+#endif
 
 #define BAIKAL_SMBIOS_STRING(Str)  Str "\0"
 #define BAIKAL_SMBIOS_TABLE_HANDLE(Type, Num)  ((Type) << 8 | (Num))
