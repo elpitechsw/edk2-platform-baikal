@@ -859,6 +859,8 @@ PciHostBridgeLibConstructor (
       0
       );
 
+    gBS->Stall (1000);
+
     if (PciePerstBases[PcieIdx]) { /* deassert resets */
       if (PciePerstPolarity[PcieIdx]) {
         GpioOutSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
