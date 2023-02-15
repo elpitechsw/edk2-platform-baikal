@@ -495,8 +495,20 @@ PciHostBridgeLibConstructor (
       ASSERT ((CfgSize & (SIZE_1MB - 1)) == 0);
 
       PcieIdxs[Iter] = PcieIdx;
-      mPcieCfgBases[PcieIdx] = CfgBase;
-      PcieCfgSizes[PcieIdx] = CfgSize;
+      mPcieCfgBases[PcieIdx] = (CfgBase & ~0xfffffffULL) + SIZE_1MB;
+      if (mPcieCfgBases[PcieIdx] < CfgBase) {
+        DEBUG((EFI_D_ERROR, "PcieRoot(0x%x): Invalid config region @ %llx\n",
+               PcieIdx, CfgBase));
+        continue;
+      }
+      PcieCfgSizes[PcieIdx] = CfgSize - (mPcieCfgBases[PcieIdx] - CfgBase);
+      if (PcieCfgSizes[PcieIdx] < SIZE_2MB) {
+        DEBUG((EFI_D_ERROR, "PcieRoot(0x%x): Invalid size for config region @ %llx\n",
+               PcieIdx, CfgBase));
+        continue;
+      } else if (PcieCfgSizes[PcieIdx] > (SIZE_1MB * 255)) {
+        PcieCfgSizes[PcieIdx] = SIZE_1MB * 255;
+      }
     } else {
       continue;
     }
