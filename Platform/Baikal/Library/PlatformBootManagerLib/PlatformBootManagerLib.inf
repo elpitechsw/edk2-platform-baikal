@@ -39,8 +39,6 @@
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
-  gBaikalTokenSpaceGuid.PcdVduLvdsMode
-  gBaikalTokenSpaceGuid.PcdUart1Mode
 
 [Guids]
   gEdkiiNonDiscoverableEhciDeviceGuid
@@ -57,4 +55,3 @@
   gEfiPciRootBridgeIoProtocolGuid
   gEsrtManagementProtocolGuid
   gPlatformBootManagerProtocolGuid
-  gFdtClientProtocolGuid

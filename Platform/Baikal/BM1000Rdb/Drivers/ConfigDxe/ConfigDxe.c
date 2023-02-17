@@ -18,6 +18,7 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Platform/ConfigVars.h>
 #include <Protocol/FruClient.h>
+#include <Protocol/FdtClient.h>
 #include "ConfigDxeFormSetGuid.h"
 
 extern UINT8  ConfigDxeHiiBin[];
@@ -195,6 +196,56 @@ SetupVariables (
   return EFI_SUCCESS;
 }
 
+#if defined(ELP_2) || defined(ELP_3) || defined(ELP_5)
+STATIC
+VOID
+EFIAPI
+FixupFdt (
+  VOID
+  )
+{
+  FDT_CLIENT_PROTOCOL             *FdtClient;
+  EFI_STATUS                       Status;
+  INT32                            Node = 0, SubNode;
+
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+#ifdef ELP_2 /* et-101 family board */
+  if (PcdGet32(PcdVduLvdsMode) == 0) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "vdu-lvds", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->SetNodeProperty (
+            FdtClient,
+            Node,
+            "status",
+            "disabled",
+            9
+	    );
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't update vdu_lvds status - %r\n", Status));
+    }
+  }
+#endif
+
+  if (PcdGet32(PcdUart1Mode) == 0) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "serial1", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->FindNextSubnode(FdtClient, "ps2mult", Node, &SubNode);
+      if(Status == EFI_SUCCESS) {
+        Status = FdtClient->DeleteNode(FdtClient, SubNode);
+      }
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't delete ps2mult node - %r\n", Status));
+    }
+  }
+}
+#endif
+
 STATIC
 VOID
 EFIAPI
@@ -207,6 +258,10 @@ OnReadyToBoot (
   UINTN                 Size;
   FRU_CLIENT_PROTOCOL  *FruClient;
   EFI_STATUS            Status;
+
+#if defined(ELP_2) || defined(ELP_3) || defined(ELP_5)
+  FixupFdt();
+#endif
 
   Size = sizeof (UINT32);
   Status = gRT->GetVariable (

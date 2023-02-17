@@ -32,7 +32,6 @@
 #include <Protocol/PciIo.h>
 #include <Protocol/PciRootBridgeIo.h>
 #include <Protocol/PlatformBootManager.h>
-#include <Protocol/FdtClient.h>
 
 #define DP_NODE_LEN(Type) { (UINT8)sizeof (Type), (UINT8)(sizeof (Type) >> 8) }
 
@@ -629,53 +628,6 @@ PlatformRegisterOptionsAndKeys (
   ASSERT (Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED);
 }
 
-#define VDU_LVDS      0x202D0000
-
-VOID
-EFIAPI
-FixupFdt (
-  VOID
-  )
-{
-  FDT_CLIENT_PROTOCOL             *FdtClient;
-  EFI_STATUS                       Status;
-  INT32                            Node = 0, SubNode;
-
-  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
-  if (EFI_ERROR (Status)) {
-    return;
-  }
-
-  if (PcdGet32(PcdVduLvdsMode) == 0) {
-    Status = FdtClient->FindNodeByAlias (FdtClient, "vdu-lvds", &Node);
-    if(Status == EFI_SUCCESS) {
-      Status = FdtClient->SetNodeProperty (
-            FdtClient,
-            Node,
-            "status",
-	    "disabled",
-            9
-	    );
-    }
-    if (EFI_ERROR(Status)) {
-      DEBUG((EFI_D_ERROR, "Can't update vdu_lvds status - %r\n", Status));
-    }
-  }
-
-  if (PcdGet32(PcdUart1Mode) == 0) {
-    Status = FdtClient->FindNodeByAlias (FdtClient, "serial1", &Node);
-    if(Status == EFI_SUCCESS) {
-      Status = FdtClient->FindNextSubnode(FdtClient, "ps2mult", Node, &SubNode);
-      if(Status == EFI_SUCCESS) {
-        Status = FdtClient->DeleteNode(FdtClient, SubNode);
-      }
-    }
-    if (EFI_ERROR(Status)) {
-      DEBUG((EFI_D_ERROR, "Can't delete ps2mult node - %r\n", Status));
-    }
-  }
-}
-
 //
 // BDS Platform Functions
 //
@@ -774,8 +726,6 @@ PlatformBootManagerBeforeConsole (
   // Register platform-specific boot options and keyboard shortcuts.
   //
   PlatformRegisterOptionsAndKeys ();
-
-  FixupFdt ();
 }
 
 STATIC
