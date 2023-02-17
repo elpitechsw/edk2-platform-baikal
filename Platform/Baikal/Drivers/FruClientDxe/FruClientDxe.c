@@ -14,7 +14,6 @@
 #include <Protocol/FruClient.h>
 #include "FruInternals.h"
 
-#define EEPROM_SIZE              4096
 #define EEPROM_WRITE_SIZE        16
 
 #define MULTIRECORD_TYPEID_MAC0  0xC0
@@ -176,6 +175,7 @@ STATIC UINTN                  mFruAddr;
 STATIC EFI_PHYSICAL_ADDRESS   mFruI2cBase;
 STATIC UINT8                 *mFruBuf;
 STATIC UINTN                  mFruBufSize;
+STATIC UINTN                  mFruOffsetSize;
 
 EFI_STATUS
 EFIAPI
@@ -223,22 +223,37 @@ FruClientDxeInitialize (
     return Status;
   }
 
-  if (FdtClient->FindCompatibleNode (FdtClient, "atmel,24c32", &Node) == EFI_SUCCESS &&
-      FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
-      PropSize == 4) {
-    mFruAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
-    if (mFruAddr >= 0x50 && mFruAddr <= 0x57 &&
-        FdtClient->FindParentNode  (FdtClient, Node, &Node) == EFI_SUCCESS &&
-        FdtClient->IsNodeEnabled   (FdtClient, Node) &&
-        FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
-        PropSize == 16) {
-      mFruI2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+  if (FdtClient->FindNodeByAlias (FdtClient, "fru", &Node) == EFI_SUCCESS &&
+      FdtClient->GetNodeProperty (FdtClient, Node, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
+    if (AsciiStrCmp((CHAR8 *)Prop, "atmel,24c32") == 0) {
+      mFruBufSize = 4096;
+      mFruOffsetSize = 2;
+    } else if (AsciiStrCmp((CHAR8 *)Prop, "atmel,24c02") == 0) {
+      mFruBufSize = 256;
+      mFruOffsetSize = 1;
     } else {
-      mFruAddr = 0;
+      DEBUG((EFI_D_ERROR, "%a: Unknown fru \"compatible\" property (%a)\n",
+        __FUNCTION__, (UINT8 *)Prop));
+      return EFI_NOT_FOUND;
+    }
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+      PropSize == 4) {
+      mFruAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+      if (mFruAddr >= 0x50 && mFruAddr <= 0x57 &&
+          FdtClient->FindParentNode  (FdtClient, Node, &Node) == EFI_SUCCESS &&
+          FdtClient->IsNodeEnabled   (FdtClient, Node) &&
+          FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+          PropSize == 16) {
+        mFruI2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+      } else {
+        mFruAddr = 0;
+        mFruBufSize = 0;
+        return EFI_NOT_FOUND;
+      }
     }
   }
 
-  Status = gBS->AllocatePool (EfiBootServicesData, EEPROM_SIZE, (VOID **) &mFruBuf);
+  Status = gBS->AllocatePool (EfiBootServicesData, mFruBufSize, (VOID **) &mFruBuf);
   if (EFI_ERROR (Status)) {
     DEBUG ((
       EFI_D_ERROR,
@@ -254,29 +269,27 @@ FruClientDxeInitialize (
                     mFruI2cBase,
                     mFruAddr,
                     (UINT8 *) &FruMemAddr,
-                    sizeof (FruMemAddr),
+                    mFruOffsetSize,
                     mFruBuf,
-                    EEPROM_SIZE
+                    mFruBufSize
                     );
 
-    if (I2cRxedSize == EEPROM_SIZE) {
-      mFruBufSize = I2cRxedSize;
-    } else {
+    if (I2cRxedSize != mFruBufSize) {
       DEBUG((EFI_D_ERROR, "Can't read fru (size %d). Retrying...\n", I2cRxedSize));
       I2cRxedSize = I2cTxRx (
                       mFruI2cBase,
                       mFruAddr,
                       (UINT8 *) &FruMemAddr,
-                      sizeof (FruMemAddr),
+                      mFruOffsetSize,
                       mFruBuf,
-                      EEPROM_SIZE
+                      mFruBufSize
                       );
 
-      if (I2cRxedSize == EEPROM_SIZE) {
-        mFruBufSize = I2cRxedSize;
-	DEBUG((EFI_D_ERROR, "Retried OK.\n"));
+      if (I2cRxedSize == mFruBufSize) {
+        DEBUG((EFI_D_ERROR, "Retried OK.\n"));
       } else {
         DEBUG((EFI_D_ERROR, "Retry failed (size %d).\n", I2cRxedSize));
+        mFruBufSize = 0;
         return EFI_DEVICE_ERROR;
       }
     }
@@ -319,7 +332,7 @@ FruClientDxeInitialize (
   }
 
 #if !defined(MDEPKG_NDEBUG)
-  if (mFruBufSize == EEPROM_SIZE) {
+  if (mFruBufSize > 0) {
     UINTN            RetVal;
     CHAR8            Str[FRU_TYPLENSTR_MAX_SIZE];
 
@@ -444,7 +457,7 @@ FruClientGetBoardMfgDateTime (
   UINTN         BoardAreaSize;
   EFI_STATUS    Status;
 
-  if (mFruBufSize != EEPROM_SIZE) {
+  if (mFruBufSize == 0) {
     return 0;
   }
 
@@ -611,7 +624,7 @@ FruClientGetMultirecordMacAddr (
 
   ASSERT (MacAddr != NULL);
 
-  if (mFruBufSize != EEPROM_SIZE) {
+  if (mFruBufSize == 0) {
     return EFI_DEVICE_ERROR;
   }
 
@@ -715,7 +728,7 @@ FruReadTypLenEncBoardData (
   ASSERT (DstBuf != NULL);
   ASSERT (DstBufSize > 0);
 
-  if (mFruBufSize != EEPROM_SIZE) {
+  if (mFruBufSize == 0) {
     return 0;
   }
 
@@ -760,7 +773,7 @@ FruReadTypLenEncProductData (
   ASSERT (DstBuf != NULL);
   ASSERT (DstBufSize > 0);
 
-  if (mFruBufSize != EEPROM_SIZE) {
+  if (mFruBufSize == 0) {
     return 0;
   }
 
@@ -844,8 +857,8 @@ FruClientSetBoardPowerPolicy (
       I2cRxedSize = I2cTxRx (
                       mFruI2cBase,
                       mFruAddr,
-                      WriteBuf,
-                      EEPROM_WRITE_SIZE + 2,
+                      WriteBuf + 2 - mFruOffsetSize,
+                      EEPROM_WRITE_SIZE + mFruOffsetSize,
                       NULL,
                       0
                     );
