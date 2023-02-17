@@ -28,6 +28,7 @@
   UefiDriverEntryPoint
   UefiLib
   GpioLib
+  I2cLib
 
 [Depex]
   TRUE
