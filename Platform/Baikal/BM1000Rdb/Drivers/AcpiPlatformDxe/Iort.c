@@ -123,19 +123,19 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     // Thus RIDBus is 0.
     //
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE0_SEGMENT,
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             0,
                              0),
 #ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE1_SEGMENT,
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             1,
                              0),
 #endif
 #ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE2_SEGMENT,
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             2,
                              0),
 #endif
-
+#ifndef ELPITECH
     //
     // These are synthetic segments covering devices on busses 2, 3, 4 and 5
     // for each of the real segments. This allows consuming devices with
@@ -180,6 +180,7 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 5),
                              BAIKAL_ACPI_PCIE2_SEGMENT,
                              5),
+#endif
 #endif
   }
 };

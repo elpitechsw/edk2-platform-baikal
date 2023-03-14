@@ -14,7 +14,7 @@
   /* UINT16  PciSegmentGroupNumber */             \
   Segment,                                        \
   /* UINT8   StartBusNumber        */             \
-   0,                                             \
+   1,                                             \
   /* UINT8   EndBusNumber          */             \
   255,                                            \
   /* UINT32  Reserved              */             \

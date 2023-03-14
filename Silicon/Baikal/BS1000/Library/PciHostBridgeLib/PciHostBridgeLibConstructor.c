@@ -819,9 +819,9 @@ PciHostBridgeLibConstructor (
     PciHostBridgeLibCfgWindow (
       mPcieDbiBases[PcieIdx],
       0,
-      mPcieCfgBases[PcieIdx],
+      mPcieCfgBases[PcieIdx] + SIZE_1MB,
       0, // See AcpiPlatformDxe/Iort.c for implications of using 0 here instead of encoding the bus
-      mPcieCfgSizes[PcieIdx] >= SIZE_2MB ? SIZE_2MB : mPcieCfgSizes[PcieIdx],
+      SIZE_64KB,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
       );
@@ -830,9 +830,9 @@ PciHostBridgeLibConstructor (
     PciHostBridgeLibCfgWindow (
       mPcieDbiBases[PcieIdx],
       1,
-      mPcieCfgBases[PcieIdx],
+      mPcieCfgBases[PcieIdx] + SIZE_2MB,
       0,
-      mPcieCfgSizes[PcieIdx] > SIZE_2MB ? mPcieCfgSizes[PcieIdx] - SIZE_2MB : 0,
+      mPcieCfgSizes[PcieIdx] - SIZE_2MB,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
       );

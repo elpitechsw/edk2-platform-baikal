@@ -327,9 +327,11 @@ ProcessBridgeForSsdt (
 
   Index = UefiSeg;
   AcpiSeg = AcpiSegs[UefiSeg];
+#ifndef ELPITECH
   if (Bus > 1) {
     AcpiSeg = SYNTH_SEG(AcpiSeg, Bus);
   }
+#endif
 
   DEBUG ((
     DEBUG_ERROR,
