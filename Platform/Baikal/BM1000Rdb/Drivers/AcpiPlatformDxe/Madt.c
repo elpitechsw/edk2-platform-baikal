@@ -59,7 +59,6 @@ typedef struct {
   EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER  Table;
   EFI_ACPI_6_4_GIC_STRUCTURE                           GicC[BAIKAL_MADT_CPU_COUNT];
   EFI_ACPI_6_4_GIC_DISTRIBUTOR_STRUCTURE               GicD;
-  EFI_ACPI_6_4_GIC_MSI_FRAME_STRUCTURE                 GicMsiFrame;
   EFI_ACPI_6_4_GIC_ITS_STRUCTURE                       GicIts;
 } BAIKAL_ACPI_MADT;
 
@@ -105,24 +104,6 @@ STATIC BAIKAL_ACPI_MADT  Madt = {
     { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE }
   },
   {
-    /* UINT8   Type                      */
-    EFI_ACPI_6_4_GIC_MSI_FRAME,
-    /* UINT8   Length                    */
-    sizeof (EFI_ACPI_6_4_GIC_MSI_FRAME_STRUCTURE),
-    /* UINT16  Reserved1                 */
-    EFI_ACPI_RESERVED_WORD,
-    /* UINT16  GicMsiFrameId             */
-    0,
-    /* UINT64  PhysicalBaseAddress       */
-    FixedPcdGet64 (PcdGicDistributorBase),
-    /* UINT32  Flags                     */
-    EFI_ACPI_6_4_SPI_COUNT_BASE_SELECT,
-    /* UINT16  SPICount                  */
-    200,
-    /* UINT16  SPIBase                   */
-    600
-  },
-  {
     /* UINT8   Type                */
     EFI_ACPI_6_4_GIC_ITS,
     /* UINT8   Length              */
@@ -148,11 +129,9 @@ MadtInit (
   case ACPI_MSI_NONE:
   default:
     Madt.GicIts.Type      = RESERVED_MADT_TYPE;
-    Madt.GicMsiFrame.Type = RESERVED_MADT_TYPE;
     break;
 
   case ACPI_MSI_ITS:
-    Madt.GicMsiFrame.Type = RESERVED_MADT_TYPE;
     break;
 
   case ACPI_MSI_V2M:
