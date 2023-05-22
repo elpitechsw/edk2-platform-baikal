@@ -213,7 +213,7 @@ FixupFdt (
     return;
   }
 
-#ifdef ELP_2 /* et-101 family board */
+#if defined(ELP_2) || defined(ELP_5) /* et-101 family board */
   if (PcdGet32(PcdVduLvdsMode) == 0) {
     Status = FdtClient->FindNodeByAlias (FdtClient, "vdu-lvds", &Node);
     if(Status == EFI_SUCCESS) {
