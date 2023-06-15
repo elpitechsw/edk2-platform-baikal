@@ -81,7 +81,9 @@
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
+!if $(BAIKAL_ELP) == FALSE
   EspiLib|Silicon/Baikal/Library/EspiLib/EspiLib.inf
+!endif
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
@@ -236,7 +238,9 @@
   ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
   Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
+!if $(BAIKAL_ELP) == FALSE
   Platform/Baikal/Drivers/EspiFlashBlockIoDxe/EspiFlashBlockIoDxe.inf
+!endif
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   Platform/Baikal/BM1000Rdb/Drivers/EuiClientDxe/EuiClientDxe.inf
   Platform/Baikal/BM1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
@@ -442,4 +446,5 @@
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode|L"AcpiPcie"|gConfigDxeFormSetGuid|0x0|1
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|L"VduLvds"|gConfigDxeFormSetGuid|0x0|0
   gBaikalTokenSpaceGuid.PcdUart1Mode|L"Uart1"|gConfigDxeFormSetGuid|0x0|1
+  gBaikalTokenSpaceGuid.PcdM2PcieMode|L"M2Pcie"|gConfigDxeFormSetGuid|0x0|1
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5
