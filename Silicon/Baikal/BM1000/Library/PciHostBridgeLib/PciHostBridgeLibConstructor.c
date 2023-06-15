@@ -408,6 +408,7 @@ PciHostBridgeLibConstructor (
   UINTN                 PcieNumLanes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   INTN                  PciePerstGpios[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   INTN                  PciePerstPolarity[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  INTN                  PcieMaxLinkSpeed[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   UINTN                 PcieMsiDevs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   UINTN                 PcieCfgSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   UINTN                 PcieIdxs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
@@ -571,6 +572,13 @@ PciHostBridgeLibConstructor (
       }
     } else {
       PciePerstGpios[PcieIdx] = -1;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "max-link-speed", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 4) {
+      PcieMaxLinkSpeed[PcieIdx] = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+    } else {
+      PcieMaxLinkSpeed[PcieIdx] = 3;
     }
 
     if (FdtClient->GetNodeProperty (FdtClient, Node, "msi-map", &Prop, &PropSize) == EFI_SUCCESS &&
@@ -863,7 +871,7 @@ PciHostBridgeLibConstructor (
        mPcieDbiBases[PcieIdx] +
        BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG,
       ~BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG_TRGT_LNK_SPEED_BITS,
-       1
+       PcieMaxLinkSpeed[PcieIdx]
       );
 
     MmioOr32 (BM1000_PCIE_GPR_GENCTL_REG (PcieIdx), BM1000_PCIE_GPR_GENCTL_LTSSM_EN);
