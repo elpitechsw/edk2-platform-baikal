@@ -39,3 +39,9 @@
 #string STR_PPOL_HELP         #language en-US "Wait for PowerButton or autoboot when power is connected"
 #string STR_PPOL_OFF          #language en-US "Off"
 #string STR_PPOL_AUTO         #language en-US "Auto"
+
+#string STR_M2_PCIE_PROMPT    #language en-US "M2 PCIe Speed"
+#string STR_M2_PCIE_HELP      #language en-US "Set Max PCIe Speed for M2 slot"
+#string STR_M2_PCIE_GEN1      #language en-US "1"
+#string STR_M2_PCIE_GEN2      #language en-US "2"
+#string STR_M2_PCIE_GEN3      #language en-US "3"

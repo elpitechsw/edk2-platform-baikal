@@ -58,6 +58,7 @@
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode
   gBaikalTokenSpaceGuid.PcdVduLvdsMode
   gBaikalTokenSpaceGuid.PcdUart1Mode
+  gBaikalTokenSpaceGuid.PcdM2PcieMode
 
 [Depex]
   gPcdProtocolGuid

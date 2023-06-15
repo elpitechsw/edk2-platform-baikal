@@ -42,4 +42,11 @@ typedef struct {
   UINT32  Mode;
 } PPOL_VARSTORE_DATA;
 
+typedef struct {
+#define PCIE_GEN1         1
+#define PCIE_GEN2         2
+#define PCIE_GEN3         3
+  UINT32  Mode;
+} M2_PCIE_VARSTORE_DATA;
+
 #endif // CONFIG_VARS_H_

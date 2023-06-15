@@ -8,6 +8,7 @@
  **/
 
 #include <Uefi.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/DxeServicesLib.h>
@@ -104,7 +105,9 @@ SetupVariables (
 {
   UINTN                 Size;
   UINT32                Var32;
+  INT32                 Node;
   FRU_CLIENT_PROTOCOL  *FruClient;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
   EFI_STATUS            Status;
 
   Size = sizeof (UINT32);
@@ -191,6 +194,44 @@ SetupVariables (
                   &Var32
                   );
     ASSERT_EFI_ERROR (Status);
+  }
+
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"M2Pcie",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status) || Var32 < PCIE_GEN1 || Var32 > PCIE_GEN3) {
+    Var32 = PCIE_GEN3;
+    Status = gRT->SetVariable (
+                  L"M2Pcie",
+                  &gConfigDxeFormSetGuid,
+                  EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                  sizeof(Var32),
+                  &Var32
+                  );
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gFdtClientProtocolGuid,
+                  NULL,
+                  (VOID **) &FdtClient
+                  );
+  if (Status == EFI_SUCCESS) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "m2-pcie", &Node);
+    if (Status == EFI_SUCCESS) {
+      UINT32 Prop = SwapBytes32 (Var32);
+      Status = FdtClient->SetNodeProperty (
+            FdtClient,
+            Node,
+	    "max-link-speed",
+            &Prop,
+            sizeof(Prop)
+            );
+    }
   }
 
   return EFI_SUCCESS;

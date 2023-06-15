@@ -47,6 +47,11 @@ formset
     name      = PowerPolicy,
     guid      = CONFIG_DXE_FORM_SET_GUID;
 
+  efivarstore M2_PCIE_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = M2Pcie,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
   form formid = 1,
     title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
     subtitle text = STRING_TOKEN(STR_NULL_STRING);
@@ -89,8 +94,17 @@ formset
       prompt      = STRING_TOKEN(STR_PPOL_PROMPT),
       help        = STRING_TOKEN(STR_PPOL_HELP),
       flags       = NUMERIC_SIZE_4 | INTERACTIVE,
-      option text = STRING_TOKEN(STR_PPOL_OFF), value = PPOL_OFF, flags = DEFAULT;
-      option text = STRING_TOKEN(STR_PPOL_AUTO),  value = PPOL_AUTO,  flags = 0;
+      option text = STRING_TOKEN(STR_PPOL_OFF),  value = PPOL_OFF,  flags = DEFAULT;
+      option text = STRING_TOKEN(STR_PPOL_AUTO), value = PPOL_AUTO, flags = 0;
+    endoneof;
+
+    oneof varid = M2Pcie.Mode,
+      prompt      = STRING_TOKEN(STR_M2_PCIE_PROMPT),
+      help        = STRING_TOKEN(STR_M2_PCIE_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_M2_PCIE_GEN1), value = PCIE_GEN1, flags = 0;
+      option text = STRING_TOKEN(STR_M2_PCIE_GEN2), value = PCIE_GEN2, flags = 0;
+      option text = STRING_TOKEN(STR_M2_PCIE_GEN3), value = PCIE_GEN3, flags = DEFAULT;
     endoneof;
   endform;
 endformset;
