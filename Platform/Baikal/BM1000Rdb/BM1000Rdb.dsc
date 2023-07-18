@@ -38,6 +38,9 @@
 !elseif $(BAIKAL_MBM20)
   *_*_*_CC_FLAGS = -DBAIKAL_MBM20
   *_*_*_ASLPP_FLAGS = -DBAIKAL_MBM20
+!elseif $(BAIKAL_ELP)
+  *_*_*_CC_FLAGS = -DELP_$(BOARD_VER) -DELPITECH
+  *_*_*_ASLPP_FLAGS = -DELP_$(BOARD_VER) -DELPITECH
 !endif
 
 [BuildOptions.common.EDKII.DXE_CORE,BuildOptions.common.EDKII.DXE_DRIVER,BuildOptions.common.EDKII.UEFI_DRIVER,BuildOptions.common.EDKII.UEFI_APPLICATION]
@@ -387,7 +390,9 @@
   # Unfortunately, Linux doesn't seem to handle correctly "small" apertures (i.e. 4K),
   # so round it out to the full 16-bit space.
   #
+!if $(BAIKAL_ELP) == FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciIoApertureSizeAlignment|0x10000
+!endif
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200
