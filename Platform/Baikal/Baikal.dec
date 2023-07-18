@@ -53,6 +53,7 @@
   gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase|0x0|UINT32|0x00000008
   gBaikalTokenSpaceGuid.PcdFlashNvStorageVarBase|0x0|UINT32|0x00000009
   gBaikalTokenSpaceGuid.PcdSpdInitialBase|0x0|UINT64|0x0000000A
+  gBaikalTokenSpaceGuid.PcdPs2MultUartBaseAddr|0x20240000|UINT64|0x0000000F
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x000000B
