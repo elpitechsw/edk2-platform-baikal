@@ -240,6 +240,9 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbMouseDxe/UsbMouseDxe.inf
 
+  # PS/2
+  INF Platform/Baikal/Drivers/Ps2MultDxe/Ps2MultDxe.inf
+
   # UEFI application (Shell Embedded Boot Loader)
   INF ShellPkg/Application/Shell/Shell.inf
   INF ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf
