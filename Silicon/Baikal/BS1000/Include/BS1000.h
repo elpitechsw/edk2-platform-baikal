@@ -237,12 +237,12 @@
 
 // Multichip configs support
 
-#if defined(BAIKAL_DBS) || defined(BAIKAL_DBS_OV) || defined(BAIKAL_MBS_1S) || defined(BAIKAL_QEMU_S)
-#define PLATFORM_CHIP_COUNT             1
-#define PLATFORM_ADDR_BITS_PER_CHIP     44
-#elif defined(BAIKAL_MBS_2S)
+#if defined(BAIKAL_MBS_2S)
 #define PLATFORM_CHIP_COUNT             2
 #define PLATFORM_ADDR_BITS_PER_CHIP     43
+#else
+#define PLATFORM_CHIP_COUNT             1
+#define PLATFORM_ADDR_BITS_PER_CHIP     44
 #endif
 
 #define PLATFORM_CHIP_MEM_OFFSET(chip)      ((1ULL << PLATFORM_ADDR_BITS_PER_CHIP) * (chip))

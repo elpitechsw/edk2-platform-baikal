@@ -26,6 +26,7 @@
   GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a -fno-stack-protector
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
+!if $(BAIKAL_BOARD)
   *_*_*_CC_FLAGS = -D$(BAIKAL_BOARD) -D'BAIKAL_BOARD_NAME="$(BAIKAL_BOARD_NAME)"'
   *_*_*_ASLPP_FLAGS = -D$(BAIKAL_BOARD) -D'BAIKAL_BOARD_NAME="$(BAIKAL_BOARD_NAME)"'
 
@@ -51,6 +52,11 @@
 
 !if $(USE_KRKX4)
   *_*_*_ASLPP_FLAGS = -DUSE_KRKX4
+!endif
+
+!elseif $(BAIKAL_ELP)
+  *_*_*_CC_FLAGS = -DELP_$(BOARD_VER) -DELPITECH -D'BAIKAL_BOARD_NAME="$(ELP_BOARD_NAME)"'
+  *_*_*_ASLPP_FLAGS = -DELP_$(BOARD_VER) -DELPITECH -D'BAIKAL_BOARD_NAME="$(ELP_BOARD_NAME)"'
 !endif
 
 !if $(ENABLE_CORESIGHT)
@@ -424,7 +430,9 @@
   # Unfortunately, Linux doesn't seem to handle correctly "small" apertures (i.e. 4K),
   # so round it out to the full 16-bit space.
   #
+!if $(BAIKAL_ELP) == FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciIoApertureSizeAlignment|0x10000
+!endif
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200
