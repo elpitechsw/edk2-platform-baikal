@@ -322,6 +322,9 @@
   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
   MdeModulePkg/Bus/Usb/UsbMouseDxe/UsbMouseDxe.inf
 
+  # PS/2
+  Platform/Baikal/Drivers/Ps2MultDxe/Ps2MultDxe.inf
+
   # UEFI application (Shell Embedded Boot Loader)
   ShellPkg/Application/Shell/Shell.inf {
     <LibraryClasses>

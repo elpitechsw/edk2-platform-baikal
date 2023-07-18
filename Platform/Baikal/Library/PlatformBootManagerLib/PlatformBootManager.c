@@ -94,6 +94,38 @@ STATIC PLATFORM_USB_KEYBOARD  mUsbKeyboard = {
   }
 };
 
+#pragma pack (1)
+typedef struct {
+  VENDOR_DEVICE_PATH          Vendor;
+  UINT64                      BaseAddress;
+  UINT8                       Unused;
+} NON_DISCOVERABLE_PS2_MULT;
+typedef struct {
+  NON_DISCOVERABLE_PS2_MULT   Dev;
+  EFI_DEVICE_PATH_PROTOCOL    End;
+} PLATFORM_PS2MULT_KBD;
+#pragma pack ()
+
+#define PS2MULT_DEV_GUID { \
+          0x22f1771e, 0x0910, 0x44bf, \
+          { 0xF2, 0xA1, 0x1B, 0x66, 0x99, 0xF9, 0x31, 0x5E } \
+          }
+
+STATIC PLATFORM_PS2MULT_KBD mPs2MultKbd = {
+  {
+    {
+      { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN (NON_DISCOVERABLE_PS2_MULT) },
+      PS2MULT_DEV_GUID
+    },
+    FixedPcdGet64(PcdPs2MultUartBaseAddr),
+    0
+  },
+  {
+    END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE,
+    DP_NODE_LEN (EFI_DEVICE_PATH_PROTOCOL)
+  }
+};
+
 /**
   Check if the handle satisfies a particular condition.
 
@@ -664,6 +696,12 @@ PlatformBootManagerBeforeConsole (
   //
   EfiBootManagerUpdateConsoleVariable (
     ConIn, (EFI_DEVICE_PATH_PROTOCOL *) &mUsbKeyboard, NULL);
+
+  //
+  // Add the hardcoded PS/2 multiplexer device path to ConIn.
+  //
+  EfiBootManagerUpdateConsoleVariable (ConIn,
+    (EFI_DEVICE_PATH_PROTOCOL *)&mPs2MultKbd, NULL);
 
   //
   // Add the hardcoded serial console device path to ConIn, ConOut, ErrOut.

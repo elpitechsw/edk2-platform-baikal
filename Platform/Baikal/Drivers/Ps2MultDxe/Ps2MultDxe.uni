@@ -1,0 +1,17 @@
+// /** @file
+// PS/2 Multiplexer Driver.
+//
+// PS/2 Multiplexer Driver for UEFI. The keyboard type implemented follows IBM
+// compatible PS2 protocol.
+//
+// Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+// Copyright (c) 2022, Elpitech.<BR>
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "PS/2 Multiplexer Driver"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "PS/2 Multiplexer Driver for UEFI. The keyboard type implemented follows IBM compatible PS/2 protocol."
+
