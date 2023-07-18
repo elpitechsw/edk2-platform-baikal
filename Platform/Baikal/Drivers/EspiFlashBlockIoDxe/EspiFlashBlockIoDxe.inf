@@ -1,0 +1,37 @@
+## @file
+#
+#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = EspiFlashBlockIoDxe
+  FILE_GUID                      = F7D2B53F-5B82-4C13-99A3-3403D5757263
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EspiFlashBlockIoDxeInitialize
+
+[Sources]
+  EspiFlashBlockIoDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/Baikal.dec
+  Silicon/Baikal/BM1000/BM1000.dec
+
+[LibraryClasses]
+  BaseLib
+  EspiLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+
+[Depex]
+  gFdtClientProtocolGuid

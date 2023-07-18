@@ -1,37 +1,48 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
+################################################################################
+#
+# FD Section
+# The [FD] Section is made up of the definition statements and a
+# description of what goes into  the Flash Device Image.  Each FD section
+# defines one flash "device" image.  A flash device image may be one of
+# the following: Removable media bootable image (like a boot floppy
+# image,) an Option ROM image (that would be "flashed" into an add-in
+# card,) a System "Flash"  image (that would be burned into a system's
+# flash) or an Update ("Capsule") image that will be used to update and
+# existing system flash.
+#
+################################################################################
+
 [FD.BAIKAL_EFI]
-BaseAddress   = 0x00000000|gArmTokenSpaceGuid.PcdFdBaseAddress
-Size          = 0x00200000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the FLASH Device
+BaseAddress   = 0xA0000000|gArmTokenSpaceGuid.PcdFdBaseAddress
+Size          = 0x00140000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the FLASH Device
 ErasePolarity = 1
-BlockSize     = 0x2000
-NumBlocks     = 0x100
+BlockSize     = 0x00001000
+NumBlocks     = 0x140
 
+################################################################################
 #
-# Implement the Linux kernel header layout so that the loader will identify
-# it as something bootable, and execute it with a FDT pointer in x0 or r2.
-# This area will be reused to store a copy of the FDT so round it up to 64 KiB.
+# Following are lists of FD Region layout which correspond to the locations of different
+# images within the flash device.
 #
-0x00000000|0x00010000
-DATA = {
-  0x01, 0x00, 0x00, 0x10,                         # code0: adr x1, .
-  0xff, 0x3f, 0x00, 0x14,                         # code1: b 0x10000
-  0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, # text_offset: 512 KB
-  0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, # image_size: 2 MB
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # flags
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # res2
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # res3
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # res4
-  0x41, 0x52, 0x4d, 0x64,                         # magic: "ARM\x64"
-  0x00, 0x00, 0x00, 0x00                          # res5
-}
+# Regions must be defined in ascending order and may not overlap.
+#
+# A Layout Region start with a eight digit hex offset (leading "0x" required) followed by
+# the pipe "|" character, followed by the size of the region, also in hex with the leading
+# "0x" characters. Like:
+# Offset|Size
+# PcdOffsetCName|PcdSizeCName
+# RegionType <FV, DATA, or FILE>
+#
+################################################################################
 
-0x00010000|0x00140000
+0x00000000|0x00140000
 gArmTokenSpaceGuid.PcdFvBaseAddress|gArmTokenSpaceGuid.PcdFvSize
 FV = FVMAIN_COMPACT
 
@@ -126,8 +137,8 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
-  INF Platform/Baikal/Drivers/BaikalSpiFvDxe/BaikalSpiFvDxe.inf
-  INF Platform/Baikal/Drivers/BaikalSpiBlockDxe/BaikalSpiBlockDxe.inf
+  INF Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
+  INF Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
 
   # PI DXE Drivers producing Architectural Protocols (EFI Services)
   INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
@@ -151,6 +162,7 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
+  INF Platform/Baikal/BS1000Rdb/Drivers/ArmGicLpiDxe/ArmGicLpiDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
 
@@ -160,6 +172,7 @@ READ_LOCK_STATUS   = TRUE
   INF FatPkg/EnhancedFatDxe/Fat.inf
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
+!include Features/Ext4Pkg/Ext4.fdf.inc
 
   # SMBIOS Support
   INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
@@ -192,10 +205,10 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
+  INF ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
   INF Emulator/X86EmulatorDxe/X86EmulatorDxe.inf
   INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
-  INF Silicon/Baikal/BS1000/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
 
   # NVMe
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
@@ -231,7 +244,7 @@ READ_STATUS        = TRUE
 READ_LOCK_CAP      = TRUE
 READ_LOCK_STATUS   = TRUE
 
-  INF Platform/Baikal/PrePi/PrePiUniCoreRelocatable.inf
+  INF ArmPlatformPkg/PrePi/PeiUniCore.inf
 
   FILE FV_IMAGE = 9E21FD93-9C72-4c15-8C4B-E77F1DB2D792 {
     SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE {
@@ -254,6 +267,13 @@ READ_LOCK_STATUS   = TRUE
   FILE DRIVER = $(NAMED_GUID) {
     DXE_DEPEX  DXE_DEPEX                Optional $(INF_OUTPUT)/$(MODULE_NAME).depex
     PE32       PE32                     $(INF_OUTPUT)/$(MODULE_NAME).efi
+    UI         STRING="$(MODULE_NAME)"  Optional
+  }
+
+[Rule.Common.DXE_DRIVER.BINARY]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX  DXE_DEPEX Optional       |.depex
+    PE32       PE32                     |.efi
     UI         STRING="$(MODULE_NAME)"  Optional
   }
 

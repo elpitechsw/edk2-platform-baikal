@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -47,7 +47,7 @@ EuiClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to locate UidClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -64,7 +64,7 @@ EuiClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to install EuiClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -88,9 +88,9 @@ EuiClientGetEui48 (
     MacAddr->Addr[0] = 0x4C;
     MacAddr->Addr[1] = 0xA5;
     MacAddr->Addr[2] = 0x15;
-    MacAddr->Addr[3] = (UidClient->Get32() >> 16) & 0xFF;
-    MacAddr->Addr[4] = (UidClient->Get32() >>  8) & 0xFF;
-    MacAddr->Addr[5] = (UidClient->Get32() & 0xFE) | (Base == BS1000_GMAC0_BASE ? 0 : 1);
+    MacAddr->Addr[3] = (UidClient->Get32 () >> 16) & 0xFF;
+    MacAddr->Addr[4] = (UidClient->Get32 () >>  8) & 0xFF;
+    MacAddr->Addr[5] = (UidClient->Get32 () & 0xFE) | (Base == BS1000_GMAC0_BASE ? 0 : 1);
   }
 }
 
@@ -116,5 +116,5 @@ EuiClientIsValidEui48 (
     return FALSE;
   }
 
-  return EFI_SUCCESS;
+  return TRUE;
 }

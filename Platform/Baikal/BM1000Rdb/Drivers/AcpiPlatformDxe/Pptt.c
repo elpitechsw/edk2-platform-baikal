@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -17,7 +17,7 @@
   - core L1 data cache
   - core L1 instruction cache
 */
-#define BAIKAL_PPTT_CACHE_COUNT          4
+#define BAIKAL_PPTT_CACHE_COUNT          21
 #define BAIKAL_PPTT_PACKAGE_CACHE_COUNT  1
 #define BAIKAL_PPTT_CLUSTER_CACHE_COUNT  1
 #define BAIKAL_PPTT_CORE_CACHE_COUNT     2
@@ -66,7 +66,7 @@
     BAIKAL_PPTT_CLUSTER_CACHE_COUNT                                             \
   },                                                                            \
   /* UINT32  Resource */                                                        \
-  OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[1])                                        \
+  OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Id - 7])                                   \
 }
 
 #define BAIKAL_PPTT_CORE_NODE(Id, ClusterId)  {                                 \
@@ -88,12 +88,12 @@
   },                                                                            \
   /* UINT32  Resource[2] */                                                     \
   {                                                                             \
-    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[2]),                                     \
-    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[3])                                      \
+    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Id + 5]),                                \
+    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Id + 13])                                \
   }                                                                             \
 }
 
-#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity)  {                 \
+#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity, Id)  {             \
   /* UINT8                                         Type             */ \
   EFI_ACPI_6_4_PPTT_TYPE_CACHE,                                        \
   /* UINT8                                         Length           */ \
@@ -101,7 +101,16 @@
   /* UINT8                                         Reserved[2]      */ \
   { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE },                  \
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_FLAGS       Flags            */ \
-  {},                                                                  \
+  {                                                                    \
+    EFI_ACPI_6_4_PPTT_CACHE_SIZE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_NUMBER_OF_SETS_VALID,                            \
+    EFI_ACPI_6_4_PPTT_ASSOCIATIVITY_VALID,                             \
+    EFI_ACPI_6_4_PPTT_ALLOCATION_TYPE_VALID,                           \
+    EFI_ACPI_6_4_PPTT_CACHE_TYPE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_WRITE_POLICY_VALID,                              \
+    EFI_ACPI_6_4_PPTT_LINE_SIZE_VALID,                                 \
+    EFI_ACPI_6_4_PPTT_CACHE_ID_VALID                                   \
+  },                                                                   \
   /* UINT32                                        NextLevelOfCache */ \
   0,                                                                   \
   /* UINT32                                        Size             */ \
@@ -113,7 +122,9 @@
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_ATTRIBUTES  Attributes       */ \
   {},                                                                  \
   /* UINT16                                        LineSize         */ \
-  64                                                                   \
+  64,                                                                  \
+  /* UINT32                                        CacheId          */ \
+  Id                                                                   \
 }
 
 #pragma pack(1)
@@ -181,10 +192,27 @@ STATIC BAIKAL_ACPI_PPTT  Pptt = {
     BAIKAL_PPTT_CORE_NODE (7, 3)
   },
   {
-    BAIKAL_PPTT_CACHE_NODE (0x800000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x100000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x8000, 2),
-    BAIKAL_PPTT_CACHE_NODE (0xC000, 3)
+    BAIKAL_PPTT_CACHE_NODE (0x800000, 16, 1),
+    BAIKAL_PPTT_CACHE_NODE (0x100000, 16, 2),
+    BAIKAL_PPTT_CACHE_NODE (0x100000, 16, 3),
+    BAIKAL_PPTT_CACHE_NODE (0x100000, 16, 4),
+    BAIKAL_PPTT_CACHE_NODE (0x100000, 16, 5),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 6),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 7),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 8),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 9),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 10),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 11),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 12),
+    BAIKAL_PPTT_CACHE_NODE (0x8000, 2, 13),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 14),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 15),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 16),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 17),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 18),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 19),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 20),
+    BAIKAL_PPTT_CACHE_NODE (0xC000, 3, 21)
   }
 };
 #pragma pack()
@@ -234,22 +262,27 @@ PpttInit (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_CACHE_TYPE_UNIFIED,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
-  CopyMem (&Pptt.Cache[0].Attributes, &CacheAttributes, sizeof (CacheAttributes));
-  CopyMem (&Pptt.Cache[1].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  for (Idx = 0; Idx < 5; ++Idx) {
+    CopyMem (&Pptt.Cache[Idx].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  }
 
   CacheAttributes = BAIKAL_PPTT_CACHE_ATTRIBUTES (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_ALLOCATION_READ_WRITE,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_CACHE_TYPE_DATA,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
-  CopyMem (&Pptt.Cache[2].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  for (Idx = 5; Idx < 13; ++Idx) {
+    CopyMem (&Pptt.Cache[Idx].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  }
 
   CacheAttributes = BAIKAL_PPTT_CACHE_ATTRIBUTES (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_ALLOCATION_READ,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_CACHE_TYPE_INSTRUCTION,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
-  CopyMem (&Pptt.Cache[3].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  for (Idx = 13; Idx < BAIKAL_PPTT_CACHE_COUNT; ++Idx) {
+    CopyMem (&Pptt.Cache[Idx].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  }
 
   *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Pptt;
   return EFI_SUCCESS;

@@ -1,9 +1,10 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/DebugLib.h>
+#include <Library/SmcEfuseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/EuiClient.h>
 #include <Protocol/FruClient.h>
@@ -49,7 +50,7 @@ EuiClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to locate FruClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -60,7 +61,7 @@ EuiClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to locate UidClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -77,7 +78,7 @@ EuiClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to install EuiClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -113,14 +114,30 @@ EuiClientGetEui48 (
   }
 
   if (Status == EFI_SUCCESS && EuiClientIsValidEui48 (&FruMacAddr)) {
-    gBS->CopyMem ((VOID *) &MacAddr, &FruMacAddr, sizeof (EFI_MAC_ADDRESS));
+    gBS->CopyMem ((VOID *) MacAddr, &FruMacAddr, sizeof (EFI_MAC_ADDRESS));
   } else if (!EuiClientIsValidEui48 (MacAddr)) {
+    INTN  ExtId;
+
+    ExtId = SmcEfuseGetMac ();
+    if (ExtId <= 0) {
+      ExtId = UidClient->Get32 ();
+    }
+
     MacAddr->Addr[0] = 0x4C;
     MacAddr->Addr[1] = 0xA5;
     MacAddr->Addr[2] = 0x15;
-    MacAddr->Addr[3] = (UidClient->Get32() >> 16) & 0xFF;
-    MacAddr->Addr[4] = (UidClient->Get32() >>  8) & 0xFF;
-    MacAddr->Addr[5] = (UidClient->Get32() & 0xFE) | (Base == BM1000_GMAC0_BASE ? 0 : 1);
+    MacAddr->Addr[3] = (ExtId >> 16) & 0xFF;
+    MacAddr->Addr[4] = (ExtId >>  8) & 0xFF;
+    MacAddr->Addr[5] = (ExtId >>  0) & 0xFF;
+
+    MacAddr->Addr[5] &= 0xFC;
+    if (Base == BM1000_GMAC1_BASE) {
+      MacAddr->Addr[5] |= 1;
+    } else if (Base == BM1000_XGMAC0_BASE) {
+      MacAddr->Addr[5] |= 2;
+    } else if (Base == BM1000_XGMAC1_BASE) {
+      MacAddr->Addr[5] |= 3;
+    }
   }
 }
 
@@ -146,5 +163,5 @@ EuiClientIsValidEui48 (
     return FALSE;
   }
 
-  return EFI_SUCCESS;
+  return TRUE;
 }

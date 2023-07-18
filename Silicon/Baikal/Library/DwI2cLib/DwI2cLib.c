@@ -1,11 +1,12 @@
 /** @file
-  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
 #include <Library/DebugLib.h>
 #include <Library/DwI2cLib.h>
+#include <Library/TimerLib.h>
 
 typedef struct {
   UINT32  IcCon;
@@ -52,33 +53,32 @@ typedef struct {
   UINT32  IcHsSpkLen;
 } I2C_CONTROLLER_REGS;
 
-#define IC_SPEED_MODE_FAST         2
-#define IC_CON_MASTER_MODE         BIT0
-#define IC_CON_SPEED               (IC_SPEED_MODE_FAST << 1)
-#define IC_CON_IC_SLAVE_DISABLE    BIT6
+#define IC_SPEED_MODE_FAST        2
+#define IC_CON_MASTER_MODE        BIT0
+#define IC_CON_SPEED              (IC_SPEED_MODE_FAST << 1)
+#define IC_CON_IC_SLAVE_DISABLE   BIT6
 
-#define IC_DATA_CMD_CMD            BIT8
-#define IC_DATA_CMD_STOP           BIT9
+#define IC_DATA_CMD_CMD           BIT8
+#define IC_DATA_CMD_STOP          BIT9
 
-#define IC_RAW_INTR_STAT_TX_ABRT   BIT6
+#define IC_RAW_INTR_STAT_TX_ABRT  BIT6
 
-#define IC_ENABLE_ENABLE           BIT0
+#define IC_ENABLE_ENABLE          BIT0
 
-#define IC_STATUS_TFNF             BIT1
-#define IC_STATUS_TFE              BIT2
-#define IC_STATUS_RFNE             BIT3
-#define IC_STATUS_MST_ACTIVITY     BIT5
+#define IC_STATUS_TFNF            BIT1
+#define IC_STATUS_TFE             BIT2
+#define IC_STATUS_RFNE            BIT3
+#define IC_STATUS_MST_ACTIVITY    BIT5
 
-#define IC_ENABLE_STATUS_IC_EN     BIT0
+#define IC_ENABLE_STATUS_IC_EN    BIT0
 
-#define IC_CLK                      166
-#define NANO_TO_MICRO              1000
-#define MIN_FS_SCL_HIGHTIME         600
-#define MIN_FS_SCL_LOWTIME         1300
+#define MIN_FS_SCL_HIGHTIME       600
+#define MIN_FS_SCL_LOWTIME        1300
 
 INTN
 I2cTxRx (
   IN   CONST EFI_PHYSICAL_ADDRESS  Base,
+  IN   CONST UINTN                 Iclk,
   IN   CONST UINTN                 TargetAddr,
   IN   CONST VOID * CONST          TxBuf,
   IN   CONST UINTN                 TxBufSize,
@@ -86,6 +86,7 @@ I2cTxRx (
   IN   CONST UINTN                 RxBufSize
   )
 {
+  UINT64  ActivityTimestamp;
   EFI_STATUS  Status;
   volatile I2C_CONTROLLER_REGS * CONST  I2cRegs = (volatile I2C_CONTROLLER_REGS * CONST) Base;
   UINTN  RxedSize = 0;
@@ -93,10 +94,10 @@ I2cTxRx (
   UINTN  TxedSize = 0;
   CONST UINT8 * CONST  TxPtr = (UINT8 *) TxBuf;
 
-  ASSERT(I2cRegs != NULL);
-  ASSERT(TargetAddr <= 0x7F);
-  ASSERT(TxBuf != NULL || !TxBufSize);
-  ASSERT(RxBuf != NULL || !RxBufSize);
+  ASSERT (I2cRegs != NULL);
+  ASSERT (TargetAddr <= 0x7F);
+  ASSERT (TxBuf != NULL || !TxBufSize);
+  ASSERT (RxBuf != NULL || !RxBufSize);
 
   I2cRegs->IcEnable    = 0;
   I2cRegs->IcCon       = IC_CON_IC_SLAVE_DISABLE | IC_CON_SPEED | IC_CON_MASTER_MODE;
@@ -104,15 +105,19 @@ I2cTxRx (
   I2cRegs->IcRxTl      = 0;
   I2cRegs->IcTxTl      = 0;
   I2cRegs->IcIntrMask  = 0;
-  I2cRegs->IcFsSclHcnt = (IC_CLK * MIN_FS_SCL_HIGHTIME) / NANO_TO_MICRO;
-  I2cRegs->IcFsSclLcnt = (IC_CLK * MIN_FS_SCL_LOWTIME)  / NANO_TO_MICRO;
+  I2cRegs->IcFsSclHcnt = ((UINT64)Iclk * MIN_FS_SCL_HIGHTIME + 1000000000 - 1) / 1000000000;
+  ASSERT (I2cRegs->IcFsSclHcnt + 5 > I2cRegs->IcFsSpkLen);
+  I2cRegs->IcFsSclLcnt = ((UINT64)Iclk * MIN_FS_SCL_LOWTIME  + 1000000000 - 1) / 1000000000;
+  ASSERT (I2cRegs->IcFsSclLcnt + 7 > I2cRegs->IcFsSpkLen);
   I2cRegs->IcEnable    = IC_ENABLE_ENABLE;
+  ActivityTimestamp    = GetPerformanceCounter ();
 
   for (;;) {
-    CONST  UINTN  IcStatus = I2cRegs->IcStatus;
+    CONST UINTN  IcStatus = I2cRegs->IcStatus;
 
     if (RxedSize < RxBufSize && (IcStatus & IC_STATUS_RFNE)) {
       RxPtr[RxedSize++] = I2cRegs->IcDataCmd;
+      ActivityTimestamp = GetPerformanceCounter ();
       continue;
     }
 
@@ -136,8 +141,10 @@ I2cTxRx (
           I2cRegs->IcDataCmd = Stop | IC_DATA_CMD_CMD;
         }
 
+        ActivityTimestamp = GetPerformanceCounter ();
         ++TxedSize;
-      } else if (!(IcStatus & IC_STATUS_MST_ACTIVITY)) {
+      } else if (!(IcStatus & IC_STATUS_MST_ACTIVITY) &&
+                 GetTimeInNanoSecond (GetPerformanceCounter () - ActivityTimestamp) > 100000000) {
         Status = EFI_DEVICE_ERROR;
         break;
       }
@@ -150,7 +157,8 @@ I2cTxRx (
 
   I2cRegs->IcEnable = 0;
 
-  while (I2cRegs->IcEnableStatus & IC_ENABLE_STATUS_IC_EN);
+  while (I2cRegs->IcEnableStatus & IC_ENABLE_STATUS_IC_EN)
+    ;
 
   if (EFI_ERROR (Status)) {
     return -1;

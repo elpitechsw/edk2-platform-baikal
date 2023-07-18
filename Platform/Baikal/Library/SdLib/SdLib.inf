@@ -1,0 +1,45 @@
+## @file
+#
+#  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SdLib
+  FILE_GUID                      = 088B3218-1B54-423E-AAFB-346F111474A3
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SdLib
+
+[Sources.common]
+  SdLib.c
+  SdReg.h
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  ArmSmcLib
+  BaseLib
+  TimerLib
+  UefiLib
+  UefiRuntimeLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+  gFdtClientProtocolGuid
+  gEfiCpuArchProtocolGuid
+
+[Guids]
+  gEfiAuthenticatedVariableGuid
+  gEfiEventVirtualAddressChangeGuid
+  gEfiSystemNvDataFvGuid
+  gEfiVariableGuid
+
+[Depex]
+  TRUE

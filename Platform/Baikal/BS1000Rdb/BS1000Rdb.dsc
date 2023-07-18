@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -18,9 +18,6 @@
 
   # Network definition
   DEFINE NETWORK_ALLOW_HTTP_CONNECTIONS = TRUE
-  DEFINE NETWORK_IP6_ENABLE             = FALSE
-  DEFINE NETWORK_ISCSI_ENABLE           = FALSE
-  DEFINE NETWORK_SNP_ENABLE             = FALSE
   DEFINE NETWORK_TLS_ENABLE             = FALSE
   DEFINE NETWORK_VLAN_ENABLE            = FALSE
 
@@ -30,11 +27,13 @@
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
 
-[BuildOptions.AARCH64.EDKII.DXE_CORE, BuildOptions.AARCH64.EDKII.DXE_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_DRIVER, BuildOptions.AARCH64.EDKII.UEFI_APPLICATION]
+[BuildOptions.common.EDKII.DXE_CORE,BuildOptions.common.EDKII.DXE_DRIVER,BuildOptions.common.EDKII.UEFI_DRIVER,BuildOptions.common.EDKII.UEFI_APPLICATION]
   GCC:*_*_AARCH64_DLINK_FLAGS = -z common-page-size=0x1000
 
-[BuildOptions.AARCH64.EDKII.DXE_RUNTIME_DRIVER]
+[BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER]
   GCC:*_*_AARCH64_DLINK_FLAGS = -z common-page-size=0x10000
+
+!include MdePkg/MdeLibs.dsc.inc
 
 [LibraryClasses.AARCH64.SEC, LibraryClasses.AARCH64.DXE_CORE, LibraryClasses.AARCH64.DXE_DRIVER, LibraryClasses.AARCH64.DXE_RUNTIME_DRIVER, LibraryClasses.AARCH64.UEFI_APPLICATION, LibraryClasses.AARCH64.UEFI_DRIVER]
   ArmDisassemblerLib|ArmPkg/Library/ArmDisassemblerLib/ArmDisassemblerLib.inf
@@ -47,8 +46,7 @@
   ArmPlatformStackLib|ArmPlatformPkg/Library/ArmPlatformStackLib/ArmPlatformStackLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
-  BaikalSmcLib|Platform/Baikal/Library/BaikalSmcLib/BaikalSmcLib.inf
-  BaikalSpdLib|Platform/Baikal/Library/BaikalSpdLib/BaikalSpdLib.inf
+  BaikalSmbiosLib|Platform/Baikal/Library/BaikalSmbiosLib/BaikalSmbiosLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibOptDxe/BaseMemoryLibOptDxe.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
@@ -56,7 +54,6 @@
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
   CmuLib|Platform/Baikal/BS1000Rdb/Library/CmuLib/CmuLib.inf
   CpuExceptionHandlerLib|ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
-  CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   CrcLib|Platform/Baikal/Library/CrcLib/CrcLib.inf
   CustomizedDisplayLib|MdeModulePkg/Library/CustomizedDisplayLib/CustomizedDisplayLib.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
@@ -78,11 +75,13 @@
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   MemoryInitPeiLib|Platform/Baikal/Library/BaikalMemoryInitPeiLib/BaikalMemoryInitPeiLib.inf
   NULL|ArmPkg/Library/CompilerIntrinsicsLib/CompilerIntrinsicsLib.inf
+  OrderedCollectionLib|MdePkg/Library/BaseOrderedCollectionRedBlackTreeLib/BaseOrderedCollectionRedBlackTreeLib.inf
   PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
   PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PciHostBridgeLib|Silicon/Baikal/BS1000/Library/PciHostBridgeLib/PciHostBridgeLib.inf
   PciSegmentLib|Silicon/Baikal/BS1000/Library/PciSegmentLib/PciSegmentLib.inf
+  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
@@ -94,9 +93,12 @@
   RealTimeClockLib|EmbeddedPkg/Library/TemplateRealTimeClockLib/TemplateRealTimeClockLib.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   ResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
+  SdLib|Platform/Baikal/Library/SdLib/SdLib.inf
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
   SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
+  SmcFlashLib|Platform/Baikal/Library/SmcFlashLib/SmcFlashLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   TimeBaseLib|EmbeddedPkg/Library/TimeBaseLib/TimeBaseLib.inf
@@ -114,14 +116,14 @@
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   VarCheckLib|MdeModulePkg/Library/VarCheckLib/VarCheckLib.inf
+  VariableFlashInfoLib|MdeModulePkg/Library/BaseVariableFlashInfoLib/BaseVariableFlashInfoLib.inf
+  VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
+  VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLibRuntimeDxe.inf
 !if $(TARGET) == RELEASE
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
-  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
 !else
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
-  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
-  #PeCoffExtraActionLib|ArmPkg/Library/DebugPeCoffExtraActionLib/DebugPeCoffExtraActionLib.inf
 !endif
 
 [LibraryClasses.AARCH64.DXE_CORE]
@@ -141,8 +143,8 @@
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
 
 [Components.AARCH64]
-  # SEC modules
-  Platform/Baikal/PrePi/PrePiUniCoreRelocatable.inf {
+  # PEI Phase modules
+  ArmPlatformPkg/PrePi/PeiUniCore.inf {
     <LibraryClasses>
       BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
       ExtractGuidedSectionLib|EmbeddedPkg/Library/PrePiExtractGuidedSectionLib/PrePiExtractGuidedSectionLib.inf
@@ -201,9 +203,10 @@
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
 
   ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
+  Platform/Baikal/BS1000Rdb/Drivers/ArmGicLpiDxe/ArmGicLpiDxe.inf
   ArmPkg/Drivers/TimerDxe/TimerDxe.inf
-  Platform/Baikal/Drivers/BaikalSpiFvDxe/BaikalSpiFvDxe.inf
-  Platform/Baikal/Drivers/BaikalSpiBlockDxe/BaikalSpiBlockDxe.inf
+  Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
+  Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   Platform/Baikal/BS1000Rdb/Drivers/EuiClientDxe/EuiClientDxe.inf
   Platform/Baikal/BS1000Rdb/Drivers/SpdClientDxe/SpdClientDxe.inf
@@ -217,6 +220,7 @@
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   FatPkg/EnhancedFatDxe/Fat.inf
   MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
+!include Features/Ext4Pkg/Ext4.dsc.inc
 
   # SMBIOS Support
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
@@ -254,9 +258,9 @@
   Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
+  ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
-  Silicon/Baikal/BS1000/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
 
   # NVMe
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
@@ -284,6 +288,7 @@
       NULL|ShellPkg/Library/UefiShellAcpiViewCommandLib/UefiShellAcpiViewCommandLib.inf
       HandleParsingLib|ShellPkg/Library/UefiHandleParsingLib/UefiHandleParsingLib.inf
       BcfgCommandLib|ShellPkg/Library/UefiShellBcfgCommandLib/UefiShellBcfgCommandLib.inf
+      OrderedCollectionLib|MdePkg/Library/BaseOrderedCollectionRedBlackTreeLib/BaseOrderedCollectionRedBlackTreeLib.inf
 
     <PcdsFixedAtBuild>
       gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|8000
@@ -295,10 +300,7 @@
       gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|FALSE
   }
 
-!if $(BUILD_UEFI_APPS) == TRUE
   Platform/Baikal/Application/SpiFlash/SpiFlash.inf
-  Platform/Baikal/Application/SpiFlashImage/SpiFlashImage.inf
-!endif
 
 [PcdsFeatureFlag.common]
   gArmTokenSpaceGuid.PcdRelocateVectorTable|FALSE
@@ -306,26 +308,22 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutUgaSupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdHiiOsRuntimeSupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdInstallAcpiSdtProtocol|TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdDriverDiagnostics2Disable|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdDriverDiagnosticsDisable|TRUE
   gEmbeddedTokenSpaceGuid.PcdPrePiProduceMemoryTypeInformationHob|TRUE
 
-[PcdsPatchableInModule.common]
-  gArmTokenSpaceGuid.PcdFdBaseAddress|0
-  gArmTokenSpaceGuid.PcdFvBaseAddress|0
-  gArmTokenSpaceGuid.PcdSystemMemoryBase|0
-  gArmTokenSpaceGuid.PcdSystemMemorySize|0
-  gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x80000000
-
 [PcdsFixedAtBuild.common]
   gArmPlatformTokenSpaceGuid.PL011UartClkInHz|100000000
-  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x4000
-  gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase|0x4007C000
+  gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize|0x20000
   gArmTokenSpaceGuid.PcdArmPrimaryCoreMask|0xFFFF00
   gArmTokenSpaceGuid.PcdGicDistributorBase|0x1000000
   gArmTokenSpaceGuid.PcdGicRedistributorsBase|0x1240000
+  gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
+  gArmTokenSpaceGuid.PcdSystemMemorySize|0x80000000
   gArmTokenSpaceGuid.PcdVFPEnabled|1
+  gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x80000000
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|{ 0x42, 0x4B, 0x4C, 0x45 }
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|{ 0x42, 0x41, 0x49, 0x4B, 0x41, 0x4C }
@@ -340,11 +338,17 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxAuthVariableSize|0x2800
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize|0x2000
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDisableBusEnumeration|FALSE
+  #
+  # In ECAM mode, the ACPI I/O aperture matches the PPB aperture for the exposed bus.
+  # Unfortunately, Linux doesn't seem to handle correctly "small" apertures (i.e. 4K),
+  # so round it out to the full 16-bit space.
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPciIoApertureSizeAlignment|0x10000
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xC00000
   gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosDocRev|0x0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0300
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0304
   gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
   gEfiMdePkgTokenSpaceGuid.PcdMaximumAsciiStringLength|1000000
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|1000000
@@ -363,13 +367,13 @@
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiReservedMemoryType|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode|150
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData|300
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|24
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|43
 !if $(TARGET) == RELEASE
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0
 !else
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2F
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x803B45FF
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x803B05FF
 !endif
 
 [PcdsDynamicDefault.common]

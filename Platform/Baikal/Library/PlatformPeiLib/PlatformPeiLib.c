@@ -29,7 +29,7 @@ PlatformPeim (
   UINTN              FdtPages;
   UINT64             *FdtHobData;
 
-  Base = (VOID*)(UINTN)PcdGet64 (PcdDeviceTreeInitialBaseAddress);
+  Base = (VOID*)(UINTN)FixedPcdGet64 (PcdDeviceTreeInitialBaseAddress);
   ASSERT (Base != NULL);
   ASSERT (fdt_check_header (Base) == 0);
 
@@ -43,7 +43,7 @@ PlatformPeim (
   ASSERT (FdtHobData != NULL);
   *FdtHobData = (UINTN)NewBase;
 
-  BuildFvHob (PcdGet64 (PcdFvBaseAddress), PcdGet32 (PcdFvSize));
+  BuildFvHob (FixedPcdGet64 (PcdFvBaseAddress), FixedPcdGet32 (PcdFvSize));
 
   return EFI_SUCCESS;
 }

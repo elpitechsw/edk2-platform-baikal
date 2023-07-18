@@ -1,12 +1,13 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/ArmLib.h>
-#include <Library/BaikalSpdLib.h>
+#include <Library/BaikalSmbiosLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrcLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
@@ -50,7 +51,7 @@ CreateSmbiosTable (
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to locate SMBIOS Protocol, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -83,7 +84,7 @@ CreateSmbiosTable (
       DEBUG ((
         EFI_D_ERROR,
         "%a: failed to allocate memory for SMBIOS table, Status = %r\n",
-        __FUNCTION__,
+        __func__,
         EFI_OUT_OF_RESOURCES
         ));
       return EFI_OUT_OF_RESOURCES;
@@ -113,7 +114,7 @@ CreateSmbiosTable (
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to add SMBIOS table, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
   }
@@ -125,7 +126,7 @@ CreateSmbiosTable (
   return Status;
 }
 
-/* BIOS Information table, type 0 */
+// BIOS Information table, type 0
 
 #define BAIKAL_BIOS_DATE  "00/00/0000"
 
@@ -140,14 +141,14 @@ STATIC SMBIOS_TABLE_TYPE0 SmbiosTable0 = {
   2,
   0,
   3,
-  (UINT8) (FixedPcdGet32 (PcdFdSize) - 1) / SIZE_64KB, /* BIOS ROM size */
+  (UINT8) (FixedPcdGet32 (PcdFdSize) - 1) / SIZE_64KB, // BIOS ROM size
   {},
   {
     BIT0, // AcpiIsSupported
     BIT3  // UefiSpecificationSupported
   },
-  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 4) & 0xF), /* System BIOS major revision */
-  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 0) & 0xF), /* System BIOS minor revision */
+  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 4) & 0xF), // System BIOS major revision
+  (UINT8) ((FixedPcdGet32 (PcdFirmwareRevision) >> 0) & 0xF), // System BIOS minor revision
   0xFF,
   0xFF,
   {}
@@ -180,7 +181,7 @@ SmbiosTable0Init (
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to allocate memory for SMBIOS table strings, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       EFI_OUT_OF_RESOURCES
       ));
     return EFI_OUT_OF_RESOURCES;
@@ -205,7 +206,7 @@ SmbiosTable0Init (
   return Status;
 }
 
-/* System Information table, type 1 */
+// System Information table, type 1
 
 #pragma pack(1)
 STATIC SMBIOS_TABLE_TYPE1 SmbiosTable1 = {
@@ -247,7 +248,7 @@ SmbiosTable1Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable1, SmbiosTable1Strings, ARRAY_SIZE (SmbiosTable1Strings));
 }
 
-/* Baseboard Information table, type 2 */
+// Baseboard Information table, type 2
 
 #pragma pack(1)
 STATIC SMBIOS_TABLE_TYPE2 SmbiosTable2 = {
@@ -292,7 +293,7 @@ SmbiosTable2Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable2, SmbiosTable2Strings, ARRAY_SIZE (SmbiosTable2Strings));
 }
 
-/* System Enclosure or Chassis table, type 3 */
+// System Enclosure or Chassis table, type 3
 
 #pragma pack(1)
 typedef struct {
@@ -351,7 +352,7 @@ SmbiosTable3Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable3, NULL, 0);
 }
 
-/* Processor Information table, type 4 */
+// Processor Information table, type 4
 
 #define BAIKAL_PROCESSOR_SOCKET_DESIGNATION  "CPU0"
 #define BAIKAL_PROCESSOR_MANUFACTURER        "Baikal Electronics"
@@ -411,7 +412,7 @@ SmbiosTable4Init (
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable4, NULL, 0);
 }
 
-/* Cache Information tables, type 7 */
+// Cache Information tables, type 7
 
 #pragma pack(1)
 STATIC VOID  *SmbiosTable7[] = {
@@ -554,7 +555,7 @@ SmbiosTable7Init (
   return Status;
 }
 
-/* Port Connector Information tables, type 8 */
+// Port Connector Information tables, type 8
 
 #pragma pack(1)
 STATIC VOID  *SmbiosTable8[] = {
@@ -886,7 +887,7 @@ SmbiosTable8Init (
   return Status;
 }
 
-/* System Slots tables, type 9 */
+// System Slots tables, type 9
 
 #pragma pack(1)
 typedef struct {
@@ -1200,10 +1201,10 @@ SmbiosTable9Init (
   return Status;
 }
 
-/* Physical Memory Array table, type 16 */
-/* Memory Device tables, type 17 */
-/* Memory Array Mapped Address tables, type 19 */
-/* Memory Device Mapped Address tables, type 20 */
+// Physical Memory Array table, type 16
+// Memory Device tables, type 17
+// Memory Array Mapped Address tables, type 19
+// Memory Device Mapped Address tables, type 20
 
 #define SMBIOS_DIMM_NUM  12
 
@@ -1220,7 +1221,7 @@ STATIC VOID  *SmbiosTable16 = BAIKAL_SMBIOS_TABLE (
     MemoryArrayLocationSystemBoard,
     MemoryArrayUseSystemMemory,
     MemoryErrorCorrectionMultiBitEcc,
-    0x30000000, /* DDR4 max 64Gb (x12) */
+    0x30000000, // DDR4 max 64 GiB (x12)
     SMBIOS_HANDLE_PI_RESERVED,
     0,
     0
@@ -1270,17 +1271,53 @@ STATIC VOID  *SmbiosTable20 = BAIKAL_SMBIOS_TABLE (
 STATIC SPD_CLIENT_PROTOCOL  *SpdClient;
 
 STATIC
+UINT16
+SpdGetCrc16 (
+  IN  CONST UINT8 * CONST  SpdBuf
+  )
+{
+  return SpdBuf[0] | (SpdBuf[1] << 8);
+}
+
+STATIC
+INTN
+SpdIsValid (
+  IN  CONST UINT8 * CONST  SpdBuf,
+  IN  CONST UINTN          Size
+  )
+{
+  INTN  Result = 0;
+
+  if (!SpdBuf || Size < 128) {
+    return 0;
+  }
+
+  if (Size >= 128) {
+    Result = SpdGetCrc16 (SpdBuf + 126) == Crc16 (SpdBuf, 126, 0);
+  }
+
+  if (Size >= 256) {
+    Result &= SpdGetCrc16 (SpdBuf + 254) == Crc16 (SpdBuf + 128, 126, 0);
+  }
+
+  if (Size >= 320) {
+    Result &= SpdGetCrc16 (SpdBuf + 318) == Crc16 (SpdBuf + 256, 62, 0);
+  }
+
+  return Result;
+}
+
+STATIC
 EFI_STATUS
 GetDdrInfo (
-  OUT  BAIKAL_SPD_SMBIOS_INFO * CONST  DdrInfo,
+  OUT  BAIKAL_SMBIOS_DDR_INFO * CONST  DdrInfo,
   IN   CONST INTN                      Num
   )
 {
-  UINT8         IsHybrid;
   CONST UINT8  *Spd;
   INTN          SpdSize;
 
-  Spd = SpdClient->GetData(Num);
+  Spd = SpdClient->GetData (Num);
 
   switch (*Spd & 0x07) {
   case 1:
@@ -1304,35 +1341,21 @@ GetDdrInfo (
     return EFI_NOT_FOUND;
   }
 
-  if (Spd[2] != 0xC) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: DDR4 DIMM%d is not a DDR4 SDRAM\n",
-      __FUNCTION__,
-      Num
-      ));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Spd[3] & 0x80) {
-    IsHybrid = 1;
-  }
-
   if (!SpdIsValid (Spd, SpdSize)) {
     DEBUG ((
       EFI_D_ERROR,
       "%a: DDR4 DIMM%d SPD has invalid CRC\n",
-      __FUNCTION__,
+      __func__,
       Num
       ));
     return EFI_INVALID_PARAMETER;
   }
 
-  if (SpdSetSmbiosInfo (Spd, SpdSize, IsHybrid, DdrInfo)) {
+  if (SmbiosSetDdrInfo (Spd, SpdSize, DdrInfo, NULL, NULL)) {
     DEBUG ((
       EFI_D_ERROR,
       "%a: DDR4 DIMM%d SPD info is invalid\n",
-      __FUNCTION__,
+      __func__,
       Num
       ));
     return EFI_INVALID_PARAMETER;
@@ -1364,7 +1387,7 @@ GetMemoryRanges (
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to locate FdtClientProtocol, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -1383,7 +1406,7 @@ GetMemoryRanges (
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to find MemoryNodeReg, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -1393,7 +1416,7 @@ GetMemoryRanges (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid AddressCells(%u) of the MemoryNodeReg\n",
-      __FUNCTION__,
+      __func__,
       *AddressCells
       ));
     return EFI_INVALID_PARAMETER;
@@ -1403,7 +1426,7 @@ GetMemoryRanges (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid SizeCells(%u) of the MemoryNodeReg\n",
-      __FUNCTION__,
+      __func__,
       *SizeCells
       ));
     return EFI_INVALID_PARAMETER;
@@ -1414,7 +1437,7 @@ GetMemoryRanges (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid RegSize(%u) of the MemoryNodeReg\n",
-      __FUNCTION__,
+      __func__,
       RegSize
       ));
     return EFI_INVALID_PARAMETER;
@@ -1432,7 +1455,7 @@ SmbiosTable16_17_19_20Init (
   )
 {
   UINTN                    AddressCells;
-  BAIKAL_SPD_SMBIOS_INFO  *DdrInfo;
+  BAIKAL_SMBIOS_DDR_INFO  *DdrInfo;
   UINT16                   DdrPresence = 0;
   UINT8                    Idx;
   CONST UINT32            *Reg;
@@ -1447,19 +1470,19 @@ SmbiosTable16_17_19_20Init (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to locate SpdClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
   }
 
   // Getting information about DDR
-  DdrInfo = (BAIKAL_SPD_SMBIOS_INFO *) AllocateZeroPool (SMBIOS_DIMM_NUM * sizeof (BAIKAL_SPD_SMBIOS_INFO));
+  DdrInfo = (BAIKAL_SMBIOS_DDR_INFO *) AllocateZeroPool (SMBIOS_DIMM_NUM * sizeof (BAIKAL_SMBIOS_DDR_INFO));
   if (DdrInfo == NULL) {
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to allocate memory for SPD info structure, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       EFI_OUT_OF_RESOURCES
       ));
     return EFI_OUT_OF_RESOURCES;
@@ -1496,7 +1519,7 @@ SmbiosTable16_17_19_20Init (
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to allocate memory for memory region info, Status = %r\n",
-      __FUNCTION__,
+      __func__,
       EFI_OUT_OF_RESOURCES
       ));
     FreePool (DdrInfo);
@@ -1589,11 +1612,11 @@ SmbiosTable16_17_19_20Init (
       } else if (Cc == 1 && Id == 24) {
         PtrString = "Kingston";
       } else if (Cc || Id) {
-        CHAR8  HexValue[5];
-        AsciiValueToStringS (HexValue, 5, RADIX_HEX, DdrInfo[Idx].ManufacturerId & 0xFF, 4);
-        CopyMem (Manufacturer + 6, HexValue, 4);
-        AsciiValueToStringS (HexValue, 5, RADIX_HEX, (DdrInfo[Idx].ManufacturerId >> 8) & 0xFF, 4);
-        CopyMem (Manufacturer + 16, HexValue, 4);
+        CHAR8  HexValue[3];
+        AsciiValueToStringS (HexValue, 3, RADIX_HEX, DdrInfo[Idx].ManufacturerId & 0xFF, 2);
+        CopyMem (Manufacturer + 8, HexValue, 2);
+        AsciiValueToStringS (HexValue, 3, RADIX_HEX, (DdrInfo[Idx].ManufacturerId >> 8) & 0xFF, 2);
+        CopyMem (Manufacturer + 18, HexValue, 2);
         PtrString = Manufacturer;
       }
 
@@ -1631,9 +1654,6 @@ SmbiosTable16_17_19_20Init (
       Table17.MaximumVoltage = DdrInfo[Idx].Voltage;
       Table17.ConfiguredVoltage = DdrInfo[Idx].Voltage;
       Table17.ModuleManufacturerID = DdrInfo[Idx].ManufacturerId;
-      Table17.ModuleProductID = DdrInfo[Idx].ProductId;
-      Table17.MemorySubsystemControllerManufacturerID = DdrInfo[Idx].SubsystemManufacturerId;
-      Table17.MemorySubsystemControllerProductID = DdrInfo[Idx].SubsystemProductId;
       Table17.VolatileSize = DdrInfo[Idx].Size;
 
       Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &Table17, PtrBuf, ARRAY_SIZE (PtrBuf));
@@ -1736,7 +1756,7 @@ SmbiosTable16_17_19_20Init (
   return EFI_SUCCESS;
 }
 
-/* System Boot Information table, type 32 */
+// System Boot Information table, type 32
 
 #pragma pack(1)
 STATIC VOID  *SmbiosTable32 = BAIKAL_SMBIOS_TABLE (

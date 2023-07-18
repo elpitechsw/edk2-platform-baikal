@@ -41,7 +41,8 @@
 
 [FixedPcd]
   gArmPlatformTokenSpaceGuid.PcdSystemMemoryUefiRegionSize
-  gArmTokenSpaceGuid.PcdFdSize
+  gArmTokenSpaceGuid.PcdSystemMemoryBase
+  gArmTokenSpaceGuid.PcdSystemMemorySize
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiACPIMemoryNVS
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiACPIReclaimMemory
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiBootServicesCode
@@ -51,11 +52,6 @@
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiReservedMemoryType
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData
-
-[Pcd]
-  gArmTokenSpaceGuid.PcdFdBaseAddress
-  gArmTokenSpaceGuid.PcdSystemMemoryBase
-  gArmTokenSpaceGuid.PcdSystemMemorySize
 
 [Depex]
   TRUE

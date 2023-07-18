@@ -4,13 +4,8 @@
 **/
 
 #include <BM1000.h>
-#include <Platform/Pcie.h>
 
 #include "AcpiPlatform.h"
-
-  External (\_SB.STA0, FieldUnitObj)
-  External (\_SB.STA1, FieldUnitObj)
-  External (\_SB.STA2, FieldUnitObj)
 
   Scope (_SB_) {
   Device (XXXX) {
@@ -26,13 +21,13 @@
     // RUID - e.g. BM1000_PCIE0_IDX
     // _SEG - e.g. BAIKAL_ACPI_PCIE0_SEGMENT
     // CFGB - e.g. BM1000_PCIE0_CFG_BASE
-    // MB32 - e.g. BM1000_PCIE0_MMIO32_BASE
-    // MS32 - e.g. BM1000_PCIE0_MMIO32_SIZE
+    // MB32 - e.g. BM1000_PCIE0_MEM_BASE
+    // MS32 - e.g. BM1000_PCIE0_MEM_SIZE
     // MBPF - e.g. the prefetchable window base
     // MSPF - e.g. the prefetchable window size
-    // IOBA - e.g. BM1000_PCIE0_PORTIO_MIN
-    // IOCA - e.g. BM1000_PCIE0_PORTIO_BASE
-    // IOSI - e.g. BM1000_PCIE0_PORTIO_SIZE
+    // IOBA - e.g. BM1000_PCIE0_IO_MIN
+    // IOCA - e.g. BM1000_PCIE0_IO_BASE
+    // IOSI - e.g. BM1000_PCIE0_IO_SIZE
     // BUSC - max buses
     //
     // The default values are important so the NameOps are sized right
@@ -54,7 +49,7 @@
     Name (BUSC, 0xAB)
 
     Method (_STA, 0, Serialized) {
-      OperationRegion (LCRU, SystemMemory, BM1000_PCIE_GPR_STATUS_REG(RUID), 0x4)
+      OperationRegion (LCRU, SystemMemory, BM1000_PCIE_GPR_STS(RUID), 0x4)
       Field (LCRU, DWordAcc, NoLock, Preserve) {
         Offset (0x00),
         STAR, 32
@@ -66,8 +61,8 @@
         TYPE, 8
       }
 
-      if ((STAR & BM1000_PCIE_GPR_STATUS_LTSSM_STATE_MASK) !=
-                  BM1000_PCIE_GPR_STATUS_LTSSM_STATE_L0) {
+      if ((STAR & BM1000_PCIE_GPR_STS_LTSSM_STATE_MASK) !=
+                  BM1000_PCIE_GPR_STS_LTSSM_STATE_L0) {
         Return (0x0)
       }
 

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -43,7 +43,7 @@
     OFFSET_OF (BAIKAL_DBG2_DEVICE_INFORMATION, AddressSize)                                        \
   },                                                                                               \
   /* EFI_ACPI_6_4_GENERIC_ADDRESS_STRUCTURE  BaseAddressRegister */                                \
-  { EFI_ACPI_6_4_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_4_BYTE, UartBase },                              \
+  { EFI_ACPI_6_4_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_4_DWORD, UartBase },                             \
   /* UINT32                                  AddressSize */                                        \
   BAIKAL_DBG2_UART_ADDRESS_LENGTH,                                                                 \
   /* UINT8                                   NamespaceString[BAIKAL_DBG2_NAMESPACE_STRING_SIZE] */ \

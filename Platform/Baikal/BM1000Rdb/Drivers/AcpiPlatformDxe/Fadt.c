@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -29,7 +29,7 @@ STATIC BAIKAL_ACPI_FADT  Fadt = {
   /* UINT8                                   Reserved0                */
   EFI_ACPI_RESERVED_BYTE,
   /* UINT8                                   PreferredPmProfile       */
-  EFI_ACPI_6_4_PM_PROFILE_MOBILE,
+  EFI_ACPI_6_4_PM_PROFILE_WORKSTATION,
   /* UINT16                                  SciInt                   */
   0,
   /* UINT32                                  SmiCmd                   */

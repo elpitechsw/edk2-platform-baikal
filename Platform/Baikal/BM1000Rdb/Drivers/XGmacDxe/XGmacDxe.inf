@@ -1,0 +1,33 @@
+## @file
+#
+#  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = XGmacDxe
+  FILE_GUID                      = CD6FFDCC-BFF9-11EC-9928-D3A5E2EA079F
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = XGmacDxeDriverEntry
+
+[Sources.common]
+  XGmac.c
+
+[Packages]
+  Platform/Baikal/Baikal.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  IoLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEuiClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+  gFdtClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
+
+[Depex]
+  gEuiClientProtocolGuid  AND
+  gFdtClientProtocolGuid

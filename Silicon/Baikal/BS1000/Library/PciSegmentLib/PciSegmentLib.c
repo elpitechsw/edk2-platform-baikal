@@ -41,7 +41,6 @@ PciSegmentLibGetConfigBase (
   CONST UINTN  Bus      = (PciSegLibAddr >> 20) & 0xFF;
   CONST UINTN  Device   = (PciSegLibAddr >> 15) & 0x1F;
   CONST UINTN  Function = (PciSegLibAddr >> 12) & 0x7;
-  extern UINT32                mPcieCfg0FilteringWorks;
   extern EFI_PHYSICAL_ADDRESS  mPcieCfgBases[];
   extern EFI_PHYSICAL_ADDRESS  mPcieDbiBases[];
 
@@ -53,24 +52,16 @@ PciSegmentLibGetConfigBase (
     }
   } else if (Bus == 1) {
     if (Device == 0) {
-      if (Function == 0 || (mPcieCfg0FilteringWorks & (1 << Segment))) {
-        if (PciHostBridgeLibGetLink(Segment)) {
-          return mPcieCfgBases[Segment] + (Bus << 20) + (Device << 15) + (Function << 12);
-        } else {
-          return MAX_UINT64;
-        }
+      if (PciHostBridgeLibGetLink (Segment)) {
+        return mPcieCfgBases[Segment] + (Bus << 20) + (Device << 15) + (Function << 12);
       } else {
-        //
-        // TLP filtering doesn't work. Must not access beyond RCS:0.0. But this
-        // probably means its a simple adapter with a single function anyway.
-        //
         return MAX_UINT64;
       }
     } else {
       return MAX_UINT64;
     }
   } else {
-    if (PciHostBridgeLibGetLink(Segment)) {
+    if (PciHostBridgeLibGetLink (Segment)) {
       return mPcieCfgBases[Segment] + (Bus << 20) + (Device << 15) + (Function << 12);
     } else {
       return MAX_UINT64;

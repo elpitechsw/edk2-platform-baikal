@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -9,6 +9,7 @@
 INTN
 I2cTxRx (
   IN   CONST EFI_PHYSICAL_ADDRESS  Base,
+  IN   CONST UINTN                 Iclk,
   IN   CONST UINTN                 TargetAddr,
   IN   CONST VOID * CONST          TxBuf,
   IN   CONST UINTN                 TxBufSize,

@@ -18,10 +18,10 @@
   HighMemDxe.c
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   ArmPkg/ArmPkg.dec
-  Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
   BaseLib

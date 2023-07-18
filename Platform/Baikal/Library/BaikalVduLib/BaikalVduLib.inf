@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #  Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
@@ -19,11 +19,11 @@
   BaikalVduPlatform.c
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   ArmPkg/ArmPkg.dec
   ArmPlatformPkg/ArmPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  Platform/Baikal/Baikal.dec
 
 [LibraryClasses]
   BaseLib
@@ -37,12 +37,14 @@
   gFdtClientProtocolGuid                        # CONSUMES
 
 [Pcd]
-  gBaikalTokenSpaceGuid.PcdVduBase                                  ## CONSUMES
-  gBaikalTokenSpaceGuid.PcdVduLcruId                                ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn               ## SOMETIMES_PRODUCES
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow                  ## SOMETIMES_PRODUCES
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution  ## SOMETIMES_PRODUCES
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution    ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn                    ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow                       ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution       ## SOMETIMES_PRODUCES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution         ## SOMETIMES_PRODUCES
 
 [FixedPcd]
   gArmPlatformTokenSpaceGuid.PcdGopPixelFormat

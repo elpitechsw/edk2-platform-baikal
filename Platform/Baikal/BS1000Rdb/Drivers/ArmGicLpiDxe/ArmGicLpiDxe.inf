@@ -1,0 +1,32 @@
+## @file
+#
+#  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = ArmGicLpiDxe
+  FILE_GUID                      = 972664A5-15E6-4D39-8E1C-83835A25AB2C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = ArmGicLpiDxeInitialize
+
+[Sources]
+  ArmGicLpiDxe.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  IoLib
+  UefiDriverEntryPoint
+
+[Pcd]
+  gArmTokenSpaceGuid.PcdGicDistributorBase
+  gArmTokenSpaceGuid.PcdGicRedistributorsBase
+
+[Depex]
+  TRUE

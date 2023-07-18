@@ -1,7 +1,7 @@
 /** @file
   This file contains Baikal VDU driver functions
 
-  Copyright (c) 2019 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
   Parts of this file were based on sources as follows:
@@ -22,29 +22,29 @@
 #include "BaikalHdmi.h"
 #include "BaikalVdu.h"
 
-/* LCRU */
-#define BAIKAL_SMC_LCRU          0x82000000
-#define BAIKAL_SMC_LCRU_SET      0
-#define BAIKAL_SMC_LCRU_ENABLE   2
-#define BAIKAL_SMC_LCRU_DISABLE  3
+#define BAIKAL_SMC_CMU_CMD           0xC2000000
+#define BAIKAL_SMC_CMU_PLL_SET_RATE  0
 
 EFI_STATUS
-BaikalSetVduFrequency(
-  UINT32 LcruId,
-  UINT32 RefFreq,
-  UINT32 OscFreq
+BaikalSetVduFrequency (
+  IN CONST UINT32  CmuBase,
+  IN CONST UINT32  RefFreq,
+  IN CONST UINT32  OscFreq
   )
 {
-  ARM_SMC_ARGS Args;
-  Args.Arg0 = BAIKAL_SMC_LCRU;
-  Args.Arg1 = LcruId;
-  Args.Arg2 = BAIKAL_SMC_LCRU_SET;
-  Args.Arg3 = OscFreq;
-  Args.Arg4 = RefFreq;
-  ArmCallSmc(&Args);
+  ARM_SMC_ARGS  ArmSmcArgs;
 
-  if (Args.Arg0)
+  ArmSmcArgs.Arg0 = BAIKAL_SMC_CMU_CMD;
+  ArmSmcArgs.Arg1 = CmuBase;
+  ArmSmcArgs.Arg2 = BAIKAL_SMC_CMU_PLL_SET_RATE;
+  ArmSmcArgs.Arg3 = OscFreq;
+  ArmSmcArgs.Arg4 = RefFreq;
+
+  ArmCallSmc (&ArmSmcArgs);
+  if (ArmSmcArgs.Arg0) {
     return EFI_DEVICE_ERROR;
+  }
+
   return EFI_SUCCESS;
 }
 
@@ -54,13 +54,11 @@ LcdIdentifyHdmi (
   VOID
   )
 {
-  DEBUG ((EFI_D_WARN, "Probing ID registers at 0x%lx for Baikal HDMI VDU\n",
-    BAIKAL_VDU_REG_CIR(VDU_HDMI)));
-
   // Check if this is a Baikal VDU
-  if (MmioRead32 (BAIKAL_VDU_REG_CIR(VDU_HDMI)) == BAIKAL_VDU_PERIPH_ID) {
+  if (MmioRead32 (BAIKAL_VDU_CIR(BM1000_HDMI_VDU_BASE)) == BAIKAL_VDU_PERIPH_ID) {
     return EFI_SUCCESS;
   }
+
   return EFI_NOT_FOUND;
 }
 
@@ -70,29 +68,26 @@ LcdIdentifyLvds (
   VOID
   )
 {
-  DEBUG ((EFI_D_WARN, "Probing ID registers at 0x%lx for Baikal LVDS VDU\n",
-    BAIKAL_VDU_REG_CIR(VDU_LVDS)));
-
   // Check if this is a Baikal VDU
-  if (MmioRead32 (BAIKAL_VDU_REG_CIR(VDU_LVDS)) == BAIKAL_VDU_PERIPH_ID) {
+  if (MmioRead32 (BAIKAL_VDU_CIR(BM1000_LVDS_VDU_BASE)) == BAIKAL_VDU_PERIPH_ID) {
     return EFI_SUCCESS;
   }
+
   return EFI_NOT_FOUND;
 }
 
 STATIC
 EFI_STATUS
 LcdSetFramebufferBase (
-  IN EFI_PHYSICAL_ADDRESS   VduBase,
-  IN EFI_PHYSICAL_ADDRESS   VramBaseAddress
+  IN EFI_PHYSICAL_ADDRESS  VduBase,
+  IN EFI_PHYSICAL_ADDRESS  VramBaseAddress
   )
 {
-
   // Define start of the VRAM. This never changes for any graphics mode
-  MmioWrite32 (BAIKAL_VDU_REG_DBAR(VduBase), (UINT32) VramBaseAddress);
+  MmioWrite32 (BAIKAL_VDU_DBAR(VduBase), (UINT32) VramBaseAddress);
 
   // Disable all interrupts from the VDU
-  MmioWrite32 (BAIKAL_VDU_REG_IMR(VduBase), 0);
+  MmioWrite32 (BAIKAL_VDU_IMR(VduBase), 0);
 
   return EFI_SUCCESS;
 }
@@ -103,10 +98,10 @@ LcdSetupHdmi (
   IN UINT32  ModeNumber
   )
 {
-  EFI_STATUS        Status;
-  SCAN_TIMINGS      *Horizontal;
-  SCAN_TIMINGS      *Vertical;
-  HDMI_PHY_SETTINGS *PhySettings;
+  EFI_STATUS         Status;
+  SCAN_TIMINGS       *Horizontal;
+  SCAN_TIMINGS       *Vertical;
+  HDMI_PHY_SETTINGS  *PhySettings;
 
   // Set the video mode timings and other relevant information
   Status = LcdPlatformGetTimings (
@@ -139,7 +134,6 @@ LcdSetupHdmi (
              PhySettings
              );
   if (EFI_ERROR (Status)) {
-    //ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
@@ -149,28 +143,28 @@ LcdSetupHdmi (
 STATIC
 EFI_STATUS
 LcdSetTimings (
-  IN EFI_PHYSICAL_ADDRESS   VduBase,
-  IN SCAN_TIMINGS           *Horizontal,
-  IN SCAN_TIMINGS           *Vertical,
-  IN LCD_BPP                LcdBpp,
-  IN BOOLEAN                IsBgr,
-  IN UINT32                 LvdsPorts,
-  IN UINT32                 LvdsOutBpp
+  IN EFI_PHYSICAL_ADDRESS  VduBase,
+  IN SCAN_TIMINGS          *Horizontal,
+  IN SCAN_TIMINGS          *Vertical,
+  IN LCD_BPP               LcdBpp,
+  IN BOOLEAN               IsBgr,
+  IN UINT32                LvdsPorts,
+  IN UINT32                LvdsOutBpp
   )
 {
-  UINT32 BufSize;
-  UINT32 LcdControl;
-  UINT32 Hfp = Horizontal->FrontPorch;
-  UINT32 Hsw = Horizontal->Sync;
+  UINT32  BufSize;
+  UINT32  LcdControl;
+  UINT32  Hfp = Horizontal->FrontPorch;
+  UINT32  Hsw = Horizontal->Sync;
 
-  if (VduBase == VDU_LVDS && LvdsPorts == 2) {
+  if (VduBase == BM1000_LVDS_VDU_BASE && LvdsPorts == 2) {
     --Hfp;
   } else {
     --Hsw;
   }
 
   MmioWrite32 (
-    BAIKAL_VDU_REG_HTR(VduBase),
+    BAIKAL_VDU_HTR(VduBase),
     HOR_AXIS_PANEL (
       Horizontal->BackPorch,
       Hfp,
@@ -181,13 +175,13 @@ LcdSetTimings (
 
   if (Horizontal->Resolution > 4080 || Horizontal->Resolution % 16 != 0) {
     MmioWrite32 (
-      BAIKAL_VDU_REG_HPPLOR(VduBase),
+      BAIKAL_VDU_HPPLOR(VduBase),
       Horizontal->Resolution | BAIKAL_VDU_HPPLOR_HPOE
       );
   }
 
   MmioWrite32 (
-    BAIKAL_VDU_REG_VTR1(VduBase),
+    BAIKAL_VDU_VTR1(VduBase),
     VER_AXIS_PANEL (
       Vertical->BackPorch,
       Vertical->FrontPorch,
@@ -196,12 +190,12 @@ LcdSetTimings (
     );
 
   MmioWrite32 (
-    BAIKAL_VDU_REG_VTR2(VduBase),
+    BAIKAL_VDU_VTR2(VduBase),
     Vertical->Resolution
     );
 
   MmioWrite32 (
-    BAIKAL_VDU_REG_HVTER(VduBase),
+    BAIKAL_VDU_HVTER(VduBase),
     TIMINGS_EXT (
       Horizontal->BackPorch,
       Hfp,
@@ -214,16 +208,18 @@ LcdSetTimings (
 
   // Set control register
   LcdControl = BAIKAL_VDU_CR1_DEP | BAIKAL_VDU_CR1_FDW_16_WORDS;
-  if (VduBase == VDU_HDMI)
+  if (VduBase == BM1000_HDMI_VDU_BASE) {
      LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD24;
-  else { // VduBase == VDU_LVDS
-    if (LvdsEnabled() == TRUE) {
-      if (LvdsOutBpp == 24)
+  } else { // VduBase == BM1000_LVDS_VDU_BASE
+    if (LvdsEnabled ()) {
+      if (LvdsOutBpp == 24) {
         LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD24;
-      else // LvdsOutBpp == 18
+      } else { // LvdsOutBpp == 18
         LcdControl |= BAIKAL_VDU_CR1_LCE | BAIKAL_VDU_CR1_OPS_LCD18;
+      }
     }
   }
+
   if (IsBgr) {
     LcdControl |= BAIKAL_VDU_CR1_BGR;
   }
@@ -231,28 +227,28 @@ LcdSetTimings (
   BufSize = Horizontal->Resolution * Vertical->Resolution;
 
   switch (LcdBpp) {
-  case LCD_BITS_PER_PIXEL_1:
+  case LcdBitsPerPixel_1:
     LcdControl |= BAIKAL_VDU_CR1_BPP1;
     BufSize /= 8;
     break;
-  case LCD_BITS_PER_PIXEL_2:
+  case LcdBitsPerPixel_2:
     LcdControl |= BAIKAL_VDU_CR1_BPP2;
     BufSize /= 4;
     break;
-  case LCD_BITS_PER_PIXEL_4:
+  case LcdBitsPerPixel_4:
     LcdControl |= BAIKAL_VDU_CR1_BPP4;
     BufSize /= 2;
     break;
-  case LCD_BITS_PER_PIXEL_8:
+  case LcdBitsPerPixel_8:
     LcdControl |= BAIKAL_VDU_CR1_BPP8;
     break;
-  case LCD_BITS_PER_PIXEL_16_555:
+  case LcdBitsPerPixel_16_555:
     LcdControl |= BAIKAL_VDU_CR1_OPS_555;
-  case LCD_BITS_PER_PIXEL_16_565:
+  case LcdBitsPerPixel_16_565:
     LcdControl |= BAIKAL_VDU_CR1_BPP16;
     BufSize *= 2;
     break;
-  case LCD_BITS_PER_PIXEL_24:
+  case LcdBitsPerPixel_24:
     LcdControl |= BAIKAL_VDU_CR1_BPP24;
     BufSize *= 4;
     break;
@@ -260,32 +256,34 @@ LcdSetTimings (
     return EFI_NOT_FOUND;
   }
 
-  MmioWrite32 (BAIKAL_VDU_REG_PCTR(VduBase), BAIKAL_VDU_PCTR_PCR + BAIKAL_VDU_PCTR_PCI);
-  MmioWrite32 (BAIKAL_VDU_REG_MRR(VduBase),
-    ((MmioRead32 (BAIKAL_VDU_REG_DBAR(VduBase)) + BufSize - 1) & BAIKAL_VDU_MRR_DEAR_MRR_MASK) | BAIKAL_VDU_MRR_OUTSTND_RQ(4)
+  MmioWrite32 (BAIKAL_VDU_PCTR(VduBase), BAIKAL_VDU_PCTR_PCR + BAIKAL_VDU_PCTR_PCI);
+  MmioWrite32 (BAIKAL_VDU_MRR(VduBase),
+    ((MmioRead32 (BAIKAL_VDU_DBAR(VduBase)) + BufSize - 1) & BAIKAL_VDU_MRR_DEAR_MRR_MASK) | BAIKAL_VDU_MRR_OUTSTND_RQ(4)
     );
-  MmioWrite32 (BAIKAL_VDU_REG_CR1(VduBase), LcdControl);
+  MmioWrite32 (BAIKAL_VDU_CR1(VduBase), LcdControl);
 
-  if (VduBase == VDU_LVDS)
+  if (VduBase == BM1000_LVDS_VDU_BASE) {
     switch (LvdsPorts) {
-      case 4:
-        MmioWrite32 (
-          BAIKAL_VDU_REG_GPIOR(VduBase),
-          BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_QUAD_PORT
+    case 4:
+      MmioWrite32 (
+        BAIKAL_VDU_GPIOR(VduBase),
+        BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_QUAD_PORT
         );
-        break;
-      case 2:
-        MmioWrite32 (
-          BAIKAL_VDU_REG_GPIOR(VduBase),
-          BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_DUAL_PORT
+      break;
+    case 2:
+      MmioWrite32 (
+        BAIKAL_VDU_GPIOR(VduBase),
+        BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_DUAL_PORT
         );
-        break;
-      case 1:
-        MmioWrite32 (
-          BAIKAL_VDU_REG_GPIOR(VduBase),
-          BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_SNGL_PORT
+      break;
+    case 1:
+      MmioWrite32 (
+        BAIKAL_VDU_GPIOR(VduBase),
+        BAIKAL_VDU_GPIOR_UHD_ENB + BAIKAL_VDU_GPIOR_UHD_SNGL_PORT
         );
-      }
+      break;
+    }
+  }
 
   return EFI_SUCCESS;
 }
@@ -302,10 +300,11 @@ LcdIdentify (
   VOID
   )
 {
-  if (LcdIdentifyHdmi() == EFI_SUCCESS && LcdIdentifyLvds() == EFI_SUCCESS)
+  if (LcdIdentifyHdmi () == EFI_SUCCESS && LcdIdentifyLvds () == EFI_SUCCESS) {
     return EFI_SUCCESS;
-  else
-    return EFI_NOT_FOUND;
+  }
+
+  return EFI_NOT_FOUND;
 }
 
 /** Initialize display.
@@ -316,11 +315,11 @@ LcdIdentify (
 **/
 EFI_STATUS
 LcdInitialize (
-  IN EFI_PHYSICAL_ADDRESS   VramBaseAddress
+  IN EFI_PHYSICAL_ADDRESS  VramBaseAddress
   )
 {
-  LcdSetFramebufferBase(VDU_HDMI, VramBaseAddress);
-  LcdSetFramebufferBase(VDU_LVDS, VramBaseAddress);
+  LcdSetFramebufferBase (BM1000_HDMI_VDU_BASE, VramBaseAddress);
+  LcdSetFramebufferBase (BM1000_LVDS_VDU_BASE, VramBaseAddress);
   return EFI_SUCCESS;
 }
 
@@ -336,17 +335,16 @@ LcdSetMode (
   IN UINT32  ModeNumber
   )
 {
-  EFI_STATUS        Status;
-  SCAN_TIMINGS      *Horizontal;
-  SCAN_TIMINGS      *Vertical;
-  LCD_BPP           LcdBpp;
-  BOOLEAN           IsBgr;
-  UINT32            LvdsPorts;
-  UINT32            LvdsOutBpp;
-
+  EFI_STATUS    Status;
+  SCAN_TIMINGS  *Horizontal;
+  SCAN_TIMINGS  *Vertical;
+  LCD_BPP       LcdBpp;
+  BOOLEAN       IsBgr;
+  UINT32        LvdsPorts;
+  UINT32        LvdsOutBpp;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  ModeInfo;
 
-  LcdSetupHdmi(ModeNumber);
+  LcdSetupHdmi (ModeNumber);
 
   // Set the video mode timings and other relevant information
   Status = LcdPlatformGetTimings (
@@ -375,10 +373,11 @@ LcdSetMode (
     return Status;
   }
 
-  if (ModeInfo.PixelFormat == PixelBlueGreenRedReserved8BitPerColor)
+  if (ModeInfo.PixelFormat == PixelBlueGreenRedReserved8BitPerColor) {
     IsBgr = TRUE;
-  else
+  } else {
     IsBgr = FALSE;
+  }
 
   Status = LcdPlatformGetLvdsInfo (ModeNumber, &LvdsPorts, &LvdsOutBpp);
   if (EFI_ERROR (Status)) {
@@ -386,20 +385,19 @@ LcdSetMode (
     return Status;
   }
 
-  LcdSetTimings(VDU_HDMI, Horizontal, Vertical, LcdBpp, IsBgr, 0, 0);
-  LcdSetTimings(VDU_LVDS, Horizontal, Vertical, LcdBpp, IsBgr, LvdsPorts, LvdsOutBpp);
+  LcdSetTimings (BM1000_HDMI_VDU_BASE, Horizontal, Vertical, LcdBpp, IsBgr, 0, 0);
+  LcdSetTimings (BM1000_LVDS_VDU_BASE, Horizontal, Vertical, LcdBpp, IsBgr, LvdsPorts, LvdsOutBpp);
 
   return EFI_SUCCESS;
 }
 
-/** De-initializes the display.
-*/
+// De-initializes the display
 VOID
 LcdShutdown (
   VOID
   )
 {
   // Disable the controllers
-  MmioAnd32 (BAIKAL_VDU_REG_CR1(VDU_HDMI), ~BAIKAL_VDU_CR1_LCE);
-  MmioAnd32 (BAIKAL_VDU_REG_CR1(VDU_LVDS), ~BAIKAL_VDU_CR1_LCE);
+  MmioAnd32 (BAIKAL_VDU_CR1(BM1000_HDMI_VDU_BASE), ~BAIKAL_VDU_CR1_LCE);
+  MmioAnd32 (BAIKAL_VDU_CR1(BM1000_LVDS_VDU_BASE), ~BAIKAL_VDU_CR1_LCE);
 }

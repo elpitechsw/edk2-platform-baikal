@@ -7,8 +7,8 @@
 #include <IndustryStandard/IoRemappingTable.h>
 #include <Library/PcdLib.h>
 
+#include <BM1000.h>
 #include <Platform/ConfigVars.h>
-#include <Platform/Pcie.h>
 
 #include "AcpiPlatform.h"
 
@@ -32,7 +32,7 @@ typedef struct {
       sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE) +                \
         sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE),              \
       /* UINT8   Revision      */                                 \
-      3,                                                          \
+      4,                                                          \
       /* UINT32  Identifier    */                                 \
       Segment + 1,                                                \
       /* UINT32  NumIdMappings */                                 \
@@ -41,7 +41,7 @@ typedef struct {
       sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE)                  \
     },                                                            \
     /* UINT32  CacheCoherent     */                               \
-    1,                                                            \
+    0,                                                            \
     /* UINT8   AllocationHints   */                               \
     0,                                                            \
     /* UINT16  Reserved          */                               \
@@ -54,12 +54,12 @@ typedef struct {
     Segment,                                                      \
     /* UINT8   MemoryAddressSize */                               \
     64,                                                           \
-    /* UINT8   Reserved1[3]      */                               \
-    {                                                             \
-      EFI_ACPI_RESERVED_BYTE,                                     \
-      EFI_ACPI_RESERVED_BYTE,                                     \
-      EFI_ACPI_RESERVED_BYTE                                      \
-    }                                                             \
+    /* UINT16  PasidCapabilities */                               \
+    0,                                                            \
+    /* UINT8   Reserved1[1]      */                               \
+    { EFI_ACPI_RESERVED_BYTE },                                   \
+    /* UINT32  Flags             */                               \
+    0                                                             \
   },                                                              \
   {                                                               \
     /* UINT32  InputBase       */                                 \
@@ -80,7 +80,7 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     BAIKAL_ACPI_HEADER (
       EFI_ACPI_6_4_IO_REMAPPING_TABLE_SIGNATURE,
       BAIKAL_ACPI_IORT,
-      3, /* Revision */
+      EFI_ACPI_IO_REMAPPING_TABLE_REVISION_05, /* Revision */
       0x54524F49
       ),
     /* UINT32  NumNodes   */

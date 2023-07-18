@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -55,12 +55,12 @@ typedef struct {
 
 #define FIFO_SIZE  16
 
-#define SCL_CLK_DIV  499
-STATIC_ASSERT (SCL_CLK_DIV < 1024, "Incorrect SCL clock divider");
-
-INTN
+UINTN
 SmbusTxRx (
   IN   CONST EFI_PHYSICAL_ADDRESS  Base,
+  IN   CONST UINTN                 Iclk,
+  IN   CONST enum SmbusSht         Sht,
+  IN   CONST UINTN                 SclClk,
   IN   CONST UINTN                 TargetAddr,
   IN   CONST VOID * CONST          TxBuf,
   IN   CONST UINTN                 TxBufSize,
@@ -69,11 +69,16 @@ SmbusTxRx (
   )
 {
   volatile SMBUS_CONTROLLER_REGS * CONST  SmbusRegs = (volatile SMBUS_CONTROLLER_REGS * CONST) Base;
+  CONST  UINTN  SclClkDiv = Iclk / SclClk - 1;
   UINTN  RxedSize = 0;
         UINT8 * CONST  RxPtr = (UINT8 *) RxBuf;
   CONST UINT8 * CONST  TxPtr = (UINT8 *) TxBuf;
 
   ASSERT (SmbusRegs != NULL);
+  ASSERT (SclClk >= 10000);
+  ASSERT ((Sht == SmbusSht100kHz && SclClk <= 100000) ||
+          (Sht == SmbusSht400kHz && SclClk <= 400000));
+  ASSERT (SclClkDiv <= 1023);
   ASSERT (TargetAddr <= 0x7F);
   ASSERT (TxBuf != NULL || !TxBufSize);
   ASSERT (RxBuf != NULL || !RxBufSize);
@@ -81,8 +86,8 @@ SmbusTxRx (
   SmbusRegs->Cr1   = CR1_IRT;
   SmbusRegs->Cr1   = 0;
   SmbusRegs->Cr2   = 0;
-  SmbusRegs->Scd1  = SCL_CLK_DIV & 0xFF;
-  SmbusRegs->Scd2  = SCD2_SHT | (SCL_CLK_DIV >> 8);
+  SmbusRegs->Scd1  = (SclClkDiv & 0xFF);
+  SmbusRegs->Scd2  = (SclClkDiv >> 8) | (Sht == SmbusSht100kHz ? SCD2_SHT : 0);
   SmbusRegs->Adr1  = TargetAddr;
   SmbusRegs->Imr1  = 0;
   SmbusRegs->Imr2  = 0;
@@ -94,7 +99,7 @@ SmbusTxRx (
 
     SmbusRegs->Cr1 |= CR1_TRS;
     for (TxedSize = 0; TxedSize < TxBufSize;) {
-      UINTN  ByteCount;
+      UINTN    ByteCount;
       BOOLEAN  HoldBus = FALSE;
 
       ByteCount = TxBufSize - TxedSize;
@@ -126,7 +131,8 @@ SmbusTxRx (
 
       while (!(SmbusRegs->Isr1 &
                (ISR1_TCS | ISR1_ALD | ISR1_RNK)) &&
-             !(SmbusRegs->Isr2 & ISR2_MSH));
+             !(SmbusRegs->Isr2 & ISR2_MSH))
+        ;
 
       if (SmbusRegs->Isr1 & (ISR1_ALD | ISR1_RNK)) {
         goto Exit;
@@ -147,7 +153,8 @@ SmbusTxRx (
     SmbusRegs->Cr2   = CR2_FTE;
 
     while ((SmbusRegs->Cr2 & CR2_FTE) &&
-           !(SmbusRegs->Isr1 & (ISR1_TCS | ISR1_ALD | ISR1_RNK)));
+           !(SmbusRegs->Isr1 & (ISR1_TCS | ISR1_ALD | ISR1_RNK)))
+      ;
 
     if (SmbusRegs->Isr1 & (ISR1_ALD | ISR1_RNK)) {
       goto Exit;

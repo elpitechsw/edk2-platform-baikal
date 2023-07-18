@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SmcEfuseLib
+  FILE_GUID                      = 103F3BF9-4750-4725-9BB2-5DFC4699C41C
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SmcEfuseLib
+
+[Sources]
+  SmcEfuseLib.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  ArmSmcLib

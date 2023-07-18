@@ -31,11 +31,9 @@
   FdtLib
 
 [FixedPcd]
+  gArmTokenSpaceGuid.PcdFvBaseAddress
   gArmTokenSpaceGuid.PcdFvSize
   gBaikalTokenSpaceGuid.PcdDeviceTreeAllocationPadding
-
-[Pcd]
-  gArmTokenSpaceGuid.PcdFvBaseAddress
   gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress
 
 [Guids]

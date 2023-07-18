@@ -1,5 +1,0 @@
-[Defines]
-  DEC_SPECIFICATION              = 0x0001001B
-
-[PcdsFixedAtBuild.AARCH64]
-  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|0|UINT8|0x00000011

@@ -30,28 +30,26 @@ IsNodeEnabled (
   IN  CONST INT32              Node
   )
 {
-  INT32         Len;
-  CONST CHAR8  *Status;
+  CONST CHAR8  *Prop;
 
   ASSERT (mDeviceTreeBase != NULL);
 
-  //
-  // A missing status property implies "ok" so ignore any errors that
-  // may occur here. If the status property is present, check whether
-  // it is set to "ok" or "okay", anything else is treated as "disabled".
-  //
-  Status = fdt_getprop (mDeviceTreeBase, Node, "status", &Len);
-  if (Status == NULL) {
+  Prop = fdt_getprop (mDeviceTreeBase, Node, "status", NULL);
+  if (Prop == NULL) {
+    //
+    // Lack of a status property should be treated as
+    // if the property existed with the value of "okay".
+    // See the "Devicetree Specification v0.4-rc1".
+    //
     return TRUE;
   }
 
-  if (Len > 0) {
-    if (AsciiStrCmp (Status, "ok") == 0 ||
-        AsciiStrCmp (Status, "okay") == 0) {
-      return TRUE;
-    }
+  // If the status property is present, check if it is set to "okay"
+  if (AsciiStrCmp (Prop, "okay") == 0) {
+    return TRUE;
   }
 
+  // Anything else is treated as "disabled"
   return FALSE;
 }
 
@@ -259,7 +257,7 @@ FindCompatibleNodeReg (
   if ((*RegSize % 16) != 0) {
     DEBUG ((EFI_D_ERROR,
       "%a: '%a' compatible node has invalid 'reg' property (size == 0x%x)\n",
-      __FUNCTION__, CompatibleString, *RegSize));
+      __func__, CompatibleString, *RegSize));
     return EFI_NOT_FOUND;
   }
 
@@ -334,13 +332,13 @@ FindNextMemoryNodeReg (
       if (EFI_ERROR (Status)) {
         DEBUG ((EFI_D_WARN,
           "%a: ignoring memory node with no 'reg' property\n",
-          __FUNCTION__));
+          __func__));
         continue;
       }
       if ((*RegSize % 16) != 0) {
         DEBUG ((EFI_D_WARN,
           "%a: ignoring memory node with invalid 'reg' property (size == 0x%x)\n",
-          __FUNCTION__, *RegSize));
+          __func__, *RegSize));
         continue;
       }
 
@@ -430,7 +428,7 @@ OnPlatformHasDeviceTree (
                   &Interface
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "%a: LocateProtocol(): %r\n", __FUNCTION__, Status));
+    DEBUG ((EFI_D_ERROR, "%a: LocateProtocol(): %r\n", __func__, Status));
     return;
   }
 
@@ -438,7 +436,7 @@ OnPlatformHasDeviceTree (
   DEBUG ((
     DEBUG_INFO,
     "%a: exposing DTB @ 0x%p to OS\n",
-    __FUNCTION__,
+    __func__,
     DeviceTreeBase
     ));
   Status = gBS->InstallConfigurationTable (&gFdtTableGuid, DeviceTreeBase);
@@ -467,14 +465,14 @@ InitializeFdtClientDxe (
   DeviceTreeBase = (VOID *)(UINTN)*(UINT64 *)GET_GUID_HOB_DATA (Hob);
 
   if (fdt_check_header (DeviceTreeBase) != 0) {
-    DEBUG ((EFI_D_ERROR, "%a: No DTB found @ 0x%p\n", __FUNCTION__,
+    DEBUG ((EFI_D_ERROR, "%a: No DTB found @ 0x%p\n", __func__,
       DeviceTreeBase));
     return EFI_NOT_FOUND;
   }
 
   mDeviceTreeBase = DeviceTreeBase;
 
-  DEBUG ((EFI_D_INFO, "%a: DTB @ 0x%p\n", __FUNCTION__, mDeviceTreeBase));
+  DEBUG ((EFI_D_INFO, "%a: DTB @ 0x%p\n", __func__, mDeviceTreeBase));
 
   Status = gBS->InstallProtocolInterface (
                   &ImageHandle,
@@ -483,7 +481,7 @@ InitializeFdtClientDxe (
                   NULL
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "%a: InstallProtocolInterface(): %r\n", __FUNCTION__, Status));
+    DEBUG ((EFI_D_ERROR, "%a: InstallProtocolInterface(): %r\n", __func__, Status));
     return Status;
   }
 
@@ -499,7 +497,7 @@ InitializeFdtClientDxe (
                   &PlatformHasDeviceTreeEvent
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: CreateEvent(): %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: CreateEvent(): %r\n", __func__, Status));
     return Status;
   }
 
@@ -512,7 +510,7 @@ InitializeFdtClientDxe (
     DEBUG ((
       DEBUG_ERROR,
       "%a: RegisterProtocolNotify(): %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     goto CloseEvent;
@@ -523,7 +521,7 @@ InitializeFdtClientDxe (
   //
   Status = gBS->SignalEvent (PlatformHasDeviceTreeEvent);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: SignalEvent(): %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: SignalEvent(): %r\n", __func__, Status));
     goto CloseEvent;
   }
 
@@ -537,7 +535,7 @@ InitializeFdtClientDxe (
     DEBUG ((
       DEBUG_ERROR,
       "%a: InstallProtocolInterface(): %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     goto CloseEvent;

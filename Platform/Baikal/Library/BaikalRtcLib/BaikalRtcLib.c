@@ -1,7 +1,7 @@
 /** @file
   Implement EFI RealTimeClock runtime services via RTC Lib.
 
-  Copyright (c) 2018 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -24,12 +24,17 @@
 #define ABEOZ9_BCD_MASK_YEARS  0x7F
 
 STATIC EFI_PHYSICAL_ADDRESS  I2cBase;
+STATIC UINTN                 I2cIclk;
 STATIC UINTN                 RtcAddr;
 
+STATIC CONST CHAR16  mTimeZoneVariableName[] = L"RtcTimeZone";
+STATIC CONST CHAR16  mDaylightVariableName[] = L"RtcDaylight";
+
 enum {
-  RTC_TYPE_UNKNOWN,
-  RTC_TYPE_ABEOZ9,
-  RTC_TYPE_PCF212X
+  RtcTypeUnknown,
+  RtcTypeAbeoz9,
+  RtcTypePcf212x,
+  RtcTypeMax
 } STATIC RtcType;
 
 STATIC
@@ -69,25 +74,27 @@ LibGetTime (
   OUT  EFI_TIME_CAPABILITIES  *Capabilities
   )
 {
-  UINT8  Buf[10];
-  INTN   I2cDataSize;
-  INTN   I2cRxedSize;
-  UINT8  RegisterAddr;
-  UINT8  *TimeDateBcds;
+  UINT8       Buf[10];
+  INTN        I2cDataSize;
+  INTN        I2cRxedSize;
+  UINT8       RegisterAddr;
+  UINTN       Size;
+  EFI_STATUS  Status;
+  UINT8       *TimeDateBcds;
 
   if (Time == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (EfiAtRuntime()) {
+  if (EfiAtRuntime ()) {
     return EFI_UNSUPPORTED;
   }
 
-  if (RtcType == RTC_TYPE_ABEOZ9) {
+  if (RtcType == RtcTypeAbeoz9) {
     RegisterAddr = 0x08;
     I2cDataSize  = 7;
     TimeDateBcds = &Buf[0];
-  } else if (RtcType == RTC_TYPE_PCF212X) {
+  } else if (RtcType == RtcTypePcf212x) {
     RegisterAddr = 0x00;
     I2cDataSize  = 10;
     TimeDateBcds = &Buf[3];
@@ -95,8 +102,86 @@ LibGetTime (
     return EFI_DEVICE_ERROR;
   }
 
+  // Get the current time zone information from non-volatile storage
+  Size   = sizeof (Time->TimeZone);
+  Status = EfiGetVariable (
+             (CHAR16 *)mTimeZoneVariableName,
+             &gEfiCallerIdGuid,
+             NULL,
+             &Size,
+             (VOID *)&(Time->TimeZone)
+             );
+
+  if (EFI_ERROR (Status)) {
+    if (Status != EFI_NOT_FOUND) {
+      return Status;
+    }
+
+    // The time zone variable does not exist in non-volatile storage, so create it.
+    Time->TimeZone = EFI_UNSPECIFIED_TIMEZONE;
+    Status = EfiSetVariable (
+               (CHAR16 *)mTimeZoneVariableName,
+               &gEfiCallerIdGuid,
+               EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+               Size,
+               (VOID *)&(Time->TimeZone)
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "LibGetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+        mTimeZoneVariableName,
+        Status
+        ));
+      return Status;
+    }
+  } else {
+    // Check TimeZone bounds: -1440 to 1440 or 2047
+    if (  ((Time->TimeZone < -1440) || (Time->TimeZone > 1440))
+       && (Time->TimeZone != EFI_UNSPECIFIED_TIMEZONE))
+    {
+      Time->TimeZone = EFI_UNSPECIFIED_TIMEZONE;
+    }
+  }
+
+  // Get the current daylight information from non-volatile storage
+  Size   = sizeof (Time->Daylight);
+  Status = EfiGetVariable (
+             (CHAR16 *)mDaylightVariableName,
+             &gEfiCallerIdGuid,
+             NULL,
+             &Size,
+             (VOID *)&(Time->Daylight)
+             );
+
+  if (EFI_ERROR (Status)) {
+    if (Status != EFI_NOT_FOUND) {
+      return Status;
+    }
+
+    // The daylight variable does not exist in non-volatile storage, so create it.
+    Time->Daylight = 0;
+    Status = EfiSetVariable (
+               (CHAR16 *)mDaylightVariableName,
+               &gEfiCallerIdGuid,
+               EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+               Size,
+               (VOID *)&(Time->Daylight)
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "LibGetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+        mDaylightVariableName,
+        Status
+        ));
+      return Status;
+    }
+  }
+
   I2cRxedSize = I2cTxRx (
                   I2cBase,
+                  I2cIclk,
                   RtcAddr,
                   (UINT8 *) &RegisterAddr,
                   sizeof RegisterAddr,
@@ -110,6 +195,7 @@ LibGetTime (
 
   I2cRxedSize = I2cTxRx (
                   I2cBase,
+                  I2cIclk,
                   RtcAddr,
                   NULL,
                   0,
@@ -124,41 +210,39 @@ LibGetTime (
   Time->Second = Bcd2Bin (TimeDateBcds[0] & BCD_MASK_SECONDS);
   Time->Minute = Bcd2Bin (TimeDateBcds[1] & BCD_MASK_MINUTES);
 
-  /* Handle 12/24-hour modes */
-  if ((RtcType == RTC_TYPE_ABEOZ9  && (TimeDateBcds[2] & BIT6)) ||
-      (RtcType == RTC_TYPE_PCF212X && (Buf[0] & BIT2))) {
-    /* 12-hour mode */
+  // Handle 12/24-hour modes
+  if ((RtcType == RtcTypeAbeoz9  && (TimeDateBcds[2] & BIT6)) ||
+      (RtcType == RtcTypePcf212x && (Buf[0] & BIT2))) {
+    // 12-hour mode
     Time->Hour = Bcd2Bin (TimeDateBcds[2] & BCD_MASK_HOURS12);
-    /* Handle AM/PM bit */
+    // Handle AM/PM bit
     if ((TimeDateBcds[2] & BIT5) && Time->Hour != 12) {
       Time->Hour += 12;
     }
   } else {
-    /* 24-hour mode */
+    // 24-hour mode
     Time->Hour = Bcd2Bin (TimeDateBcds[2] & BCD_MASK_HOURS24);
   }
 
   Time->Day    = Bcd2Bin (TimeDateBcds[3] & BCD_MASK_DAYS);
   Time->Month  = Bcd2Bin (TimeDateBcds[5] & BCD_MASK_MONTHS);
 
-  if (RtcType == RTC_TYPE_ABEOZ9) {
+  if (RtcType == RtcTypeAbeoz9) {
     TimeDateBcds[6] &= ABEOZ9_BCD_MASK_YEARS;
   }
 
   Time->Year   = Bcd2Bin (TimeDateBcds[6]) + 2000;
 
-  /* Not supported */
+  // Not supported
   Time->Pad1       = 0;
   Time->Nanosecond = 0;
-  Time->TimeZone   = 0;
-  Time->Daylight   = 0;
   Time->Pad2       = 0;
 
   if (!IsTimeValid (Time)) {
     DEBUG ((
       EFI_D_ERROR,
       "%a: %04u-%02u-%02u %02u:%02u:%02u is invalid date/time\n",
-      __FUNCTION__,
+      __func__,
       Time->Year,
       Time->Month,
       Time->Day,
@@ -166,6 +250,14 @@ LibGetTime (
       Time->Minute,
       Time->Second
       ));
+
+    // Set default time
+    Time->Year   = TIME_BUILD_YEAR;
+    Time->Month  = 1;
+    Time->Day    = 1;
+    Time->Hour   = 1; // AM/PM indifferent
+    Time->Minute = 0;
+    Time->Second = 0;
   }
 
   if (Capabilities != NULL) {
@@ -192,26 +284,27 @@ LibSetTime (
   IN  EFI_TIME  *Time
   )
 {
-  UINT8  Buf[8];
-  INTN   I2cRxedSize;
+  UINT8       Buf[8];
+  INTN        I2cRxedSize;
+  EFI_STATUS  Status;
 
   if (Time == NULL || !IsTimeValid (Time)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (EfiAtRuntime()) {
+  if (EfiAtRuntime ()) {
     return EFI_UNSUPPORTED;
   }
 
   if (Time->Year < 2000 ||
-      (Time->Year > 2085 && RtcType == RTC_TYPE_ABEOZ9) ||
-      (Time->Year > 2099 && RtcType == RTC_TYPE_PCF212X)) {
+      (Time->Year > 2085 && RtcType == RtcTypeAbeoz9) ||
+      (Time->Year > 2099 && RtcType == RtcTypePcf212x)) {
     return EFI_UNSUPPORTED;
   }
 
-  if (RtcType == RTC_TYPE_ABEOZ9) {
+  if (RtcType == RtcTypeAbeoz9) {
     Buf[0] = 0x08;
-  } else if (RtcType == RTC_TYPE_PCF212X) {
+  } else if (RtcType == RtcTypePcf212x) {
     Buf[0] = 0x03;
   } else {
     return EFI_DEVICE_ERROR;
@@ -224,8 +317,45 @@ LibSetTime (
   Buf[6] = Bin2Bcd (Time->Month);
   Buf[7] = Bin2Bcd (Time->Year - 2000);
 
+  // Save the current time zone information into non-volatile storage
+  Status = EfiSetVariable (
+             (CHAR16 *)mTimeZoneVariableName,
+             &gEfiCallerIdGuid,
+             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+             sizeof (Time->TimeZone),
+             (VOID *)&(Time->TimeZone)
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "LibSetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+      mTimeZoneVariableName,
+      Status
+      ));
+    return Status;
+  }
+
+  // Save the current daylight information into non-volatile storage
+  Status = EfiSetVariable (
+             (CHAR16 *)mDaylightVariableName,
+             &gEfiCallerIdGuid,
+             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+             sizeof (Time->Daylight),
+             (VOID *)&(Time->Daylight)
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "LibSetTime: Failed to save %s variable to non-volatile storage, Status = %r\n",
+      mDaylightVariableName,
+      Status
+      ));
+    return Status;
+  }
+
   I2cRxedSize = I2cTxRx (
                   I2cBase,
+                  I2cIclk,
                   RtcAddr,
                   Buf,
                   sizeof Buf,
@@ -300,7 +430,6 @@ LibRtcInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_TIME              EfiTime;
   FDT_CLIENT_PROTOCOL  *FdtClient;
   INT32                 Node;
   CONST VOID           *Prop;
@@ -312,38 +441,35 @@ LibRtcInitialize (
 
   Node = 0;
   if (FdtClient->FindNextCompatibleNode (FdtClient, "abracon,abeoz9", Node, &Node) == EFI_SUCCESS) {
-    RtcType = RTC_TYPE_ABEOZ9;
+    RtcType = RtcTypeAbeoz9;
   } else if (FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2127", Node, &Node) == EFI_SUCCESS ||
              FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2129", Node, &Node) == EFI_SUCCESS) {
-    RtcType = RTC_TYPE_PCF212X;
+    RtcType = RtcTypePcf212x;
   } else {
     return EFI_DEVICE_ERROR;
   }
 
   Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
-  if (EFI_ERROR (Status) || PropSize != 4) {
+  if (EFI_ERROR (Status) || PropSize != sizeof (UINT32)) {
     return EFI_DEVICE_ERROR;
   }
 
-  RtcAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+  RtcAddr = SwapBytes32 (*(CONST UINT32 *) Prop);
 
   if (FdtClient->FindParentNode (FdtClient, Node, &Node) == EFI_SUCCESS &&
       FdtClient->IsNodeEnabled (FdtClient, Node) &&
-      FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 16) {
-    I2cBase = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
+      FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
+    I2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
+        FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
+        FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+      I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
+    } else {
+      return EFI_DEVICE_ERROR;
+    }
   } else {
     return EFI_DEVICE_ERROR;
-  }
-
-  Status = LibGetTime (&EfiTime, NULL);
-  if (Status == EFI_SUCCESS && !IsTimeValid (&EfiTime)) {
-    EfiTime.Year   = TIME_BUILD_YEAR;
-    EfiTime.Month  = 1;
-    EfiTime.Day    = 1;
-    EfiTime.Hour   = 1; /* AM/PM indifferent */
-    EfiTime.Minute = 0;
-    EfiTime.Second = 0;
-    LibSetTime (&EfiTime);
   }
 
   return EFI_SUCCESS;

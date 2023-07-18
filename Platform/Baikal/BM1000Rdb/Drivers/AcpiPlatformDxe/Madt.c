@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -14,43 +14,44 @@
 #define BAIKAL_MADT_CPU_COUNT  8
 #define RESERVED_MADT_TYPE     0xFF
 
-#define BAIKAL_MADT_GICC_ENTRY(CPUInterfaceNumber, Mpidr)  {                 \
-  /* UINT8   Type                          */                                \
-  EFI_ACPI_6_4_GIC,                                                          \
-  /* UINT8   Length                        */                                \
-  sizeof (EFI_ACPI_6_4_GIC_STRUCTURE),                                       \
-  /* UINT16  Reserved                      */                                \
-  EFI_ACPI_RESERVED_WORD,                                                    \
-  /* UINT32  CPUInterfaceNumber            */                                \
-  0,                                                                         \
-  /* UINT32  AcpiProcessorUid              */                                \
-  CPUInterfaceNumber,                                                        \
-  /* UINT32  Flags                         */                                \
-  EFI_ACPI_6_4_GIC_ENABLED,                                                  \
-  /* UINT32  ParkingProtocolVersion        */                                \
-  0,                                                                         \
-  /* UINT32  PerformanceInterruptGsiv      */                                \
-  23,                                                                        \
-  /* UINT64  ParkedAddress                 */                                \
-  0,                                                                         \
-  /* UINT64  PhysicalBaseAddress           */                                \
-  0,                                                                         \
-  /* UINT64  GICV                          */                                \
-  0,                                                                         \
-  /* UINT64  GICH                          */                                \
-  0,                                                                         \
-  /* UINT32  VGICMaintenanceInterrupt      */                                \
-  25,                                                                        \
-  /* UINT64  GICRBaseAddress               */                                \
-  FixedPcdGet64 (PcdGicRedistributorsBase) + (0x20000 * CPUInterfaceNumber), \
-  /* UINT64  MPIDR                         */                                \
-  Mpidr,                                                                     \
-  /* UINT8   ProcessorPowerEfficiencyClass */                                \
-  0,                                                                         \
-  /* UINT8   Reserved2                     */                                \
-  EFI_ACPI_RESERVED_BYTE,                                                    \
-  /* UINT16  SpeOverflowInterrupt          */                                \
-  0                                                                          \
+#define BAIKAL_MADT_GICC_ENTRY(CPUInterfaceNumber, Mpidr)  { \
+  /* UINT8   Type                          */                \
+  EFI_ACPI_6_4_GIC,                                          \
+  /* UINT8   Length                        */                \
+  sizeof (EFI_ACPI_6_4_GIC_STRUCTURE),                       \
+  /* UINT16  Reserved                      */                \
+  EFI_ACPI_RESERVED_WORD,                                    \
+  /* UINT32  CPUInterfaceNumber            */                \
+  0,                                                         \
+  /* UINT32  AcpiProcessorUid              */                \
+  CPUInterfaceNumber,                                        \
+  /* UINT32  Flags                         */                \
+  EFI_ACPI_6_4_GIC_ENABLED,                                  \
+  /* UINT32  ParkingProtocolVersion        */                \
+  0,                                                         \
+  /* UINT32  PerformanceInterruptGsiv      */                \
+  23,                                                        \
+  /* UINT64  ParkedAddress                 */                \
+  0,                                                         \
+  /* UINT64  PhysicalBaseAddress           */                \
+  0,                                                         \
+  /* UINT64  GICV                          */                \
+  0,                                                         \
+  /* UINT64  GICH                          */                \
+  0,                                                         \
+  /* UINT32  VGICMaintenanceInterrupt      */                \
+  25,                                                        \
+  /* UINT64  GICRBaseAddress               */                \
+  FixedPcdGet64 (PcdGicRedistributorsBase) +                 \
+    (0x20000 * (CPUInterfaceNumber)),                        \
+  /* UINT64  MPIDR                         */                \
+  Mpidr,                                                     \
+  /* UINT8   ProcessorPowerEfficiencyClass */                \
+  0,                                                         \
+  /* UINT8   Reserved2                     */                \
+  EFI_ACPI_RESERVED_BYTE,                                    \
+  /* UINT16  SpeOverflowInterrupt          */                \
+  0                                                          \
 }
 
 #pragma pack(1)

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -140,7 +140,7 @@ FruInternalsCommonHeaderCheck (
   if (CommonHeader->FormatVersion != COMMON_HEADER_FORMAT_VERSION) {
     DEBUG ((
       EFI_D_ERROR, "%a: invalid Common Header Format Version: %d != %d\n",
-      __FUNCTION__,
+      __func__,
       CommonHeader->FormatVersion,
       COMMON_HEADER_FORMAT_VERSION
       ));
@@ -148,7 +148,7 @@ FruInternalsCommonHeaderCheck (
   }
 
   if (CalcChecksum ((UINT8 *) CommonHeader, sizeof (COMMON_HEADER))) {
-    DEBUG ((EFI_D_ERROR, "%a: invalid Common Header Checksum\n", __FUNCTION__));
+    DEBUG ((EFI_D_ERROR, "%a: invalid Common Header Checksum\n", __func__));
     return EFI_CRC_ERROR;
   }
 
@@ -180,7 +180,7 @@ FruInternalsBoardAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid board area offset(%u)\n",
-      __FUNCTION__,
+      __func__,
       BoardAreaOffset
       ));
     return EFI_INVALID_PARAMETER;
@@ -191,7 +191,7 @@ FruInternalsBoardAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid board area format version (%u != %u)\n",
-      __FUNCTION__,
+      __func__,
       **BoardArea,
       BOARD_AREA_FORMAT_VERSION
       ));
@@ -203,14 +203,14 @@ FruInternalsBoardAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid board area size(%u)\n",
-      __FUNCTION__,
+      __func__,
       *BoardAreaSize
       ));
     return EFI_INVALID_PARAMETER;
   }
 
   if (CalcChecksum (*BoardArea, *BoardAreaSize)) {
-    DEBUG ((EFI_D_ERROR, "%a: invalid board area checksum\n", __FUNCTION__));
+    DEBUG ((EFI_D_ERROR, "%a: invalid board area checksum\n", __func__));
     return EFI_CRC_ERROR;
   }
 
@@ -240,7 +240,7 @@ FruInternalsMultirecordAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid multirecord area offset (%u)\n",
-      __FUNCTION__,
+      __func__,
       MultirecordAreaOffset
       ));
     return EFI_INVALID_PARAMETER;
@@ -276,7 +276,7 @@ FruInternalsProductAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid product area offset(%u)\n",
-      __FUNCTION__,
+      __func__,
       ProductAreaOffset
       ));
     return EFI_INVALID_PARAMETER;
@@ -287,7 +287,7 @@ FruInternalsProductAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid product area format version (%u != %u)\n",
-      __FUNCTION__,
+      __func__,
       **ProductArea,
       PRODUCT_AREA_FORMAT_VERSION
       ));
@@ -299,7 +299,7 @@ FruInternalsProductAreaLocate (
     DEBUG ((
       EFI_D_ERROR,
       "%a: invalid product area size(%u)\n",
-      __FUNCTION__,
+      __func__,
       *ProductAreaSize
       ));
 
@@ -307,7 +307,7 @@ FruInternalsProductAreaLocate (
   }
 
   if (CalcChecksum (*ProductArea, *ProductAreaSize)) {
-    DEBUG ((EFI_D_ERROR, "%a: invalid product area checksum\n", __FUNCTION__));
+    DEBUG ((EFI_D_ERROR, "%a: invalid product area checksum\n", __func__));
     return EFI_CRC_ERROR;
   }
 
@@ -325,7 +325,7 @@ FruInternalsMultirecordCheckData (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unknown multirecord format(%u)\n",
-      __FUNCTION__,
+      __func__,
       MrecHdr->Format & 0x07
       ));
     return EFI_INVALID_PARAMETER;
@@ -335,7 +335,7 @@ FruInternalsMultirecordCheckData (
     DEBUG ((
       EFI_D_ERROR,
       "%a: MrecBufSize(%u) is smaller than multirecord header+data size(%u)\n",
-      __FUNCTION__,
+      __func__,
       MrecBufSize,
       sizeof (MULTIRECORD_HEADER) + MrecHdr->Length
       ));
@@ -344,7 +344,7 @@ FruInternalsMultirecordCheckData (
 
   if ((CalcChecksum (MrecBuf + sizeof (MULTIRECORD_HEADER), MrecHdr->Length) +
        MrecHdr->RecordChecksum) & 0xFF) {
-    DEBUG ((EFI_D_ERROR, "%a: invalid multirecord data checksum\n", __FUNCTION__));
+    DEBUG ((EFI_D_ERROR, "%a: invalid multirecord data checksum\n", __func__));
     return EFI_CRC_ERROR;
   }
 
@@ -365,7 +365,7 @@ FruInternalsMultirecordParseHeader (
     DEBUG ((
       EFI_D_ERROR,
       "%a: MrecBufSize (%u) is smaller than MULTIRECORD_HEADER size (%u)\n",
-      __FUNCTION__,
+      __func__,
       MrecBufSize,
       sizeof (MULTIRECORD_HEADER)
       ));

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -38,7 +38,7 @@ UidClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to locate SpdClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -55,7 +55,7 @@ UidClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to install UidClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -70,11 +70,11 @@ UidClientDxeInitialize (
     if (Crc16 (SpdData, 126, 0) == ((SpdData[127] << 8) | SpdData[126])) {
       CONST UINTN  BytesUsed = SpdData[0] & 0xF;
       if (BytesUsed >= 3) { // Find DIMM with manufacturer's specific data
-        gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize()), &Uid32);
+        gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize ()), &Uid32);
         return EFI_SUCCESS;
       } else if (Uid32 == 0) {
         // Use general data of any DIMM if there is no DIMM with specific data
-        gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize()), &Uid32);
+        gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize ()), &Uid32);
       }
     }
   }

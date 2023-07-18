@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -24,8 +24,7 @@ UidClientDxeInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  UINTN       SpdAddr;
-  UINTN       SpdSize;
+  UINTN       SpdPort;
   EFI_STATUS  Status;
 
   STATIC UID_CLIENT_PROTOCOL  mUidClientProtocol = {
@@ -43,7 +42,7 @@ UidClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to install UidClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -51,19 +50,12 @@ UidClientDxeInitialize (
 
   Uid32 = 0;
 
-  for (SpdAddr = 0x50, SpdSize = 0; SpdAddr < 0x54; ++SpdAddr) {
-    SpdSize = SpdGetSize (SpdAddr);
+  for (SpdPort = 0; SpdPort < BAIKAL_SPD_PORT_COUNT; ++SpdPort) {
+    CONST UINT8  *Spd = SpdGetBuf (SpdPort);
+    UINTN         SpdSize = SpdGetSize (SpdPort);
 
-    if (SpdSize) {
-      UINT8  *Spd;
-
-      Status = gBS->AllocatePool (EfiBootServicesData, SpdSize, (VOID **) &Spd);
-      if (!EFI_ERROR (Status)) {
-        SpdGetBuf (SpdAddr, Spd, SpdSize);
-        gBS->CalculateCrc32 (Spd, SpdSize, &Uid32);
-        gBS->FreePool (Spd);
-      }
-
+    if (Spd && SpdSize) {
+      gBS->CalculateCrc32 ((VOID *) Spd, SpdSize, &Uid32);
       break;
     }
   }

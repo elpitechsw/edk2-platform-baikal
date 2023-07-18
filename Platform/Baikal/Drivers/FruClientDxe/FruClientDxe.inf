@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -19,9 +19,9 @@
   FruInternals.h
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   EmbeddedPkg/EmbeddedPkg.dec
   MdePkg/MdePkg.dec
-  Platform/Baikal/Baikal.dec
   Silicon/Baikal/Baikal.dec
 
 [LibraryClasses]

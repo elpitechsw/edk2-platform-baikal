@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -156,8 +156,9 @@ FruClientDxeInitialize (
   )
 {
   FDT_CLIENT_PROTOCOL   *FdtClient;
-  EFI_PHYSICAL_ADDRESS   FruI2cBase = 0;
   CONST UINT16           FruMemAddr = 0;
+  EFI_PHYSICAL_ADDRESS   I2cBase = 0;
+  UINTN                  I2cIclk = 0;
   INTN                   I2cRxedSize;
   INT32                  Node;
   CONST VOID            *Prop;
@@ -187,7 +188,7 @@ FruClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to locate FdtClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -195,14 +196,20 @@ FruClientDxeInitialize (
 
   if (FdtClient->FindCompatibleNode (FdtClient, "atmel,24c32", &Node) == EFI_SUCCESS &&
       FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
-      PropSize == 4) {
-    mFruAddr = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+      PropSize == sizeof (UINT32)) {
+    mFruAddr = SwapBytes32 (*(CONST UINT32 *) Prop);
     if (mFruAddr >= 0x50 && mFruAddr <= 0x57 &&
         FdtClient->FindParentNode  (FdtClient, Node, &Node) == EFI_SUCCESS &&
         FdtClient->IsNodeEnabled   (FdtClient, Node) &&
         FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
-        PropSize == 16) {
-      FruI2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+        PropSize == 2 * sizeof (UINT64)) {
+      I2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+
+      if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
+          FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
+          FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+        I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
+      }
     } else {
       mFruAddr = 0;
     }
@@ -213,15 +220,16 @@ FruClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to allocate mFruBuf, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
   }
 
-  if (FruI2cBase && mFruAddr) {
+  if (I2cBase && I2cIclk && mFruAddr) {
     I2cRxedSize = I2cTxRx (
-                    FruI2cBase,
+                    I2cBase,
+                    I2cIclk,
                     mFruAddr,
                     (UINT8 *) &FruMemAddr,
                     sizeof (FruMemAddr),
@@ -245,7 +253,7 @@ FruClientDxeInitialize (
     DEBUG ((
       EFI_D_ERROR,
       "%a: unable to install FruClientProtocol, Status: %r\n",
-      __FUNCTION__,
+      __func__,
       Status
       ));
     return Status;
@@ -576,14 +584,25 @@ FruClientGetMultirecordMacAddr (
 
           return EFI_SUCCESS;
         } else if (MrecHdr.Length == 6) {
-          // Legacy BMC FW generates incorrect OEM Records without 3-byte Manufacturer ID field
-          DEBUG ((
-            EFI_D_WARN,
-            "%a: MrecHdr.Length:%u is deprecated for MrecHdr.TypeId:0x%02x\n",
-            __FUNCTION__,
-            MrecHdr.Length,
-            MrecHdr.TypeId
-            ));
+          STATIC BOOLEAN  WarnOnceMac[2];
+
+          if ((MrecHdr.TypeId == MULTIRECORD_TYPEID_MAC0 && !WarnOnceMac[0]) ||
+              (MrecHdr.TypeId == MULTIRECORD_TYPEID_MAC1 && !WarnOnceMac[1])) {
+            // Legacy BMC FW generates incorrect OEM Records without 3-byte Manufacturer ID field
+            DEBUG ((
+              EFI_D_WARN,
+              "%a: MrecHdr.Length:%u is deprecated for MrecHdr.TypeId:0x%02x\n",
+              __func__,
+              MrecHdr.Length,
+              MrecHdr.TypeId
+              ));
+
+            if (MrecHdr.TypeId == MULTIRECORD_TYPEID_MAC0) {
+              WarnOnceMac[0] = TRUE;
+            } else if (MrecHdr.TypeId == MULTIRECORD_TYPEID_MAC1) {
+              WarnOnceMac[1] = TRUE;
+            }
+          }
 
           for (Idx = 0; Idx < 6; ++Idx) {
             MacAddr->Addr[Idx] = MrecArea[sizeof (MULTIRECORD_HEADER) + Idx];
@@ -594,7 +613,7 @@ FruClientGetMultirecordMacAddr (
           DEBUG ((
             EFI_D_ERROR,
             "%a: MrecHdr.Length:%u does not match MrecHdr.TypeId:0x%02x\n",
-            __FUNCTION__,
+            __func__,
             MrecHdr.Length,
             MrecHdr.TypeId
             ));

@@ -90,7 +90,6 @@ InstallHiiPages (
   return EFI_SUCCESS;
 }
 
-
 STATIC
 EFI_STATUS
 SetupVariables (
@@ -141,7 +140,7 @@ ConfigDxeInitialize (
 
   Status = SetupVariables ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: couldn't not setup NV vars: %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: couldn't setup NV vars: %r\n", __func__, Status));
   }
 
   Status = gBS->InstallProtocolInterface (
@@ -154,7 +153,7 @@ ConfigDxeInitialize (
 
   Status = InstallHiiPages ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: couldn't install HiiPages: %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: couldn't install HiiPages: %r\n", __func__, Status));
   }
 
   return EFI_SUCCESS;

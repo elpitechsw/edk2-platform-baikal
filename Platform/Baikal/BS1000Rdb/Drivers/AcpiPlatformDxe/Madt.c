@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -38,7 +38,8 @@
   /* UINT32  VGICMaintenanceInterrupt      */                \
   25,                                                        \
   /* UINT64  GICRBaseAddress               */                \
-  0,                                                         \
+  FixedPcdGet64 (PcdGicRedistributorsBase) +                 \
+    (0x20000 * (CPUInterfaceNumber)),                        \
   /* UINT64  MPIDR                         */                \
   (Mpidr) << 8,                                              \
   /* UINT8   ProcessorPowerEfficiencyClass */                \
@@ -49,11 +50,11 @@
   0                                                          \
 }
 
-#define BAIKAL_MADT_GICC_ENTRY_CLUSTER(ClusterId)                      \
-  BAIKAL_MADT_GICC_ENTRY (4 * ClusterId, GET_MPID (ClusterId, 0)),     \
-  BAIKAL_MADT_GICC_ENTRY (4 * ClusterId + 1, GET_MPID (ClusterId, 1)), \
-  BAIKAL_MADT_GICC_ENTRY (4 * ClusterId + 2, GET_MPID (ClusterId, 2)), \
-  BAIKAL_MADT_GICC_ENTRY (4 * ClusterId + 3, GET_MPID (ClusterId, 3))
+#define BAIKAL_MADT_GICC_ENTRY_CLUSTER(ClusterId)                        \
+  BAIKAL_MADT_GICC_ENTRY (4 * (ClusterId), GET_MPID (ClusterId, 0)),     \
+  BAIKAL_MADT_GICC_ENTRY (4 * (ClusterId) + 1, GET_MPID (ClusterId, 1)), \
+  BAIKAL_MADT_GICC_ENTRY (4 * (ClusterId) + 2, GET_MPID (ClusterId, 2)), \
+  BAIKAL_MADT_GICC_ENTRY (4 * (ClusterId) + 3, GET_MPID (ClusterId, 3))
 
 #define BAIKAL_MADT_GIC_ITS_ENTRY(Id, Addr)  { \
   /* UINT8   Type                */            \
@@ -75,7 +76,6 @@ typedef struct {
   EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER  Table;
   EFI_ACPI_6_4_GIC_STRUCTURE                           GicC[BAIKAL_MADT_CPU_COUNT];
   EFI_ACPI_6_4_GIC_DISTRIBUTOR_STRUCTURE               GicD;
-  EFI_ACPI_6_4_GICR_STRUCTURE                          GicR;
   EFI_ACPI_6_4_GIC_ITS_STRUCTURE                       GicIts[16];
 } BAIKAL_ACPI_MADT;
 
@@ -123,18 +123,6 @@ STATIC BAIKAL_ACPI_MADT  Madt = {
     EFI_ACPI_6_4_GIC_V3,
     /* UINT8   Reserved2[3]        */
     { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE }
-  },
-  {
-    /* UINT8   Type                      */
-    EFI_ACPI_6_4_GICR,
-    /* UINT8   Length                    */
-    sizeof (EFI_ACPI_6_4_GICR_STRUCTURE),
-    /* UINT16  Reserved                  */
-    EFI_ACPI_RESERVED_WORD,
-    /* UINT64  DiscoveryRangeBaseAddress */
-    FixedPcdGet64 (PcdGicRedistributorsBase),
-    /* UINT32  DiscoveryRangeLength      */
-    0x00600000
   },
   {
     BAIKAL_MADT_GIC_ITS_ENTRY(0, 0x01040000),

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -24,7 +24,6 @@
   gUidClientProtocolGuid = { 0x304A2CC1, 0x1004, 0x4AB2, { 0xB0, 0x90, 0x7D, 0x9C, 0xB4, 0xD9, 0x0A, 0x7F } }
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
-
   #
   # This is the physical address where the device tree is expected to be stored
   # upon first entry into UEFI. This needs to be a FixedAtBuild PCD, so that we
@@ -49,13 +48,6 @@
   gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x0000000B
   gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000006
   gBaikalTokenSpaceGuid.PcdVduMaxMode|10|UINT32|0x00000005
-
-[PcdsFeatureFlag.common]
-  gArmPlatformTokenSpaceGuid.PcdSystemMemoryInitializeInSec|FALSE|BOOLEAN|0x00000002
-
-[PcdsDynamic]
-  gBaikalTokenSpaceGuid.PcdVduBase|0|UINT32|0x00000004
-  gBaikalTokenSpaceGuid.PcdVduLcruId|0|UINT32|0x0000000A
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x00000011

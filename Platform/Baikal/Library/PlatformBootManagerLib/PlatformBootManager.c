@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -163,7 +163,7 @@ FilterAndProcess (
     //
     // This is not an error, just an informative condition.
     //
-    DEBUG ((EFI_D_VERBOSE, "%a: %g: %r\n", __FUNCTION__, ProtocolGuid, Status));
+    DEBUG ((EFI_D_VERBOSE, "%a: %g: %r\n", __func__, ProtocolGuid, Status));
     return;
   }
 
@@ -231,7 +231,7 @@ IsPciDisplay (
                         &Pci
                         );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "%a: %s: %r\n", __FUNCTION__, ReportText, Status));
+    DEBUG ((EFI_D_ERROR, "%a: %s: %r\n", __func__, ReportText, Status));
     return FALSE;
   }
 
@@ -294,7 +294,7 @@ Connect (
   DEBUG ((
     EFI_ERROR (Status) ? EFI_D_ERROR : EFI_D_VERBOSE,
     "%a: %s: %r\n",
-    __FUNCTION__,
+    __func__,
     ReportText,
     Status
     ));
@@ -320,7 +320,7 @@ AddOutput (
     DEBUG ((
       EFI_D_ERROR,
       "%a: %s: handle %p: device path not found\n",
-      __FUNCTION__,
+      __func__,
       ReportText,
       Handle
       ));
@@ -333,7 +333,7 @@ AddOutput (
     DEBUG ((
       EFI_D_ERROR,
       "%a: %s: adding to ConOut: %r\n",
-      __FUNCTION__,
+      __func__,
       ReportText,
       Status
       ));
@@ -346,7 +346,7 @@ AddOutput (
     DEBUG ((
       EFI_D_ERROR,
       "%a: %s: adding to ErrOut: %r\n",
-      __FUNCTION__,
+      __func__,
       ReportText,
       Status
       ));
@@ -357,7 +357,7 @@ AddOutput (
   DEBUG ((
     EFI_D_VERBOSE,
     "%a: %s: added to ConOut and ErrOut\n",
-    __FUNCTION__,
+    __func__,
     ReportText
     ));
 }
@@ -514,7 +514,7 @@ GetPlatformOptions (
         DEBUG ((
           DEBUG_ERROR,
           "%a: failed to register \"%s\": %r\n",
-          __FUNCTION__,
+          __func__,
           BootOptions[Index].Description,
           Status
           ));
@@ -543,7 +543,7 @@ GetPlatformOptions (
       DEBUG ((
         DEBUG_ERROR,
         "%a: failed to register hotkey for \"%s\": %r\n",
-        __FUNCTION__,
+        __func__,
         BootOptions[Index].Description,
         Status
         ));
@@ -702,7 +702,7 @@ HandleCapsules (
   BOOLEAN                    NeedReset;
   EFI_STATUS                 Status;
 
-  DEBUG ((DEBUG_INFO, "%a: processing capsules ...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: processing capsules ...\n", __func__));
 
   Status = gBS->LocateProtocol (
                   &gEsrtManagementProtocolGuid,
@@ -727,7 +727,7 @@ HandleCapsules (
       DEBUG ((
         DEBUG_ERROR,
         "%a: failed to process capsule %p - %r\n",
-        __FUNCTION__,
+        __func__,
         CapsuleHeader,
         Status
         ));
@@ -743,7 +743,7 @@ HandleCapsules (
       DEBUG ((
         DEBUG_WARN,
         "%a: capsule update successful, resetting ...\n",
-        __FUNCTION__
+        __func__
         ));
 
       gRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
@@ -1000,7 +1000,7 @@ PlatformBootManagerUnableToBoot (
     DEBUG ((
       DEBUG_WARN,
       "%a: rebooting after refreshing all boot options\n",
-      __FUNCTION__
+      __func__
       ));
 
     gRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);

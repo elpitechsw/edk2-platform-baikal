@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -11,10 +11,10 @@
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Platform/ConfigVars.h>
-#include <Platform/Pcie.h>
 #include <Protocol/AcpiTable.h>
 #include <Protocol/PciIo.h>
 
+#include <BM1000.h>
 #include "AcpiPlatform.h"
 
 // DeviceOp PkgLength NameString
@@ -74,7 +74,6 @@ EFI_STATUS
 
 extern EFI_STATUS CsrtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS Dbg2Init (EFI_ACPI_DESCRIPTION_HEADER  **Table);
-extern EFI_STATUS FacsInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS FadtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS GtdtInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
 extern EFI_STATUS IortInit (EFI_ACPI_DESCRIPTION_HEADER  **Table);
@@ -88,7 +87,6 @@ STATIC BAIKAL_ACPI_INIT_FUNCTION  AcpiTableInit[] = {
   &CsrtInit,
   &Dbg2Init,
   &DsdtInit,
-  &FacsInit,
   &FadtInit,
   &GtdtInit,
   &IortInit,
@@ -198,9 +196,9 @@ GeneratePcieSsdt (
   )
 {
   STATIC CONST EFI_PHYSICAL_ADDRESS  CfgBases[] = {
-                                                    BM1000_PCIE0_CFG_BASE,
-                                                    BM1000_PCIE1_CFG_BASE,
-                                                    BM1000_PCIE2_CFG_BASE
+                                                    BAIKAL_ACPI_PCIE0_CFG_BASE,
+                                                    BAIKAL_ACPI_PCIE1_CFG_BASE,
+                                                    BAIKAL_ACPI_PCIE2_CFG_BASE
                                                   };
 
   UINT64                        Iosi = 0;
@@ -315,7 +313,7 @@ ProcessBridgeForSsdt (
 #if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
      BAIKAL_ACPI_PCIE1_SEGMENT,
 #else
-     0, /* Unused */
+     0, // Unused
 #endif
      BAIKAL_ACPI_PCIE2_SEGMENT
   };

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -20,7 +20,7 @@ STATIC EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE  Spcr = {
   { EFI_ACPI_RESERVED_BYTE,
     EFI_ACPI_RESERVED_BYTE,
     EFI_ACPI_RESERVED_BYTE },                                                   // Reserved1[3]
-  { EFI_ACPI_6_4_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_4_BYTE, 0x00C00000 },         // BaseAddress
+  { EFI_ACPI_6_4_SYSTEM_MEMORY, 32, 0, EFI_ACPI_6_4_DWORD, 0x00C00000 },        // BaseAddress
   EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERRUPT_TYPE_GIC,            // InterruptType
   0,                                                                            // Irq
   93,                                                                           // GlobalSystemInterrupt

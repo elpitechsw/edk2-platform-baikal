@@ -19,11 +19,11 @@
   GmacSnp.h
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   ArmPkg/ArmPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
   NetworkPkg/NetworkPkg.dec
-  Platform/Baikal/Baikal.dec
   Silicon/Baikal/Baikal.dec
 
 [LibraryClasses]

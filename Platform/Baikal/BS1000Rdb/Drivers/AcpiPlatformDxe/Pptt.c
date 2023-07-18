@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -17,7 +17,7 @@
   - core L1 data cache
   - core L1 instruction cache
 */
-#define BAIKAL_PPTT_CACHE_COUNT          5
+#define BAIKAL_PPTT_CACHE_COUNT          157
 #define BAIKAL_PPTT_PACKAGE_CACHE_COUNT  1
 #define BAIKAL_PPTT_CLUSTER_CACHE_COUNT  1
 #define BAIKAL_PPTT_CORE_CACHE_COUNT     3
@@ -66,7 +66,7 @@
     BAIKAL_PPTT_CLUSTER_CACHE_COUNT                                             \
   },                                                                            \
   /* UINT32  Resource */                                                        \
-  OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[1])                                        \
+  OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Id - 47])                                  \
 }
 
 #define BAIKAL_PPTT_CORE_NODE(Id, ClusterId)  {                                 \
@@ -74,7 +74,7 @@
     /* UINT8                                        Type                     */ \
     EFI_ACPI_6_4_PPTT_TYPE_PROCESSOR,                                           \
     /* UINT8                                        Length                   */ \
-    sizeof (BAIKAL_PPTT_NODE3),                                                 \
+    sizeof (BAIKAL_PPTT_NODE2),                                                 \
     /* UINT8                                        Reserved[2]              */ \
     { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE },                         \
     /* EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR_FLAGS  Flags                    */ \
@@ -84,13 +84,12 @@
     /* UINT32                                       AcpiProcessorId          */ \
     Id,                                                                         \
     /* UINT32                                       NumberOfPrivateResources */ \
-    BAIKAL_PPTT_CORE_CACHE_COUNT                                                \
+    BAIKAL_PPTT_CORE_CACHE_COUNT - 1                                            \
   },                                                                            \
   /* UINT32  Resource[2] */                                                     \
   {                                                                             \
-    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[2]),                                     \
-    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[3]),                                     \
-    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[4])                                      \
+    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Id + 61]),                               \
+    OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Id + 109])                               \
   }                                                                             \
 }
 
@@ -100,7 +99,7 @@
   BAIKAL_PPTT_CORE_NODE(Id + 2, ClusterId),          \
   BAIKAL_PPTT_CORE_NODE(Id + 3, ClusterId)
 
-#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity)  {                 \
+#define BAIKAL_PPTT_CACHE_NODE(Size, Associativity, Id)  {             \
   /* UINT8                                         Type             */ \
   EFI_ACPI_6_4_PPTT_TYPE_CACHE,                                        \
   /* UINT8                                         Length           */ \
@@ -108,7 +107,16 @@
   /* UINT8                                         Reserved[2]      */ \
   { EFI_ACPI_RESERVED_BYTE, EFI_ACPI_RESERVED_BYTE },                  \
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_FLAGS       Flags            */ \
-  {},                                                                  \
+  {                                                                    \
+    EFI_ACPI_6_4_PPTT_CACHE_SIZE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_NUMBER_OF_SETS_VALID,                            \
+    EFI_ACPI_6_4_PPTT_ASSOCIATIVITY_VALID,                             \
+    EFI_ACPI_6_4_PPTT_ALLOCATION_TYPE_VALID,                           \
+    EFI_ACPI_6_4_PPTT_CACHE_TYPE_VALID,                                \
+    EFI_ACPI_6_4_PPTT_WRITE_POLICY_VALID,                              \
+    EFI_ACPI_6_4_PPTT_LINE_SIZE_VALID,                                 \
+    EFI_ACPI_6_4_PPTT_CACHE_ID_VALID                                   \
+  },                                                                   \
   /* UINT32                                        NextLevelOfCache */ \
   0,                                                                   \
   /* UINT32                                        Size             */ \
@@ -120,8 +128,60 @@
   /* EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE_ATTRIBUTES  Attributes       */ \
   {},                                                                  \
   /* UINT16                                        LineSize         */ \
-  64                                                                   \
+  64,                                                                  \
+  /* UINT32                                        CacheId          */ \
+  Id                                                                   \
 }
+
+#define BAIKAL_PPTT_48_CACHE_NODES(Size, Associativity, StartId) \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId),         \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 1),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 2),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 3),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 4),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 5),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 6),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 7),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 8),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 9),     \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 10),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 11),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 12),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 13),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 14),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 15),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 16),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 17),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 18),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 19),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 20),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 21),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 22),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 23),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 24),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 25),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 26),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 27),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 28),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 29),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 30),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 31),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 32),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 33),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 34),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 35),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 36),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 37),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 38),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 39),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 40),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 41),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 42),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 43),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 44),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 45),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 46),    \
+  BAIKAL_PPTT_CACHE_NODE (Size, Associativity, StartId + 47)
 
 #pragma pack(1)
 typedef struct {
@@ -131,14 +191,14 @@ typedef struct {
 
 typedef struct {
   EFI_ACPI_6_4_PPTT_STRUCTURE_PROCESSOR  Node;
-  UINT32                                 Resource[3];
-} BAIKAL_PPTT_NODE3;
+  UINT32                                 Resource[2];
+} BAIKAL_PPTT_NODE2;
 
 typedef struct {
   EFI_ACPI_6_4_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_HEADER  Table;
   BAIKAL_PPTT_NODE                                         Package;
   BAIKAL_PPTT_NODE                                         Cluster[BAIKAL_PPTT_CLUSTER_NODE_COUNT];
-  BAIKAL_PPTT_NODE3                                        Core[BAIKAL_PPTT_CORE_NODE_COUNT];
+  BAIKAL_PPTT_NODE2                                        Core[BAIKAL_PPTT_CORE_NODE_COUNT];
   EFI_ACPI_6_4_PPTT_STRUCTURE_CACHE                        Cache[BAIKAL_PPTT_CACHE_COUNT];
 } BAIKAL_ACPI_PPTT;
 
@@ -200,11 +260,22 @@ STATIC BAIKAL_ACPI_PPTT  Pptt = {
     BAIKAL_PPTT_CORE_NODE_CLUSTER (44, 11)
   },
   {
-    BAIKAL_PPTT_CACHE_NODE (0x2000000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x200000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x80000, 8),
-    BAIKAL_PPTT_CACHE_NODE (0x10000, 16),
-    BAIKAL_PPTT_CACHE_NODE (0x10000, 4)
+    BAIKAL_PPTT_CACHE_NODE (0x2000000, 16, 1),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 2),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 3),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 4),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 5),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 6),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 7),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 8),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 9),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 10),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 11),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 12),
+    BAIKAL_PPTT_CACHE_NODE (0x200000, 16, 13),
+    BAIKAL_PPTT_48_CACHE_NODES (0x80000, 8, 14),
+    BAIKAL_PPTT_48_CACHE_NODES (0x10000, 16, 62),
+    BAIKAL_PPTT_48_CACHE_NODES (0x10000, 4, 110)
   }
 };
 #pragma pack()
@@ -254,23 +325,29 @@ PpttInit (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_CACHE_TYPE_UNIFIED,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
-  CopyMem (&Pptt.Cache[0].Attributes, &CacheAttributes, sizeof (CacheAttributes));
-  CopyMem (&Pptt.Cache[1].Attributes, &CacheAttributes, sizeof (CacheAttributes));
-  CopyMem (&Pptt.Cache[2].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  for (Idx = 0; Idx < 61; ++Idx) {
+    CopyMem (&Pptt.Cache[Idx].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  }
 
   CacheAttributes = BAIKAL_PPTT_CACHE_ATTRIBUTES (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_ALLOCATION_READ_WRITE,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_CACHE_TYPE_DATA,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
-  CopyMem (&Pptt.Cache[3].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  for (Idx = 61; Idx < 109; ++Idx) {
+    CopyMem (&Pptt.Cache[Idx].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+    Pptt.Cache[Idx].NextLevelOfCache = OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Idx - 48]);
+  }
 
   CacheAttributes = BAIKAL_PPTT_CACHE_ATTRIBUTES (
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_ALLOCATION_READ,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_CACHE_TYPE_INSTRUCTION,
     EFI_ACPI_6_4_CACHE_ATTRIBUTES_WRITE_POLICY_WRITE_BACK
     );
-  CopyMem (&Pptt.Cache[4].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+  for (Idx = 109; Idx < BAIKAL_PPTT_CACHE_COUNT; ++Idx) {
+    CopyMem (&Pptt.Cache[Idx].Attributes, &CacheAttributes, sizeof (CacheAttributes));
+    Pptt.Cache[Idx].NextLevelOfCache = OFFSET_OF (BAIKAL_ACPI_PPTT, Cache[Idx - 96]);
+  }
 
   *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Pptt;
   return EFI_SUCCESS;
