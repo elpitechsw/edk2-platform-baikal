@@ -12,7 +12,7 @@
 
 #include <BM1000.h>
 
-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS  37
+#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS  38
 
 /**
   Return the Virtual Memory Map of your platform
@@ -77,6 +77,11 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index].PhysicalBase = BM1000_UART1_BASE;
   VirtualMemoryTable[Index].VirtualBase  = BM1000_UART1_BASE;
   VirtualMemoryTable[Index].Length       = BM1000_UART1_SIZE;
+  VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+  VirtualMemoryTable[Index].PhysicalBase = BM1000_UART2_BASE;
+  VirtualMemoryTable[Index].VirtualBase  = BM1000_UART2_BASE;
+  VirtualMemoryTable[Index].Length       = BM1000_UART2_SIZE;
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   VirtualMemoryTable[Index].PhysicalBase = BM1000_I2C1_BASE;
