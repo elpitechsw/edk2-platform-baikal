@@ -343,7 +343,9 @@
   # Unfortunately, Linux doesn't seem to handle correctly "small" apertures (i.e. 4K),
   # so round it out to the full 16-bit space.
   #
+!if $(BAIKAL_ELP) == FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciIoApertureSizeAlignment|0x10000
+!endif
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xC00000
