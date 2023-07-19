@@ -24,4 +24,10 @@ typedef struct {
   UINT32  Mode;
 } ACPI_MSI_VARSTORE_DATA;
 
+typedef struct {
+#define VDU_LVDS_OFF      0
+#define VDU_LVDS_ON       1
+  UINT32  Mode;
+} VDU_LVDS_VARSTORE_DATA;
+
 #endif // CONFIG_VARS_H_

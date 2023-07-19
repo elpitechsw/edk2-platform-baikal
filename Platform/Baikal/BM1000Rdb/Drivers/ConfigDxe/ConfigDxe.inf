@@ -50,10 +50,12 @@
 
 [Protocols]
   gConfigDxeProtocolGuid                        # PROTOCOL ALWAYS_PRODUCED
+  gFdtClientProtocolGuid
 
 [Pcd]
   gBaikalTokenSpaceGuid.PcdAcpiMsiMode
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode
+  gBaikalTokenSpaceGuid.PcdVduLvdsMode
 
 [Depex]
   gPcdProtocolGuid

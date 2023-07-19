@@ -60,3 +60,4 @@
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode|0|UINT32|0x000000C
   gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0|UINT32|0x0000000D
   gBaikalTokenSpaceGuid.PcdDdrChannelsNumber|0|UINT32|0x0000000E
+  gBaikalTokenSpaceGuid.PcdVduLvdsMode|0|UINT32|0x00000010

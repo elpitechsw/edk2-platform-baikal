@@ -17,6 +17,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Platform/ConfigVars.h>
+#include <Protocol/FdtClient.h>
 #include "ConfigDxeFormSetGuid.h"
 
 extern UINT8  ConfigDxeHiiBin[];
@@ -48,6 +49,8 @@ STATIC HII_VENDOR_DEVICE_PATH  mVendorDevicePath = {
     }
   }
 };
+
+STATIC EFI_EVENT  mReadyToBootEvent;
 
 STATIC
 EFI_STATUS
@@ -126,8 +129,67 @@ SetupVariables (
     ASSERT_EFI_ERROR (Status);
   }
 
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"VduLvds",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Status = PcdSet32S (PcdVduLvdsMode, PcdGet32 (PcdVduLvdsMode));
+    ASSERT_EFI_ERROR (Status);
+  }
+
   return EFI_SUCCESS;
 }
+
+#if defined(ELP_2) || defined(ELP_5) || defined(ELP_7)
+STATIC
+VOID
+EFIAPI
+FixupFdt (
+  VOID
+  )
+{
+  FDT_CLIENT_PROTOCOL             *FdtClient;
+  EFI_STATUS                       Status;
+  INT32                            Node = 0;
+
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  if (PcdGet32(PcdVduLvdsMode) == 0) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "vdu-lvds", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->SetNodeProperty (
+            FdtClient,
+            Node,
+            "status",
+            "disabled",
+            9
+	    );
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't update vdu_lvds status - %r\n", Status));
+    }
+  }
+}
+
+STATIC
+VOID
+EFIAPI
+OnReadyToBoot (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
+{
+  FixupFdt();
+}
+#endif
 
 EFI_STATUS
 EFIAPI
@@ -154,7 +216,22 @@ ConfigDxeInitialize (
   Status = InstallHiiPages ();
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: couldn't install HiiPages: %r\n", __func__, Status));
+    return Status;
   }
 
+#if defined(ELP_2) || defined(ELP_5) || defined(ELP_7)
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnReadyToBoot,
+                  NULL,
+                  &gEfiEventReadyToBootGuid,
+                  &mReadyToBootEvent
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: couldn't install OnReadyToBoot handler: %r\n", __func__, Status));
+    return Status;
+  }
+#endif
   return EFI_SUCCESS;
 }
