@@ -29,3 +29,8 @@
 #string STR_VDU_LVDS_HELP     #language en-US "Enable/Disable VDU LVDS."
 #string STR_VDU_LVDS_OFF      #language en-US "Disabled"
 #string STR_VDU_LVDS_ON       #language en-US "Enabled"
+
+#string STR_UART1_PROMPT      #language en-US "UART1 mode"
+#string STR_UART1_HELP        #language en-US "Set Serdev or Normal UART1 mode."
+#string STR_UART1_NORM        #language en-US "Normal"
+#string STR_UART1_SERDEV      #language en-US "Serdev"
