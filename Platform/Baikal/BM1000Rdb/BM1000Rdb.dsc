@@ -447,4 +447,5 @@
   gBaikalTokenSpaceGuid.PcdAcpiMsiMode|L"AcpiMsi"|gConfigDxeFormSetGuid|0x0|1
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode|L"AcpiPcie"|gConfigDxeFormSetGuid|0x0|1
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|L"VduLvds"|gConfigDxeFormSetGuid|0x0|1
+  gBaikalTokenSpaceGuid.PcdUart1Mode|L"Uart1"|gConfigDxeFormSetGuid|0x0|1
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5

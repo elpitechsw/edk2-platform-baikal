@@ -30,4 +30,10 @@ typedef struct {
   UINT32  Mode;
 } VDU_LVDS_VARSTORE_DATA;
 
+typedef struct {
+#define UART1_NORM        0
+#define UART1_SERDEV      1
+  UINT32  Mode;
+} UART1_VARSTORE_DATA;
+
 #endif // CONFIG_VARS_H_
