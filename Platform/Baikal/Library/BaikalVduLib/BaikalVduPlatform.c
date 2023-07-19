@@ -328,9 +328,21 @@ FdtGetPanelTimings (
   }
 
   Status = FdtClient->FindNextCompatibleNode (FdtClient, "panel-lvds", -1, &NodePanel);
+#ifdef ELPITECH
+  if (EFI_ERROR (Status)) {
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "megachips,stdp4028-lvds-dp", -1, &NodePanel);
+    if (!EFI_ERROR(Status) && FdtClient->IsNodeEnabled (FdtClient, NodePanel)) {
+      mFdtDisplayMode = mDisplayModes[8];
+      mFdtDisplayMode.LvdsPorts = 2;
+      mFdtDisplayMode.LvdsOutBpp = 24;
+    }
+    goto Out;
+  }
+#else
   if (EFI_ERROR (Status)) {
     goto Out;
   }
+#endif
   if (!FdtClient->IsNodeEnabled (FdtClient, NodePanel)) {
     Status = EFI_NOT_FOUND;
     goto Out;
