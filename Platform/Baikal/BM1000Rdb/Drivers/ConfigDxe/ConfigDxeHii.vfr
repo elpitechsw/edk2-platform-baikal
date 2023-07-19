@@ -37,6 +37,11 @@ formset
     name      = VduLvds,
     guid      = CONFIG_DXE_FORM_SET_GUID;
 
+  efivarstore UART1_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = Uart1,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
   form formid = 1,
     title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
     subtitle text = STRING_TOKEN(STR_NULL_STRING);
@@ -65,6 +70,14 @@ formset
       flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
       option text = STRING_TOKEN(STR_VDU_LVDS_OFF), value = VDU_LVDS_OFF, flags = DEFAULT;
       option text = STRING_TOKEN(STR_VDU_LVDS_ON),  value = VDU_LVDS_ON,  flags = 0;
+    endoneof;
+
+    oneof varid = Uart1.Mode,
+      prompt      = STRING_TOKEN(STR_UART1_PROMPT),
+      help        = STRING_TOKEN(STR_UART1_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_UART1_NORM), value = UART1_NORM, flags = 0;
+      option text = STRING_TOKEN(STR_UART1_SERDEV),  value = UART1_SERDEV,  flags = DEFAULT;
     endoneof;
   endform;
 endformset;

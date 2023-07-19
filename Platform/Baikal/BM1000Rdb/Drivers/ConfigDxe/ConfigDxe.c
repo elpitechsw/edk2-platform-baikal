@@ -142,10 +142,22 @@ SetupVariables (
     ASSERT_EFI_ERROR (Status);
   }
 
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"Uart1",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Status = PcdSet32S (PcdUart1Mode, PcdGet32 (PcdUart1Mode));
+    ASSERT_EFI_ERROR (Status);
+  }
+
   return EFI_SUCCESS;
 }
 
-#if defined(ELP_2) || defined(ELP_5) || defined(ELP_7)
 STATIC
 VOID
 EFIAPI
@@ -155,13 +167,14 @@ FixupFdt (
 {
   FDT_CLIENT_PROTOCOL             *FdtClient;
   EFI_STATUS                       Status;
-  INT32                            Node = 0;
+  INT32                            Node = 0, SubNode;
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   if (EFI_ERROR (Status)) {
     return;
   }
 
+#if defined(ELP_2) || defined(ELP_5) || defined(ELP_7) /* et-101 family board */
   if (PcdGet32(PcdVduLvdsMode) == 0) {
     Status = FdtClient->FindNodeByAlias (FdtClient, "vdu-lvds", &Node);
     if(Status == EFI_SUCCESS) {
@@ -177,6 +190,20 @@ FixupFdt (
       DEBUG((EFI_D_ERROR, "Can't update vdu_lvds status - %r\n", Status));
     }
   }
+#endif
+
+  if (PcdGet32(PcdUart1Mode) == 0) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "serial1", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->FindNextSubnode(FdtClient, "ps2mult", Node, &SubNode);
+      if(Status == EFI_SUCCESS) {
+        Status = FdtClient->DeleteNode(FdtClient, SubNode);
+      }
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't delete ps2mult node - %r\n", Status));
+    }
+  }
 }
 
 STATIC
@@ -189,7 +216,6 @@ OnReadyToBoot (
 {
   FixupFdt();
 }
-#endif
 
 EFI_STATUS
 EFIAPI
@@ -219,7 +245,6 @@ ConfigDxeInitialize (
     return Status;
   }
 
-#if defined(ELP_2) || defined(ELP_5) || defined(ELP_7)
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_CALLBACK,
@@ -232,6 +257,5 @@ ConfigDxeInitialize (
     DEBUG ((DEBUG_ERROR, "%a: couldn't install OnReadyToBoot handler: %r\n", __func__, Status));
     return Status;
   }
-#endif
   return EFI_SUCCESS;
 }
