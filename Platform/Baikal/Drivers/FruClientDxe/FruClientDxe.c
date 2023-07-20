@@ -7,6 +7,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DwI2cLib.h>
+#include <Library/PrintLib.h>
 #include <Library/TimeBaseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FdtClient.h>
@@ -21,6 +22,8 @@
 #define MULTIRECORD_TYPEID_MAC1  0xC6
 #define MULTIRECORD_TYPEID_MAC2  0xC7
 #define MULTIRECORD_TYPEID_MACN  0xC8
+
+#define MAX_NUM_ETH 4
 
 #ifdef ELPITECH
 #define OEM_ID  58584
@@ -189,6 +192,9 @@ FruClientDxeInitialize (
   CONST VOID            *Prop;
   UINT32                 PropSize;
   EFI_STATUS             Status;
+  UINTN                  Idx;
+  CHAR8                  EthAlias[16]; // "ethernetX"
+  EFI_MAC_ADDRESS        MacAddr;
 
   STATIC FRU_CLIENT_PROTOCOL  mFruClientProtocol = {
     FruClientGetBoardMfgDateTime,
@@ -304,10 +310,24 @@ FruClientDxeInitialize (
     return Status;
   }
 
+  for (Idx = 0; Idx < MAX_NUM_ETH; Idx++) {
+    AsciiSPrint(EthAlias, 15, "ethernet%d", Idx);
+    Status = FdtClient->FindNodeByAlias(FdtClient, EthAlias, &Node);
+    if (EFI_ERROR(Status)) {
+      break;
+    }
+    Status = mFruClientProtocol.GetMultirecordMacAddr (Idx, &MacAddr);
+    if (Status == EFI_SUCCESS) {
+      Status = FdtClient->SetNodeProperty(FdtClient, Node, "mac-address", &MacAddr.Addr[0], 6);
+      if (EFI_ERROR(Status)) {
+        DEBUG((EFI_D_ERROR, "Can't set mac-address for ethernet%d (%r)\n", Idx, Status));
+	break;
+      }
+    }
+  }
+
 #if !defined(MDEPKG_NDEBUG)
   if (mFruBufSize == EEPROM_SIZE) {
-    UINTN            Idx;
-    EFI_MAC_ADDRESS  MacAddr;
     UINTN            RetVal;
     CHAR8            Str[FRU_TYPLENSTR_MAX_SIZE];
 
