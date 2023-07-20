@@ -433,7 +433,7 @@
 !endif
 
 [PcdsDynamicDefault.common]
-  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0
+  gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn|0

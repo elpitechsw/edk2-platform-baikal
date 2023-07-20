@@ -83,21 +83,21 @@ McfgInit (
     // Single-device ECAM, which allows any upstream OS without a Baikal-specific
     // driver to consume at least simple-enough (single-device) adapters.
     //
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE0_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE0_IDX)) {
       Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].BaseAddress += 0x8000;
     }
 
     Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].StartBusNumber = 0;
     Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].EndBusNumber = 0;
 #if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE1_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE1_IDX)) {
       Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].BaseAddress += 0x8000;
     }
 
     Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].StartBusNumber = 0;
     Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].EndBusNumber = 0;
 #endif
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE2_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
       Mcfg.Table[BAIKAL_ACPI_PCIE2_SEGMENT].BaseAddress += 0x8000;
     }
 
