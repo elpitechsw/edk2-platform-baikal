@@ -164,7 +164,7 @@ STATIC CONST UINTN  mPcieDbiSizes[] = {
   BM1000_PCIE2_DBI_SIZE
 };
 
-UINT32                        mPcieCfg0FilteringWorks;
+UINT32                        mPcieCfg0Quirk;
 EFI_PHYSICAL_ADDRESS          mPcieCfgBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieCfgSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieIdxs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
@@ -873,13 +873,18 @@ PciHostBridgeLibConstructor (
 #if !defined(MDEPKG_NDEBUG)
             DEBUG ((EFI_D_INFO, ", Cfg0Filter+\n"));
 #endif
-            mPcieCfg0FilteringWorks |= 1 << PcieIdx;
-            Status = PcdSet32S (PcdPcieCfg0FilteringWorks, mPcieCfg0FilteringWorks);
-            ASSERT_EFI_ERROR (Status);
+          } else if (((MmioRead32 (mPcieCfgBases[PcieIdx] + SIZE_1MB + 0xc) >> 16) & 0xff) == 0x1) {
+            /* Type 1 config header */
+#if !defined(MDEPKG_NDEBUG)
+            DEBUG ((EFI_D_INFO, ", Cfg0Filter- (Type 1)\n"));
+#endif
           } else {
 #if !defined(MDEPKG_NDEBUG)
             DEBUG ((EFI_D_INFO, ", Cfg0Filter-\n"));
 #endif
+            mPcieCfg0Quirk |= 1 << PcieIdx;
+            Status = PcdSet32S (PcdPcieCfg0Quirk, mPcieCfg0Quirk);
+            ASSERT_EFI_ERROR (Status);
           }
 
           break;
