@@ -45,4 +45,5 @@
 [Depex]
   gEfiCpuArchProtocolGuid AND
   gEuiClientProtocolGuid  AND
-  gFdtClientProtocolGuid
+  gFdtClientProtocolGuid  AND
+  gFruClientProtocolGuid
