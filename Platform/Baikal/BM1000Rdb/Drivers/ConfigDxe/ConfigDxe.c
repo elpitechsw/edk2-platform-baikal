@@ -18,6 +18,7 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Platform/ConfigVars.h>
 #include <Protocol/FdtClient.h>
+#include <Protocol/FruClient.h>
 #include "ConfigDxeFormSetGuid.h"
 
 extern UINT8  ConfigDxeHiiBin[];
@@ -93,15 +94,18 @@ InstallHiiPages (
   return EFI_SUCCESS;
 }
 
+STATIC UINT32 mSavedPowerPolicy;
+
 STATIC
 EFI_STATUS
 SetupVariables (
   VOID
   )
 {
-  UINTN       Size;
-  UINT32      Var32;
-  EFI_STATUS  Status;
+  UINTN                 Size;
+  UINT32                Var32;
+  FRU_CLIENT_PROTOCOL  *FruClient;
+  EFI_STATUS            Status;
 
   Size = sizeof (UINT32);
   Status = gRT->GetVariable (
@@ -152,6 +156,40 @@ SetupVariables (
                   );
   if (EFI_ERROR (Status)) {
     Status = PcdSet32S (PcdUart1Mode, PcdGet32 (PcdUart1Mode));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gFruClientProtocolGuid,
+                  NULL,
+                  (VOID **) &FruClient
+                  );
+  if (Status == EFI_SUCCESS) {
+    Var32 = FruClient->GetBoardPowerPolicy();
+    if (Var32 == FRU_POWERPOLICY_ON) {
+      mSavedPowerPolicy = PPOL_AUTO;
+    } else {
+      mSavedPowerPolicy = PPOL_OFF;
+    }
+  }
+
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"PowerPolicy",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Var32 = mSavedPowerPolicy;
+    Status = gRT->SetVariable (
+                  L"PowerPolicy",
+                  &gConfigDxeFormSetGuid,
+                  EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                  sizeof(Var32),
+                  &Var32
+                  );
     ASSERT_EFI_ERROR (Status);
   }
 
@@ -214,7 +252,49 @@ OnReadyToBoot (
   IN VOID       *Context
   )
 {
+  UINT32                Var32;
+  UINTN                 Size;
+  FRU_CLIENT_PROTOCOL  *FruClient;
+  EFI_STATUS            Status;
+
   FixupFdt();
+
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"PowerPolicy",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: variable '%s' could not be read - bailing!\n", __func__, L"PowerPolicy"));
+    return;
+  }
+
+  if (Var32 == mSavedPowerPolicy) {
+    DEBUG ((DEBUG_INFO, "%a: PowerPolicy not changed - doing nothing\n", __func__));
+    return;
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gFruClientProtocolGuid,
+                  NULL,
+                  (VOID **) &FruClient
+                  );
+  if (Status == EFI_SUCCESS) {
+    Status = FruClient->SetBoardPowerPolicy(
+                 (Var32 == PPOL_AUTO)?
+                    FRU_POWERPOLICY_ON:
+                    FRU_POWERPOLICY_OFF
+                 );
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "%a: couldn't save PowerPolicy: %r\n", __func__, Status));
+    }
+  } else {
+    DEBUG((DEBUG_ERROR, "%a: can't get FruClientProtocol: %r\n", __func__, Status));
+  }
+
 }
 
 EFI_STATUS

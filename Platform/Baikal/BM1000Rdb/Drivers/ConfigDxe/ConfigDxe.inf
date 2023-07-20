@@ -51,6 +51,7 @@
 [Protocols]
   gConfigDxeProtocolGuid                        # PROTOCOL ALWAYS_PRODUCED
   gFdtClientProtocolGuid
+  gFruClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
 
 [Pcd]
   gBaikalTokenSpaceGuid.PcdAcpiMsiMode
