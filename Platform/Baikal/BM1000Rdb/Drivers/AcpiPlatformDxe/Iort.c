@@ -215,25 +215,25 @@ IortInit (
     //
     // For devices on busses further below, no special magic happens.
     //
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE0_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE0_IDX)) {
       Iort.Rc[BAIKAL_ACPI_PCIE0_SEGMENT].Map.OutputBase += 0x8;
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE0_SEGMENT].Map.NumIds = 0x7;
 #if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE1_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE1_IDX)) {
       Iort.Rc[BAIKAL_ACPI_PCIE1_SEGMENT].Map.OutputBase += 0x8;
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE1_SEGMENT].Map.NumIds = 0x7;
 
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE2_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
       Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.OutputBase += 0x8;
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.NumIds = 0x7;
 #else
-    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE2_IDX)) == 0) {
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
       Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT - 1].Map.OutputBase += 0x8;
     }
 

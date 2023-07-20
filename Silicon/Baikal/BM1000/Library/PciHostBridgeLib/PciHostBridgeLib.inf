@@ -37,7 +37,7 @@
 [Pcd]
   gBaikalTokenSpaceGuid.PcdAcpiMsiMode
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode
-  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks
+  gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk
 
 [Protocols]
   gEfiPciIoProtocolGuid    ## CONSUMES
