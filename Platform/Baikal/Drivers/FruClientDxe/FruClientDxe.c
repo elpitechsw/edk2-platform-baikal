@@ -568,7 +568,7 @@ FruClientGetMultirecordMacAddr (
   )
 {
   CONST UINT8         *MrecArea;
-  MULTIRECORD_HEADER   MrecHdr;
+  MULTIRECORD_HEADER  *MrecHdr;
   UINTN                MrecType;
   EFI_STATUS           Status;
 
@@ -598,40 +598,40 @@ FruClientGetMultirecordMacAddr (
            (mFruBuf + mFruBufSize) - MrecArea,
            &MrecHdr
            ) == EFI_SUCCESS) {
-    if (MrecHdr.TypeId == MrecType) {
+    if (MrecHdr->TypeId == MrecType) {
       if (FruInternalsMultirecordCheckData (MrecArea,
                                             (mFruBuf + mFruBufSize) - MrecArea,
-                                            &MrecHdr
+                                            MrecHdr
                                             ) == EFI_SUCCESS) {
         UINTN  Idx;
         CONST UINT8  *MacData = MrecArea + sizeof (MULTIRECORD_HEADER);
 
-        if (((MacAddrIdx <= 2) && (MrecHdr.Length == 9)) ||
-            ((MacAddrIdx > 2) && (MrecHdr.Length % 6) == 4)) {
+        if (((MacAddrIdx <= 2) && (MrecHdr->Length == 9)) ||
+            ((MacAddrIdx > 2) && (MrecHdr->Length % 6) == 4)) {
           // OEM Record must have 3-byte Manufacturer ID field according to IPMI FRU Spec
           MacData += 3;
-        } else if (((MacAddrIdx <= 2) && (MrecHdr.Length == 6)) ||
-                   ((MacAddrIdx > 2) && (MrecHdr.Length % 6) == 1)) {
+        } else if (((MacAddrIdx <= 2) && (MrecHdr->Length == 6)) ||
+                   ((MacAddrIdx > 2) && (MrecHdr->Length % 6) == 1)) {
           // Legacy BMC FW generates incorrect OEM Records without 3-byte Manufacturer ID field
           DEBUG ((
             EFI_D_WARN,
             "%a: MrecHdr.Length:%u is deprecated for MrecHdr.TypeId:0x%02x\n",
             __func__,
-            MrecHdr.Length,
-            MrecHdr.TypeId
+            MrecHdr->Length,
+            MrecHdr->TypeId
             ));
         } else {
           DEBUG ((
             EFI_D_ERROR,
             "%a: MrecHdr.Length:%u does not match MrecHdr.TypeId:0x%02x\n",
             __func__,
-            MrecHdr.Length,
-            MrecHdr.TypeId
+            MrecHdr->Length,
+            MrecHdr->TypeId
             ));
           return EFI_INVALID_PARAMETER;
         }
-        if (((MacAddrIdx <= 2) && (MrecHdr.Length < 6)) ||
-            ((MacAddrIdx > 2) && (MrecHdr.Length < (MacAddrIdx - 2) * 6))) {
+        if (((MacAddrIdx <= 2) && (MrecHdr->Length < 6)) ||
+            ((MacAddrIdx > 2) && (MrecHdr->Length < (MacAddrIdx - 2) * 6))) {
           return EFI_INVALID_PARAMETER;
         }
 	if (MacAddrIdx > 2) {
@@ -649,11 +649,11 @@ FruClientGetMultirecordMacAddr (
       }
     }
 
-    if (MrecHdr.Format & 0x80) {
+    if (MrecHdr->Format & 0x80) {
       break;
     }
 
-    MrecArea += sizeof (MULTIRECORD_HEADER) + MrecHdr.Length;
+    MrecArea += sizeof (MULTIRECORD_HEADER) + MrecHdr->Length;
   }
 
   return EFI_INVALID_PARAMETER;
