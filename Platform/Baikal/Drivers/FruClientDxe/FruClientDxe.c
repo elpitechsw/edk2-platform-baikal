@@ -4,6 +4,7 @@
 **/
 
 #include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DwI2cLib.h>
 #include <Library/TimeBaseLib.h>
@@ -12,12 +13,20 @@
 #include <Protocol/FruClient.h>
 #include "FruInternals.h"
 
-#define EEPROM_SIZE  4096
+#define EEPROM_SIZE              4096
+#define EEPROM_WRITE_SIZE        16
 
 #define MULTIRECORD_TYPEID_MAC0  0xC0
+#define MULTIRECORD_TYPEID_PPOL  0xC4
 #define MULTIRECORD_TYPEID_MAC1  0xC6
 #define MULTIRECORD_TYPEID_MAC2  0xC7
 #define MULTIRECORD_TYPEID_MACN  0xC8
+
+#ifdef ELPITECH
+#define OEM_ID  58584
+#else
+#define OEM_ID  0
+#endif
 
 STATIC
 UINTN
@@ -132,6 +141,20 @@ FruClientGetMultirecordMacAddr (
 
 STATIC
 UINTN
+EFIAPI
+FruClientGetBoardPowerPolicy (
+  VOID
+  );
+
+STATIC
+UINTN
+EFIAPI
+FruClientSetBoardPowerPolicy (
+  UINTN
+  );
+
+STATIC
+UINTN
 FruReadTypLenEncBoardData (
   IN   CONST UINTN    FieldIdx,
   OUT  CHAR8 * CONST  DstBuf,
@@ -146,9 +169,11 @@ FruReadTypLenEncProductData (
   IN   CONST UINTN    DstBufSize
   );
 
-STATIC UINTN   mFruAddr;
-STATIC UINT8  *mFruBuf;
-STATIC UINTN   mFruBufSize;
+STATIC UINTN                  mFruAddr;
+STATIC EFI_PHYSICAL_ADDRESS   mI2cBase;
+STATIC UINTN                  mI2cIclk;
+STATIC UINT8                 *mFruBuf;
+STATIC UINTN                  mFruBufSize;
 
 EFI_STATUS
 EFIAPI
@@ -159,8 +184,6 @@ FruClientDxeInitialize (
 {
   FDT_CLIENT_PROTOCOL   *FdtClient;
   CONST UINT16           FruMemAddr = 0;
-  EFI_PHYSICAL_ADDRESS   I2cBase = 0;
-  UINTN                  I2cIclk = 0;
   INTN                   I2cRxedSize;
   INT32                  Node;
   CONST VOID            *Prop;
@@ -181,7 +204,9 @@ FruClientDxeInitialize (
     FruClientReadProductSerialNumber,
     FruClientReadProductAssetTag,
     FruClientReadProductFileId,
-    FruClientGetMultirecordMacAddr
+    FruClientGetMultirecordMacAddr,
+    FruClientGetBoardPowerPolicy,
+    FruClientSetBoardPowerPolicy
   };
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
@@ -205,12 +230,12 @@ FruClientDxeInitialize (
         FdtClient->IsNodeEnabled   (FdtClient, Node) &&
         FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize == 2 * sizeof (UINT64)) {
-      I2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+      mI2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
 
       if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
           FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
           FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
-        I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
+        mI2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
       }
     } else {
       mFruAddr = 0;
@@ -228,10 +253,10 @@ FruClientDxeInitialize (
     return Status;
   }
 
-  if (I2cBase && I2cIclk && mFruAddr) {
+  if (mI2cBase && mI2cIclk && mFruAddr) {
     I2cRxedSize = I2cTxRx (
-                    I2cBase,
-                    I2cIclk,
+                    mI2cBase,
+                    mI2cIclk,
                     mFruAddr,
                     (UINT8 *) &FruMemAddr,
                     sizeof (FruMemAddr),
@@ -244,8 +269,8 @@ FruClientDxeInitialize (
     } else {
       DEBUG((EFI_D_ERROR, "Can't read fru (size %d). Retrying...\n", I2cRxedSize));
       I2cRxedSize = I2cTxRx (
-                      I2cBase,
-                      I2cIclk,
+                      mI2cBase,
+                      mI2cIclk,
                       mFruAddr,
                       (UINT8 *) &FruMemAddr,
                       sizeof (FruMemAddr),
@@ -749,3 +774,80 @@ FruReadTypLenEncProductData (
   FruInternalsTypLenEncReadData (EncData, DstBuf, &DstStrLen);
   return DstStrLen;
 }
+
+STATIC
+UINTN
+EFIAPI
+FruClientGetBoardPowerPolicy (
+  VOID
+  )
+{
+  EFI_STATUS                Status;
+  CONST MULTIRECORD_HEADER *MrecHdr;
+  UINT8                    *MrecData;
+
+  Status = FruInternalsGetMultirecord (
+             mFruBuf,
+             mFruBufSize,
+             MULTIRECORD_TYPEID_PPOL,
+             &MrecHdr
+             );
+  if (EFI_ERROR(Status))
+    return 0;
+  MrecData = ((UINT8 *)MrecHdr) + sizeof (MULTIRECORD_HEADER);
+  if (MrecHdr->Length == 4)
+    return MrecData[3];
+  else
+    return MrecData[0];
+}
+
+STATIC
+EFI_STATUS
+EFIAPI
+FruClientSetBoardPowerPolicy (
+  UINTN Policy
+  )
+{
+  EFI_STATUS          Status;
+  UINT8               MrecData;
+  INTN                I2cRxedSize;
+  UINTN               Size;
+  UINT8               WriteBuf[EEPROM_WRITE_SIZE + 2];
+
+  MrecData = Policy & 0xff;
+  Status = FruInternalsSetMultirecord (
+             mFruBuf,
+             mFruBufSize,
+             MULTIRECORD_TYPEID_PPOL,
+             2, 1, OEM_ID,
+             &MrecData
+             );
+  if (EFI_ERROR(Status))
+    return Status;
+  if (mI2cBase && mFruAddr) {
+    for (Size = 0; Size < mFruBufSize; Size += EEPROM_WRITE_SIZE) {
+      WriteBuf[0] = (Size >> 8) & 0xff;
+      WriteBuf[1] = Size & 0xff;
+      CopyMem(WriteBuf + 2, mFruBuf + Size, EEPROM_WRITE_SIZE);
+      I2cRxedSize = I2cTxRx (
+                      mI2cBase,
+                      mI2cIclk,
+                      mFruAddr,
+                      WriteBuf,
+                      EEPROM_WRITE_SIZE + 2,
+                      NULL,
+                      0
+                    );
+      if (I2cRxedSize != 0) {
+        break;
+      }
+    }
+  }
+  if (I2cRxedSize == 0) {
+    return EFI_SUCCESS;
+  } else {
+    DEBUG((EFI_D_ERROR, "Can't update FRU\n"));
+    return EFI_DEVICE_ERROR;
+  }
+}
+
