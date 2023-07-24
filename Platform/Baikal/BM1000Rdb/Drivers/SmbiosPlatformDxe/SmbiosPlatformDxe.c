@@ -18,7 +18,7 @@
 #include <Protocol/FruClient.h>
 #include <Protocol/Smbios.h>
 
-STATIC CHAR8  BaikalModel[4];
+STATIC CHAR8  BaikalModel[10];
 
 STATIC
 INTN
@@ -26,7 +26,11 @@ IsMbm (
   VOID
   )
 {
+#ifndef ELPITECH
   return BaikalModel[0] == 'M' ? 1 : 0;
+#else
+  return 1;
+#endif
 }
 
 #define BAIKAL_SMBIOS_STRING(Str)  Str "\0"
@@ -243,6 +247,7 @@ STATIC CHAR8 *SmbiosTable1Strings[] = {
 };
 #pragma pack()
 
+#ifndef ELPITECH
 STATIC
 EFI_STATUS
 SmbiosReadFdtModel (
@@ -277,6 +282,7 @@ SmbiosReadFdtModel (
 
   return EFI_NOT_FOUND;
 }
+#endif
 
 STATIC
 EFI_STATUS
@@ -1783,10 +1789,14 @@ SmbiosPlatformDxeInitialize (
   UINTN       Idx;
   EFI_STATUS  Status;
 
+#ifndef ELPITECH
   Status = SmbiosReadFdtModel (BaikalModel, sizeof (BaikalModel));
   if (EFI_ERROR (Status)) {
     return Status;
   }
+#else
+  AsciiStrCpyS (BaikalModel, sizeof(BaikalModel), "Elpitech");
+#endif
 
   for (Idx = 0; Idx < ARRAY_SIZE (SmbiosTableInit); ++Idx) {
     Status = (*SmbiosTableInit[Idx]) ();
