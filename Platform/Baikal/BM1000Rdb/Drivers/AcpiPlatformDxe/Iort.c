@@ -123,16 +123,19 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     // Thus RIDBus is 0.
     //
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE0_SEGMENT,
-                             BAIKAL_ACPI_PCIE0_SEGMENT,
+                             0,
                              0),
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE1_SEGMENT,
-                             BAIKAL_ACPI_PCIE1_SEGMENT,
+                             1,
                              0),
 #endif
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(BAIKAL_ACPI_PCIE2_SEGMENT,
-                             BAIKAL_ACPI_PCIE2_SEGMENT,
+                             2,
                              0),
+#endif
+#ifndef ELPITECH
 
     //
     // These are synthetic segments covering devices on busses 2, 3, 4 and 5
@@ -165,6 +168,7 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
                              BAIKAL_ACPI_PCIE1_SEGMENT,
                              5),
 #endif
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 2),
                              BAIKAL_ACPI_PCIE2_SEGMENT,
                              2),
@@ -177,6 +181,8 @@ STATIC BAIKAL_ACPI_IORT  Iort = {
     BAIKAL_IORT_ROOT_COMPLEX(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 5),
                              BAIKAL_ACPI_PCIE2_SEGMENT,
                              5),
+#endif
+#endif
   }
 };
 #pragma pack()
@@ -192,6 +198,20 @@ IortInit (
 
   switch (PcdGet32 (PcdAcpiPcieMode)) {
   case ACPI_PCIE_CUSTOM:
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE0_IDX)) {
+      Iort.Rc[BAIKAL_ACPI_PCIE0_SEGMENT].Map.OutputBase += 0x8;
+    }
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE1_IDX)) {
+      Iort.Rc[BAIKAL_ACPI_PCIE1_SEGMENT].Map.OutputBase += 0x8;
+    }
+#endif
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
+      Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.OutputBase += 0x8;
+    }
+#endif
+
     *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Iort;
     return EFI_SUCCESS;
 
@@ -220,25 +240,22 @@ IortInit (
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE0_SEGMENT].Map.NumIds = 0x7;
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE1_IDX)) {
       Iort.Rc[BAIKAL_ACPI_PCIE1_SEGMENT].Map.OutputBase += 0x8;
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE1_SEGMENT].Map.NumIds = 0x7;
+#endif
 
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
       Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.OutputBase += 0x8;
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.NumIds = 0x7;
-#else
-    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
-      Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT - 1].Map.OutputBase += 0x8;
-    }
-
-    Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT - 1].Map.NumIds = 0x7;
 #endif
+
     *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Iort;
     return EFI_SUCCESS;
   }

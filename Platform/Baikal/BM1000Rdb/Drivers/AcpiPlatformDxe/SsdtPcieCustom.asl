@@ -7,7 +7,7 @@
 
 #include "AcpiPlatform.h"
 
-#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x0, 0xFF, 0x0, 0x100)
+#define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x1, 0xFE, 0x0, 0xFE)
 
 DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 {
@@ -48,7 +48,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE0_MEM_BASE,
                        BAIKAL_ACPI_PCIE0_MEM_MAX,
-                       BAIKAL_ACPI_PCIE_MEM_OFFSET,
+                       BAIKAL_ACPI_PCIE0_MEM_OFFSET,
                        BAIKAL_ACPI_PCIE0_MEM_SIZE)
           QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,
                    BAIKAL_ACPI_PCIE_IO_BASE,
@@ -105,7 +105,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       NATIVE_PCIE_OSC
     }
 
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     // PCIe1 (x4 #1)
     Device (PCI1)
     {
@@ -137,7 +137,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE1_MEM_BASE,
                        BAIKAL_ACPI_PCIE1_MEM_MAX,
-                       BAIKAL_ACPI_PCIE_MEM_OFFSET,
+                       BAIKAL_ACPI_PCIE1_MEM_OFFSET,
                        BAIKAL_ACPI_PCIE1_MEM_SIZE)
           QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,
                    BAIKAL_ACPI_PCIE_IO_BASE,
@@ -188,6 +188,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
     }
 #endif
 
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     // PCIe2 (x8)
     Device (PCI2)
     {
@@ -219,7 +220,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
           QWordMemory (ResourceProducer,, MinFixed, MaxFixed,,, 0x0,
                        BAIKAL_ACPI_PCIE2_MEM_BASE,
                        BAIKAL_ACPI_PCIE2_MEM_MAX,
-                       BAIKAL_ACPI_PCIE_MEM_OFFSET,
+                       BAIKAL_ACPI_PCIE2_MEM_OFFSET,
                        BAIKAL_ACPI_PCIE2_MEM_SIZE)
           QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,
                    BAIKAL_ACPI_PCIE_IO_BASE,
@@ -271,5 +272,6 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       NATIVE_PCIE_OSC
     }
+#endif
   }
 }
