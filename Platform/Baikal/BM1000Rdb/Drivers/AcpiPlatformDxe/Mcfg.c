@@ -19,7 +19,7 @@
   /* UINT16  PciSegmentGroupNumber */                           \
   Segment,                                                      \
   /* UINT8   StartBusNumber        */                           \
-  0,                                                            \
+  1,                                                            \
   /* UINT8   EndBusNumber          */                           \
   EndBusNumber,                                                 \
   /* UINT32  Reserved              */                           \
@@ -45,25 +45,31 @@ STATIC BAIKAL_ACPI_MCFG  Mcfg = {
   },
   {
     BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE0_SEGMENT, BAIKAL_ACPI_PCIE0_CFG_BASE, 255),
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE1_SEGMENT, BAIKAL_ACPI_PCIE1_CFG_BASE, 255),
 #endif
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_MCFG_TABLE_ENTRY(BAIKAL_ACPI_PCIE2_SEGMENT, BAIKAL_ACPI_PCIE2_CFG_BASE, 255),
+#endif
 
+#ifndef ELPITECH
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 2), BAIKAL_ACPI_PCIE0_CFG_BASE + (2 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 3), BAIKAL_ACPI_PCIE0_CFG_BASE + (3 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 4), BAIKAL_ACPI_PCIE0_CFG_BASE + (4 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE0_SEGMENT, 5), BAIKAL_ACPI_PCIE0_CFG_BASE + (5 << 20), 0),
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 2), BAIKAL_ACPI_PCIE1_CFG_BASE + (2 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 3), BAIKAL_ACPI_PCIE1_CFG_BASE + (3 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 4), BAIKAL_ACPI_PCIE1_CFG_BASE + (4 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE1_SEGMENT, 5), BAIKAL_ACPI_PCIE1_CFG_BASE + (5 << 20), 0),
 #endif
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 2), BAIKAL_ACPI_PCIE2_CFG_BASE + (2 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 3), BAIKAL_ACPI_PCIE2_CFG_BASE + (3 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 4), BAIKAL_ACPI_PCIE2_CFG_BASE + (4 << 20), 0),
     BAIKAL_MCFG_TABLE_ENTRY(SYNTH_SEG(BAIKAL_ACPI_PCIE2_SEGMENT, 5), BAIKAL_ACPI_PCIE2_CFG_BASE + (5 << 20), 0),
+#endif
+#endif
   }
 };
 #pragma pack()
@@ -75,6 +81,22 @@ McfgInit (
 {
   switch (PcdGet32 (PcdAcpiPcieMode)) {
   case ACPI_PCIE_CUSTOM:
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE0_IDX)) {
+      Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].BaseAddress += 0x8000;
+    }
+
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE1_IDX)) {
+      Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].BaseAddress += 0x8000;
+    }
+#endif
+
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
+    if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
+      Mcfg.Table[BAIKAL_ACPI_PCIE2_SEGMENT].BaseAddress += 0x8000;
+    }
+#endif
+
     *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Mcfg;
     return EFI_SUCCESS;
 
@@ -89,7 +111,7 @@ McfgInit (
 
     Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].StartBusNumber = 0;
     Mcfg.Table[BAIKAL_ACPI_PCIE0_SEGMENT].EndBusNumber = 0;
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20)
+#ifdef BAIKAL_ACPI_PCIE1_SEGMENT
     if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE1_IDX)) {
       Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].BaseAddress += 0x8000;
     }
@@ -97,12 +119,16 @@ McfgInit (
     Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].StartBusNumber = 0;
     Mcfg.Table[BAIKAL_ACPI_PCIE1_SEGMENT].EndBusNumber = 0;
 #endif
+
+#ifdef BAIKAL_ACPI_PCIE2_SEGMENT
     if (PcdGet32 (PcdPcieCfg0Quirk) & (1 << BM1000_PCIE2_IDX)) {
       Mcfg.Table[BAIKAL_ACPI_PCIE2_SEGMENT].BaseAddress += 0x8000;
     }
 
     Mcfg.Table[BAIKAL_ACPI_PCIE2_SEGMENT].StartBusNumber = 0;
     Mcfg.Table[BAIKAL_ACPI_PCIE2_SEGMENT].EndBusNumber = 0;
+#endif
+
     *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Mcfg;
     return EFI_SUCCESS;
   }
