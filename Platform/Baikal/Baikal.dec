@@ -56,8 +56,8 @@
   gBaikalTokenSpaceGuid.PcdPs2MultUartBaseAddr|0x20240000|UINT64|0x0000000F
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
-  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x000000B
-  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|0|UINT32|0x000000C
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|1|UINT32|0x000000B
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|1|UINT32|0x000000C
   gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk|0|UINT32|0x0000000D
   gBaikalTokenSpaceGuid.PcdDdrChannelsNumber|0|UINT32|0x0000000E
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|0|UINT32|0x00000010
