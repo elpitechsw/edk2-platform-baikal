@@ -1471,7 +1471,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
           {
             Package () { "reg", Zero },
             Package () { "snps,nr-gpios", 32 },
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined (ELPITECH)
             Package () { "line-name", "PCIe2_PRSNT#" },
             Package () { "gpio-hog", One },
             Package () { "gpios", Package () { One, One } },
@@ -1542,7 +1542,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
           }
         })
       }
-#elif defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+#elif defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20) || defined (ELPITECH)
           Package () { "cs-gpios", Package () { Zero } }
         }
       })
@@ -2404,7 +2404,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
         ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package ()
         {
-          Package () { "compatible", "baikal,bm1000-ahci" }
+          Package () { "compatible", Package () { "snps,dwc-ahci", "generic-ahci" } }
         }
       })
     }
@@ -2430,7 +2430,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
         ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package ()
         {
-          Package () { "compatible", "baikal,bm1000-ahci" }
+          Package () { "compatible", Package () { "snps,dwc-ahci", "generic-ahci" } }
         }
       })
     }
@@ -2662,7 +2662,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       {
         Memory32Fixed (ReadWrite, 0x30240000, 0x10000)
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 323 }
-#ifdef BAIKAL_MBM20
+#if defined(BAIKAL_MBM20) || defined (ELPITECH)
         GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 19 }
 #endif
       })
@@ -2680,7 +2680,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
           Package () { "snps,txpbl", 4 },
           Package () { "snps,rxpbl", 4 },
           Package () { "snps,blen", Package () { Zero, Zero, Zero, Zero, Zero, Zero, 4 } },
-#ifdef BAIKAL_MBM20
+#if defined(BAIKAL_MBM20) || defined (ELPITECH)
           Package () { "snps,reset-gpios", Package ()
           {
             ^GMC0, Zero, Zero, One,
@@ -2714,7 +2714,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       {
         Memory32Fixed (ReadWrite, 0x30250000, 0x10000)
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 324 }
-#ifdef BAIKAL_MBM20
+#if defined(BAIKAL_MBM20) || defined (ELPITECH)
         GpioIo (Exclusive, PullDefault, , , IoRestrictionNone, "\\_SB.GPIO") { 20 }
 #endif
       })
@@ -2732,7 +2732,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
           Package () { "snps,txpbl", 4 },
           Package () { "snps,rxpbl", 4 },
           Package () { "snps,blen", Package () { Zero, Zero, Zero, Zero, Zero, Zero, 4 } },
-#ifdef BAIKAL_MBM20
+#if defined(BAIKAL_MBM20) || defined (ELPITECH)
           Package () { "snps,reset-gpios", Package ()
           {
             ^GMC1, Zero, Zero, One,
@@ -2815,7 +2815,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
           Package () { "compatible", "baikal,vdu" },
           Package () { "interrupt-names", Package () { "lvds_irq", "hdmi_irq" } },
           Package () { "baikal,hdmi-bridge", ^HDMI },
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20) || defined(BAIKAL_MBM20)
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20) || defined(BAIKAL_MBM20) || defined (ELPITECH)
           Package () { "baikal,lvds-panel", PNL0 },
           Package () { "enable-gpios", Package () { ^VDU0, Zero, Zero, One } },
           Package () { "lvds-lanes", 2 }
