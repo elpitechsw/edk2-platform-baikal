@@ -218,6 +218,7 @@
   Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
+  Platform/Baikal/Drivers/I2cPmBusDxe/I2cPmBusDxe.inf
   Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
 
   # GPT/MBR partitioning + filesystems

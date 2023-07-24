@@ -1,0 +1,60 @@
+## @file
+#
+# Copyright (c) 2023, Elpitech. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = I2cPmBusDxe
+  MODULE_UNI_FILE                = I2cPmBusDxe.uni
+  FILE_GUID                      = 940019DF-A32C-45CF-908E-106F9C5A79B5
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = I2cPmBusDriverEntryPoint
+  UNLOAD                         = I2cPmBusDriverUnload
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC ARM AARCH64
+#
+
+[Sources]
+  I2cPmBus.c
+  I2cPmBus.h
+  PmBus.c
+  PmBus.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+  Silicon/Baikal/Baikal.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UefiLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  BaseLib
+  BaseMemoryLib
+  DevicePathLib
+  DebugLib
+  PcdLib
+  I2cLib
+
+[Guids]
+
+[Protocols]
+  gEfiDevicePathProtocolGuid                    ## TO_START
+  gFdtClientProtocolGuid                        ## CONSUMED
+  gSimpleSensorProtocolGuid                     ## PROVIDED
+
+[FeaturePcd]
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  I2cPmBusDxeExtra.uni

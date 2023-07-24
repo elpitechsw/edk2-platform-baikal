@@ -126,6 +126,7 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
+  INF Platform/Baikal/Drivers/I2cPmBusDxe/I2cPmBusDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
   INF Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
   INF Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
