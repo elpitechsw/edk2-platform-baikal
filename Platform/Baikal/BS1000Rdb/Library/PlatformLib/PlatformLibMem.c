@@ -12,7 +12,7 @@
 
 #include <BS1000.h>
 
-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS  (58 + ((PLATFORM_CHIP_COUNT - 1) * 54))
+#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS  (65 + ((PLATFORM_CHIP_COUNT - 1) * 61))
 
 /**
   Return the Virtual Memory Map of your platform
@@ -83,6 +83,26 @@ ArmPlatformGetVirtualMemoryMap (
     VirtualMemoryTable[Index].Length       = BS1000_GMAC1_SIZE;
     VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO32_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO32_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_GPIO32_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO16_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO16_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_GPIO16_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO8_1_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO8_1_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_GPIO8_1_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO8_2_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_GPIO8_2_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_GPIO8_2_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
     VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C2_BASE);
     VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C2_BASE);
     VirtualMemoryTable[Index].Length       = BS1000_I2C2_SIZE;
@@ -90,6 +110,21 @@ ArmPlatformGetVirtualMemoryMap (
 
     VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C3_BASE);
     VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C3_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_I2C3_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C4_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C4_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_I2C3_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C5_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C5_BASE);
+    VirtualMemoryTable[Index].Length       = BS1000_I2C3_SIZE;
+    VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+
+    VirtualMemoryTable[Index].PhysicalBase = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C6_BASE);
+    VirtualMemoryTable[Index].VirtualBase  = PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C6_BASE);
     VirtualMemoryTable[Index].Length       = BS1000_I2C3_SIZE;
     VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
