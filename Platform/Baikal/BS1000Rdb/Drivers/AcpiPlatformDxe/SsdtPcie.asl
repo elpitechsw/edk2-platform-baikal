@@ -83,6 +83,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       NATIVE_PCIE_OSC
     }
 
+#ifdef BAIKAL_ACPI_PCIE0_P1_SEGMENT
     Device (PCI1)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -152,6 +153,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       NATIVE_PCIE_OSC
     }
+#endif
 
     Device (PCI2)
     {
@@ -223,6 +225,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       NATIVE_PCIE_OSC
     }
 
+#ifdef BAIKAL_ACPI_PCIE1_P1_SEGMENT
     Device (PCI3)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -292,6 +295,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       NATIVE_PCIE_OSC
     }
+#endif
 
     Device (PCI4)
     {
@@ -783,6 +787,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       NATIVE_PCIE_OSC
     }
 
+#ifdef BAIKAL_ACPI_PCIE4_P1_SEGMENT
     Device (PCIB)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -852,6 +857,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       NATIVE_PCIE_OSC
     }
+#endif
 
     Device (PCIC)
     {
