@@ -39,6 +39,9 @@
   gBaikalTokenSpaceGuid.PcdAcpiPcieMode
   gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk
 
+[Guids]
+  gEfiEndOfDxeEventGroupGuid
+
 [Protocols]
   gEfiPciIoProtocolGuid    ## CONSUMES
   gFdtClientProtocolGuid   ## CONSUMES
