@@ -705,7 +705,7 @@ PciHostBridgeLibConstructor (
     lPcieRootBridge->DmaAbove4G = TRUE;
     lPcieRootBridge->NoExtendedConfigSpace = FALSE;
     lPcieRootBridge->ResourceAssigned      = FALSE;
-    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_MEM64_DECODE | EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
+    lPcieRootBridge->AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
 
     lPcieRootBridge->Bus.Base          = 0;
     lPcieRootBridge->Bus.Limit         = mPcieCfgSizes[PcieIdx] / SIZE_1MB - 1;
@@ -715,8 +715,8 @@ PciHostBridgeLibConstructor (
     lPcieRootBridge->Mem.Base          = mPcieMemMins[PcieIdx];
     lPcieRootBridge->Mem.Limit         = mPcieMemMins[PcieIdx] + mPcieMemSizes[PcieIdx] - 1;
     lPcieRootBridge->Mem.Translation   = mPcieMemMins[PcieIdx] - mPcieMemBases[PcieIdx];
-    lPcieRootBridge->MemAbove4G.Base   = mPcieMemBases[PcieIdx] + 0x100000000; // TODO: investigate it,
-    lPcieRootBridge->MemAbove4G.Limit  = mPcieMemBases[PcieIdx] + 0x1FFFFFFFF; // TODO: try to add in DTB "ranges"
+    lPcieRootBridge->MemAbove4G.Base   = MAX_UINT64;
+    lPcieRootBridge->MemAbove4G.Limit  = 0;
     lPcieRootBridge->PMem.Base         = MAX_UINT64;
     lPcieRootBridge->PMem.Limit        = 0;
     lPcieRootBridge->PMemAbove4G.Base  = MAX_UINT64;
@@ -777,7 +777,7 @@ PciHostBridgeLibConstructor (
     MmioAndThenOr32 (
       mPcieDbiBases[PcieIdx] + BS1000_PCIE_PF0_TYPE1_HDR_TYPE1_CLASS_CODE_REV_ID_REG,
       0x000000FF,
-      0x06040000
+      0x06040100
       );
 
     if (PciePortLinkCapableLanesVal) {
@@ -799,9 +799,9 @@ PciHostBridgeLibConstructor (
     PciHostBridgeLibCfgWindow (
       mPcieDbiBases[PcieIdx],
       0,
-      mPcieCfgBases[PcieIdx],
+      mPcieCfgBases[PcieIdx] + SIZE_1MB,
       0, // See AcpiPlatformDxe/Iort.c for implications of using 0 here instead of encoding the bus
-      mPcieCfgSizes[PcieIdx] >= SIZE_2MB ? SIZE_2MB : mPcieCfgSizes[PcieIdx],
+      SIZE_64KB,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
       );
@@ -810,9 +810,9 @@ PciHostBridgeLibConstructor (
     PciHostBridgeLibCfgWindow (
       mPcieDbiBases[PcieIdx],
       1,
-      mPcieCfgBases[PcieIdx],
+      mPcieCfgBases[PcieIdx] + SIZE_2MB,
       0,
-      mPcieCfgSizes[PcieIdx], // 0..0x1FFFFF is masked by CFG0
+      mPcieCfgSizes[PcieIdx] - SIZE_2MB,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1,
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
       );
@@ -932,8 +932,8 @@ PciHostBridgeLibConstructor (
               BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT
             ));
 #endif
-          if (MmioRead32 (mPcieCfgBases[PcieIdx]) != 0xFFFFFFFF &&
-              MmioRead32 (mPcieCfgBases[PcieIdx] + 0x8000) == 0xFFFFFFFF) {
+          if (MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20)) != 0xFFFFFFFF &&
+              MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20) + 0x8000) == 0xFFFFFFFF) {
             //
             // Device appears to filter CFG0 requests, so the 64 KiB granule for the iATU
             // isn't a problem. We don't have to ignore fn > 0 or shift MCFG by 0x8000.
