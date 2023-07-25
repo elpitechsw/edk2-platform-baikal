@@ -6,6 +6,7 @@
 #include <Library/ArmLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/GpioLib.h>
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PciHostBridgeLib.h>
@@ -521,6 +522,10 @@ PciHostBridgeLibConstructor (
   INT32                 Node;
   UINTN                 PcieIdx;
   UINTN                 PcieNumLanes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PciePerstGpios[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PciePerstPolarity[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  UINTN                 PcieLinkSpeed[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+  EFI_PHYSICAL_ADDRESS  PciePerstBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
   EFI_STATUS            Status;
   PCI_ROOT_BRIDGE      *lPcieRootBridge;
 
@@ -646,6 +651,35 @@ PciHostBridgeLibConstructor (
       PcieNumLanes[PcieIdx] = 0;
     }
 
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "max-link-speed", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == sizeof (UINT32)) {
+      PcieLinkSpeed[PcieIdx] = SwapBytes32 (*(CONST UINT32 *) Prop);
+    } else {
+      PcieLinkSpeed[PcieIdx] = 0;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reset-gpios", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize >= (3 * sizeof (UINT32))) {
+      INT32        PerstGpioPhandle;
+      INT32        PerstGpioNode;
+      PerstGpioPhandle           = SwapBytes32 (*(CONST UINT32 *) Prop);
+      PciePerstGpios[PcieIdx]    = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
+      PciePerstPolarity[PcieIdx] = SwapBytes32 (((CONST UINT32 *) Prop)[2]);
+      if ((FdtClient->FindNodeByPhandle (FdtClient, PerstGpioPhandle, &PerstGpioNode) == EFI_SUCCESS) &&
+        (FdtClient->FindParentNode (FdtClient, PerstGpioNode, &PerstGpioNode) == EFI_SUCCESS)) {
+        if (FdtClient->GetNodeProperty (FdtClient, PerstGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+            PropSize == 2 * sizeof (UINT64)) {
+          PciePerstBases[PcieIdx] = SwapBytes64 (*(CONST UINT64 *) Prop);
+        } else {
+          PciePerstBases[PcieIdx] = 0;
+        }
+      } else {
+        PciePerstBases[PcieIdx] = 0;
+      }
+    } else {
+      PciePerstBases[PcieIdx] = 0;
+    }
+
     ++mPcieRootBridgesNum;
     ++Iter;
   }
@@ -694,6 +728,15 @@ PciHostBridgeLibConstructor (
        BS1000_PCIE_APB_PE_GEN_CTRL3,
       ~BS1000_PCIE_APB_PE_GEN_CTRL3_LTSSM_EN
       );
+
+    if (PciePerstBases[PcieIdx]) { /* assert resets */
+      if (PciePerstPolarity[PcieIdx]) {
+        GpioOutRst (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      } else {
+        GpioOutSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      }
+      GpioDirSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+    }
 
     if (PcieNumLanes[PcieIdx] == 1) {
       PciePortLinkCapableLanesVal = BS1000_PCIE_PF0_PORT_LOGIC_PORT_LINK_CTRL_OFF_LINK_CAPABLE_X1;
@@ -795,6 +838,22 @@ PciHostBridgeLibConstructor (
       BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_IO,
       0
       );
+
+    gBS->Stall (1000);
+
+    if (PciePerstBases[PcieIdx]) { /* deassert resets */
+      if (PciePerstPolarity[PcieIdx]) {
+        GpioOutSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      } else {
+        GpioOutRst (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+      }
+      GpioDirSet (PciePerstBases[PcieIdx], PciePerstGpios[PcieIdx]);
+    }
+
+    if (PcieLinkSpeed[PcieIdx] > 0 && PcieLinkSpeed[PcieIdx] <= 4) {
+      /* Set link speed */
+      MmioAndThenOr32 (mPcieDbiBases[PcieIdx] + 0xa0, ~0x0f, PcieLinkSpeed[PcieIdx]);
+    }
 
     MmioOr32 (
       mPcieApbBases[PcieIdx] +

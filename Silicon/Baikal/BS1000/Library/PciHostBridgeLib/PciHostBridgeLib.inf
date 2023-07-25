@@ -24,10 +24,12 @@
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
   Silicon/Baikal/BS1000/BS1000.dec
+  Silicon/Baikal/Baikal.dec
 
 [LibraryClasses]
   ArmLib
   DebugLib
+  GpioLib
 
 [Protocols]
   gFdtClientProtocolGuid   ## CONSUMES
