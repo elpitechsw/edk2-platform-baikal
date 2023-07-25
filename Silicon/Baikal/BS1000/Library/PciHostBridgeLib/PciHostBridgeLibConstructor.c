@@ -9,6 +9,7 @@
 #include <Library/GpioLib.h>
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PciHostBridgeLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -395,7 +396,7 @@ STATIC CONST CHAR8  *mPcieNames[] = {
   "PCIe4.P3"
 };
 
-UINT32                        mPcieCfg0FilteringWorks;
+UINT32                        mPcieCfg0Quirk;
 EFI_PHYSICAL_ADDRESS          mPcieCfgBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieCfgSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieIdxs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
@@ -951,11 +952,15 @@ PciHostBridgeLibConstructor (
 #if !defined(MDEPKG_NDEBUG)
             DEBUG ((EFI_D_INFO, ", Cfg0Filter+\n"));
 #endif
-            mPcieCfg0FilteringWorks |= 1 << PcieIdx;
+          } else if(((MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20) + 0xc) >> 16) & 0xff) == 0x1) {
+#if !defined(MDEPKG_NDEBUG)
+            DEBUG ((EFI_D_INFO, ", Cfg0Filter- (Type 1)\n"));
+#endif
           } else {
 #if !defined(MDEPKG_NDEBUG)
             DEBUG ((EFI_D_INFO, ", Cfg0Filter-\n"));
 #endif
+            mPcieCfg0Quirk |= 1 << PcieIdx;
           }
 #if !defined(MDEPKG_NDEBUG)
           DEBUG((EFI_D_INFO,
@@ -995,6 +1000,7 @@ PciHostBridgeLibConstructor (
       }
     }
   }
+  PcdSet32S (PcdPcieCfg0Quirk, mPcieCfg0Quirk);
 
   return EFI_SUCCESS;
 }
