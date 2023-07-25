@@ -26,12 +26,16 @@
   GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a -fno-stack-protector
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
+!if $(BAIKAL_BOARD)
   *_*_*_CC_FLAGS = -D$(BAIKAL_BOARD) -D'BAIKAL_BOARD_NAME="$(BAIKAL_BOARD_NAME)"'
   *_*_*_ASLPP_FLAGS = -D$(BAIKAL_BOARD) -D'BAIKAL_BOARD_NAME="$(BAIKAL_BOARD_NAME)"'
+!elseif $(BAIKAL_ELP)
+  *_*_*_CC_FLAGS = -DELP_$(BOARD_VER) -DELPITECH -D'BAIKAL_BOARD_NAME="$(ELP_BOARD_NAME)"'
+  *_*_*_ASLPP_FLAGS = -DELP_$(BOARD_VER) -DELPITECH -D'BAIKAL_BOARD_NAME="$(ELP_BOARD_NAME)"'
+!endif
 
 !if $(ENABLE_CORESIGHT)
   *_*_*_ASLPP_FLAGS = -DENABLE_CORESIGHT
-!endif
 
 [BuildOptions.common.EDKII.DXE_CORE,BuildOptions.common.EDKII.DXE_DRIVER,BuildOptions.common.EDKII.UEFI_DRIVER,BuildOptions.common.EDKII.UEFI_APPLICATION]
   GCC:*_*_AARCH64_DLINK_FLAGS = -z common-page-size=0x1000
@@ -224,6 +228,9 @@
   Platform/Baikal/BS1000Rdb/Drivers/SpdClientDxe/SpdClientDxe.inf
   Platform/Baikal/BS1000Rdb/Drivers/UidClientDxe/UidClientDxe.inf
   Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
+!if $(BAIKAL_ELP) == TRUE
+  Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
+!endif
   Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
   Platform/Baikal/Drivers/RngDxe/RngDxe.inf
 
@@ -359,7 +366,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xAA, 0x2C, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6E, 0x8A, 0xB6, 0xF4, 0x66, 0x23, 0x31 }
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0xC000000000007FD1
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|$(FIRMWARE_REVISION)
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Baikal Electronics"
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"$(FIRMWARE_VENDOR)"
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"$(FIRMWARE_VERSION_STRING)"
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxAuthVariableSize|0x2800
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize|0x2000
