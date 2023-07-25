@@ -19,6 +19,7 @@
 #include <Protocol/FdtClient.h>
 #include <Protocol/PciHostBridgeResourceAllocation.h>
 #include <Protocol/PciIo.h>
+#include <Guid/EventGroup.h>
 
 #include <BM1000.h>
 
@@ -78,6 +79,12 @@
 
 #define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_RELATED_OFF                                  0x890
 #define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_RELATED_OFF_GEN3_EQUALIZATION_DISABLE        BIT16
+
+#define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF                               0x8A8
+#define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_FB_MODE_BITS                  (0xF << 0)
+#define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_FB_MODE_SHIFT                 0
+#define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_PSET_REQ_VEC_BITS             (0xFFFF << 8)
+#define BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_PSET_REQ_VEC_SHIFT            8
 
 #define BM1000_PCIE_PF0_PORT_LOGIC_PIPE_LOOPBACK_CONTROL_OFF                         0x8B8
 #define BM1000_PCIE_PF0_PORT_LOGIC_PIPE_LOOPBACK_CONTROL_OFF_PIPE_LOOPBACK           BIT31
@@ -144,6 +151,8 @@
 
 #define RANGES_FLAG_IO   0x01000000
 #define RANGES_FLAG_MEM  0x02000000
+
+BOOLEAN PciHostBridgeLibGetLink (UINTN  PcieIdx);
 
 #pragma pack(1)
 typedef struct {
@@ -216,6 +225,7 @@ UINT32                        mPcieCfg0Quirk;
 EFI_PHYSICAL_ADDRESS          mPcieCfgBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieCfgSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieIdxs[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
+STATIC UINTN                  mPcieMaxLinkSpeed[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC EFI_PHYSICAL_ADDRESS   mPcieIoBases[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC EFI_PHYSICAL_ADDRESS   mPcieIoMins[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
 STATIC UINTN                  mPcieIoSizes[ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)];
@@ -517,6 +527,124 @@ PciHostBridgeLibCfgWindow (
 STATIC
 VOID
 EFIAPI
+PciHostBridgeLinkRetrain (
+  IN  EFI_EVENT   Event,
+  IN  VOID       *Context
+  )
+{
+  UINTN                 PcieIdx, Iter;
+  UINT64                TimeStart;
+  UINT32                DevCapSpeed, TargetSpeed, Reg, CapOff;
+  EFI_PHYSICAL_ADDRESS  PcieCfgBase;
+
+  DEBUG((EFI_D_INFO, "LinkRetrain called\n"));
+  for (Iter = 0; Iter < mPcieRootBridgesNum; Iter++) {
+    PcieIdx = mPcieIdxs[Iter];
+
+    if (!PciHostBridgeLibGetLink(PcieIdx))
+      continue;
+
+    /* Retrain link to 'max-link-speed' */
+    PcieCfgBase = mPcieCfgBases[PcieIdx] + SIZE_1MB;
+
+    /* Find device PCIe capability */
+    for (CapOff = 0x40; CapOff; ) {
+      Reg = MmioRead32(PcieCfgBase + CapOff);
+      if ((Reg & 0xff) == 0x10)
+        break; //PCIe capability found
+      CapOff = (Reg >> 8) & 0xff; //next capability
+    }
+
+    if (CapOff) {
+      DevCapSpeed = MmioRead32(PcieCfgBase + CapOff + 0xc) & 0x7;
+      if (DevCapSpeed > mPcieMaxLinkSpeed[PcieIdx])
+        TargetSpeed = mPcieMaxLinkSpeed[PcieIdx];
+      else
+        TargetSpeed = DevCapSpeed;
+      if (TargetSpeed == ((MmioRead32(mPcieDbiBases[PcieIdx] +
+		BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG) >> 16) & 0x7)) {
+        DEBUG((EFI_D_INFO, "PcieRoot(0x%x): Speed %d is OK\n", PcieIdx, TargetSpeed));
+	continue;
+      }
+
+      MmioAndThenOr32 (
+         mPcieDbiBases[PcieIdx] +
+         BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG,
+        ~BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL2_LINK_STATUS2_REG_TRGT_LNK_SPEED_BITS,
+         TargetSpeed
+        );
+      MmioOr32 (
+        mPcieDbiBases[PcieIdx] +
+        BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG,
+        BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_RETRAIN_LINK
+        );
+      DEBUG((EFI_D_INFO, "PcieRoot(0x%x): Retraining link to Gen%d\n", PcieIdx, TargetSpeed));
+      TimeStart = GetTimeInNanoSecond (GetPerformanceCounter());
+      while (((Reg = MmioRead32 (BM1000_PCIE_GPR_STS (PcieIdx))) & 0xff) != 0xd1) {
+        if (Reg & 0x1000 /*0x3000*/) {
+          DEBUG((EFI_D_INFO, "Link is lost\n"));
+          MmioAnd32 (BM1000_PCIE_GPR_GEN (PcieIdx), ~BM1000_PCIE_GPR_GEN_LTSSM_EN);
+          goto failedretrain;
+        }
+        if (GetTimeInNanoSecond (GetPerformanceCounter()) - TimeStart > 1000000000) {
+          DEBUG((EFI_D_ERROR, "Timeout! (LinkStatus %08x-%08x)\n",
+                MmioRead32(mPcieDbiBases[PcieIdx] +
+                BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG),
+                MmioRead32 (BM1000_PCIE_GPR_STS (PcieIdx))));
+          goto failedretrain;
+        }
+        gBS->Stall(10000);
+      }
+      Reg = MmioRead32 (
+              mPcieDbiBases[PcieIdx] +
+              BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG
+            );
+      DEBUG((EFI_D_INFO, "PcieRoot(0x%x)[%05ums]: retrained to Gen%u (status %x)\n",
+            PcieIdx,
+            (GetTimeInNanoSecond (GetPerformanceCounter()) - TimeStart) / 1000000,
+            (Reg >> 16) & 0xf,
+            Reg));
+      Reg = (Reg >> 16) & 0xf;
+
+      if (Reg < TargetSpeed) {
+        gBS->Stall(200000);
+        MmioOr32 (
+          mPcieDbiBases[PcieIdx] +
+          BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG,
+          BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_RETRAIN_LINK
+          );
+        DEBUG((EFI_D_INFO, "PcieRoot(0x%x): Retraining link to Gen%d\n", PcieIdx, TargetSpeed));
+        TimeStart = GetTimeInNanoSecond (GetPerformanceCounter());
+        while (MmioRead32(mPcieDbiBases[PcieIdx] +
+               BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG) &
+                 0x8000000) {
+          if (GetTimeInNanoSecond (GetPerformanceCounter()) - TimeStart > 1000000000) {
+            DEBUG((EFI_D_ERROR, "Timeout! (LinkStatus %08x)\n",
+                  MmioRead32(mPcieDbiBases[PcieIdx] +
+                  BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG)));
+            goto failedretrain;
+          }
+          gBS->Stall(10000);
+        }
+        Reg = MmioRead32 (
+                mPcieDbiBases[PcieIdx] +
+                BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG
+                );
+        Reg = (Reg >> 16) & 0xf;
+        DEBUG((EFI_D_INFO, "PcieRoot(0x%x)[%03ums]: retrained(2) to Gen%u\n",
+              PcieIdx,
+              (GetTimeInNanoSecond (GetPerformanceCounter()) - TimeStart) / 1000000,
+              Reg));
+      }
+    }
+failedretrain:
+    continue;
+  }
+}
+
+STATIC
+VOID
+EFIAPI
 PciHostBridgeLibExitBootServices (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -735,6 +863,13 @@ PciHostBridgeLibConstructor (
       PcieNumLanes[PcieIdx] = SwapBytes32 (*(CONST UINT32 *) Prop);
     } else {
       PcieNumLanes[PcieIdx] = 0;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "max-link-speed", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 4) {
+      mPcieMaxLinkSpeed[PcieIdx] = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
+    } else {
+      mPcieMaxLinkSpeed[PcieIdx] = 3;
     }
 
     if (FdtClient->GetNodeProperty (FdtClient, Node, "reset-gpios", &Prop, &PropSize) == EFI_SUCCESS &&
@@ -1026,6 +1161,20 @@ PciHostBridgeLibConstructor (
        1
       );
 
+    // Configure Preset Request Vector
+    MmioAndThenOr32 (
+      mPcieDbiBases[PcieIdx] + BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF,
+      ~BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_PSET_REQ_VEC_BITS,
+      0x185 << BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_PSET_REQ_VEC_SHIFT
+      );
+
+    // Configure feedback mode
+    MmioAndThenOr32 (
+      mPcieDbiBases[PcieIdx] + BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF,
+      ~BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_FB_MODE_BITS,
+      0 << BM1000_PCIE_PF0_PORT_LOGIC_GEN3_EQ_CONTROL_OFF_FB_MODE_SHIFT
+      );
+
     MmioOr32 (BM1000_PCIE_GPR_GEN (PcieIdx), BM1000_PCIE_GPR_GEN_LTSSM_EN);
 
     // Deassert PERST pin
@@ -1231,6 +1380,15 @@ PciHostBridgeLibConstructor (
       return Status;
     }
   }
+
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  PciHostBridgeLinkRetrain,
+                  NULL,
+                  &gEfiEventReadyToBootGuid,
+                  &Event
+                  );
 
   return EFI_SUCCESS;
 }
