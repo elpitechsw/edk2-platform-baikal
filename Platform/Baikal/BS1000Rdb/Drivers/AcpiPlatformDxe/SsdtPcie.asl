@@ -100,6 +100,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       }
     }
 
+#ifdef BAIKAL_ACPI_PCIE0_P1_SEGMENT
     Device (PC01)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -181,6 +182,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
         Return(0)
       }
     }
+#endif
 
     Device (PC02)
     {
@@ -269,6 +271,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       }
     }
 
+#ifdef BAIKAL_ACPI_PCIE1_P1_SEGMENT
     Device (PC03)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -351,6 +354,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
         Return(0)
       }
     }
+#endif
 
     Device (PC04)
     {
@@ -929,6 +933,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       }
     }
 
+#ifdef BAIKAL_ACPI_PCIE4_P1_SEGMENT
     Device (PC11)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -1007,6 +1012,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
         Return(0)
       }
     }
+#endif
 
     Device (PC12)
     {
