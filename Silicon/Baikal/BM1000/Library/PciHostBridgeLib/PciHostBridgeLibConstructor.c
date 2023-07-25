@@ -35,6 +35,8 @@
 
 #define BM1000_PCIE_GPR_GEN(PcieIdx)                     (BM1000_PCIE_GPR_BASE + (PcieIdx) * 0x20 + 0x08)
 #define BM1000_PCIE_GPR_GEN_LTSSM_EN                     BIT1
+#define BM1000_PCIE_GPR_GEN_DBI2_EN                      BIT2
+#define BM1000_PCIE_GPR_GEN_PHY_EN                       BIT3
 
 #define BM1000_PCIE_GPR_MSI_TRANS2                       (BM1000_PCIE_GPR_BASE + 0xF8)
 #define BM1000_PCIE_GPR_MSI_TRANS2_PCIE0_MSI_TRANS_EN    BIT9
@@ -93,6 +95,43 @@
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_LIMIT_ADDR_OFF_OUTBOUND_0                    0x914
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_LWR_TARGET_ADDR_OFF_OUTBOUND_0               0x918
 #define BM1000_PCIE_PF0_PORT_LOGIC_IATU_UPPER_TARGET_ADDR_OFF_OUTBOUND_0             0x91C
+
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_LANENUM                                    0xD04
+
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL                                    0xD08
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_READ_WRITE_FLAG                BIT29
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_DONE                           BIT30
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_BUSY                           BIT31
+
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_WRITEDATA                                  0xD0C
+#define BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_READDATA                                   0xD10
+
+#define BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL                                            0x18009
+#define BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_CDR_EN                                     BIT0
+#define BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_DFE_EN                                     BIT1
+#define BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_AGC_EN                                     BIT2
+#define BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_LCTRL_MEN                                  BIT8
+
+#define BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL                                            0x1800B
+#define BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL_POLE_OVRRD_EN                              BIT9
+#define BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL_PCS_SDS_ZERO_BITS                          (0xF << 10)
+#define BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL_PCS_SDS_ZERO_SHIFT                         10
+
+#define BM1000_PCIE_PHY_LANE_TX_CFG_1                                                0x18016
+#define BM1000_PCIE_PHY_LANE_TX_CFG_1_TURBO_EN_OVRRD_EN                              BIT10
+#define BM1000_PCIE_PHY_LANE_TX_CFG_1_VBOOST_EN_OVRRD_EN                             BIT11
+
+#define BM1000_PCIE_PHY_LANE_TX_CFG_3                                                0x18018
+#define BM1000_PCIE_PHY_LANE_TX_CFG_3_TURBO_EN                                       BIT0
+#define BM1000_PCIE_PHY_LANE_TX_CFG_3_PCS_SDS_GAIN_BITS                              (0x7 << 4)
+#define BM1000_PCIE_PHY_LANE_TX_CFG_3_PCS_SDS_GAIN_SHIFT                             4
+#define BM1000_PCIE_PHY_LANE_TX_CFG_3_VBOOST_EN                                      BIT14
+
+#define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0                                       0x3800C
+#define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0_VBOOST_EN_REQ_OVRRD_VAL               BIT13
+
+#define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2                                       0x3800E
+#define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2_VBOOST_EN_REQ_OVRRD_EN                BIT8
 
 #define RANGES_FLAG_IO   0x01000000
 #define RANGES_FLAG_MEM  0x02000000
@@ -193,6 +232,214 @@ STATIC_ASSERT (
   ARRAY_SIZE (mPcieCfgSizes) == ARRAY_SIZE (mEfiPciRootBridgeDevicePaths),
   "ARRAY_SIZE (mPcieCfgSizes) != ARRAY_SIZE (mEfiPciRootBridgeDevicePaths)"
   );
+
+STATIC
+BOOLEAN
+PciHostBridgeLibPhyWaitForDone (
+  IN  EFI_PHYSICAL_ADDRESS  PcieDbiBase
+  )
+{
+  UINT32  Val;
+  UINTN   Limit;
+
+  for (Limit = 1000; Limit > 0; --Limit) {
+    Val = MmioRead32 (PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL);
+    Val &= BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_DONE |
+           BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_BUSY;
+
+    if (Val == BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_DONE) {
+      return TRUE;
+    }
+
+    gBS->Stall (1 * 1000);
+  }
+
+  return FALSE;
+}
+
+STATIC
+BOOLEAN
+PciHostBridgeLibPhyRead (
+  IN  EFI_PHYSICAL_ADDRESS  PcieDbiBase,
+  IN  UINT32                PhyAddr,
+  OUT UINT32               *PhyData
+  )
+{
+  BOOLEAN         Ret;
+
+  MmioWrite32 (PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_LANENUM, 1);
+  MmioWrite32 (PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL, PhyAddr);
+
+  Ret = PciHostBridgeLibPhyWaitForDone (PcieDbiBase);
+  if (Ret) {
+    *PhyData = MmioRead32 (PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_READDATA);
+  }
+
+  return Ret;
+}
+
+STATIC
+BOOLEAN
+PciHostBridgeLibPhyWrite (
+  IN  EFI_PHYSICAL_ADDRESS  PcieDbiBase,
+  IN  UINT32                PhyAddr,
+  IN  UINT32                PhyMask,
+  IN  UINT16                PhyData
+  )
+{
+  BOOLEAN                     Ret;
+
+  MmioWrite32 (PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_LANENUM, PhyMask);
+  MmioWrite32 (PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_WRITEDATA, PhyData);
+  MmioWrite32 (
+    PcieDbiBase + BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL,
+    PhyAddr | BM1000_PCIE_BK_PHY_ACCESS_AXI2MGM_ADDRCTL_PHY_READ_WRITE_FLAG
+    );
+
+  Ret = PciHostBridgeLibPhyWaitForDone (PcieDbiBase);
+
+  return Ret;
+}
+
+STATIC
+BOOLEAN
+PciHostBridgeLibSetupPhy (
+  IN  UINTN   PcieIdx,
+  IN  UINT32  PhyMask
+  )
+{
+  EFI_PHYSICAL_ADDRESS  PcieDbiBase;
+  UINT32  PhyData;
+  UINT32  OldGenCtl;
+
+  PcieDbiBase = mPcieDbiBases[PcieIdx];
+
+  // Enable access to PHY registers and DBI2 mode
+  OldGenCtl = MmioRead32 (BM1000_PCIE_GPR_GEN (PcieIdx));
+  MmioOr32 (
+    BM1000_PCIE_GPR_GEN (PcieIdx),
+    BM1000_PCIE_GPR_GEN_PHY_EN | BM1000_PCIE_GPR_GEN_DBI2_EN
+    );
+
+  //
+  // Slice RX
+  //
+
+  // Set RX CTLE Boost to 10.2 dB
+  // Set RX CTLE Peak Value to 5 dB
+  // Enable RX CDR, RX DFE, RX AGC
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL_POLE_OVRRD_EN;
+
+#if 0 //vvv???
+  PhyData &= ~BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL_PCS_SDS_ZERO_BITS;
+  PhyData |= 8 << BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL_PCS_SDS_ZERO_SHIFT;
+#endif
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_CTLE_CTRL, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_CDR_EN |
+             BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_DFE_EN |
+             BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_AGC_EN |
+             BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL_LCTRL_MEN;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  //
+  // Slice TX
+  //
+
+  // Set TX Gain (PCS to SerDes lane TX) TX Launch Amplitude to 1000 mVppd
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_3, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData &= ~BM1000_PCIE_PHY_LANE_TX_CFG_3_PCS_SDS_GAIN_BITS;
+  PhyData |= 3 << BM1000_PCIE_PHY_LANE_TX_CFG_3_PCS_SDS_GAIN_SHIFT;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_3, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  // Enable TX Boost (PCS to SerDes lane TX)
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_3, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_TX_CFG_3_VBOOST_EN;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_3, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_1, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_TX_CFG_1_VBOOST_EN_OVRRD_EN;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_1, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  // Enable TX Boost (MAC to PCS lane TX)
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0_VBOOST_EN_REQ_OVRRD_VAL;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2_VBOOST_EN_REQ_OVRRD_EN;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  // Disable TX Turbo (PCS to SerDes lane TX)
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_3, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData &= ~BM1000_PCIE_PHY_LANE_TX_CFG_3_TURBO_EN;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_3, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_1, &PhyData)) {
+    return FALSE;
+  }
+
+  PhyData |= BM1000_PCIE_PHY_LANE_TX_CFG_1_TURBO_EN_OVRRD_EN;
+
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_1, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  // Restore access to PHY registers and DBI2 mode
+  MmioWrite32 (BM1000_PCIE_GPR_GEN (PcieIdx), OldGenCtl);
+
+  return TRUE;
+}
 
 STATIC
 VOID
@@ -654,6 +901,10 @@ PciHostBridgeLibConstructor (
         ~BM1000_PCIE_PF0_PORT_LOGIC_GEN2_CTRL_OFF_NUM_OF_LANES_BITS,
          PcieNumLanes[PcieIdx] << BM1000_PCIE_PF0_PORT_LOGIC_GEN2_CTRL_OFF_NUM_OF_LANES_SHIFT
         );
+    }
+
+    if (!PciHostBridgeLibSetupPhy (PcieIdx, (1 << PcieNumLanes[PcieIdx]) - 1)) {
+      DEBUG ((EFI_D_ERROR, "PcieRoot(0x%x): cannot setup PHY\n", PcieIdx));
     }
 
     // Enable writing read-only registers using DBI
