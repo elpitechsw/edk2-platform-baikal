@@ -236,6 +236,9 @@ READ_LOCK_STATUS   = TRUE
   INF Silicon/Baikal/BS1000/Drivers/NonDiscoverableEhciDxe/NonDiscoverableEhciDxe.inf
   INF Silicon/Baikal/BS1000/Drivers/NonDiscoverableOhciDxe/NonDiscoverableOhciDxe.inf
   INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+!if $(BAIKAL_ELP) == TRUE
+  INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+!endif
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
