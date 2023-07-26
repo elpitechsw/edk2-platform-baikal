@@ -137,7 +137,9 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/Drivers/SdFvbDxe/SdFvbDxe.inf
+!endif
   INF Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
 
   # PI DXE Drivers producing Architectural Protocols (EFI Services)
@@ -159,7 +161,7 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
-!if ($(TARGET) == DEBUG) || $(BAIKAL_QEMU_M)
+!if ($(TARGET) == DEBUG) || $(BAIKAL_QEMU_M) || $(BAIKAL_ELP)
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 !endif
 
@@ -223,11 +225,15 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   # SD
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
+!endif
 
   # FLASH
   INF Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/Drivers/EspiFlashBlockIoDxe/EspiFlashBlockIoDxe.inf
+!endif
 
   # USB
 !if $(BAIKAL_QEMU_M) == FALSE
