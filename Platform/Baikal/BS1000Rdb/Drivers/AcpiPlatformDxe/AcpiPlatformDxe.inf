@@ -30,6 +30,7 @@
 [Packages]
   ArmPkg/ArmPkg.dec
   MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
   Silicon/Baikal/BS1000/BS1000.dec
 
 [LibraryClasses]
@@ -47,6 +48,7 @@
   gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
   gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
   gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
+  gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk
 
 [Depex]
-  TRUE
+  gEfiPciRootBridgeIoProtocolGuid

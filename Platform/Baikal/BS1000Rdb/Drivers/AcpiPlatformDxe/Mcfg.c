@@ -5,6 +5,7 @@
 
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/MemoryMappedConfigurationSpaceAccessTable.h>
+#include <Library/PcdLib.h>
 
 #include "AcpiPlatform.h"
 
@@ -14,7 +15,7 @@
   /* UINT16  PciSegmentGroupNumber */             \
   Segment,                                        \
   /* UINT8   StartBusNumber        */             \
-  0,                                              \
+  1,                                              \
   /* UINT8   EndBusNumber          */             \
   255,                                            \
   /* UINT32  Reserved              */             \
@@ -68,6 +69,14 @@ McfgInit (
   EFI_ACPI_DESCRIPTION_HEADER  **Table
   )
 {
+  UINT32 PcieCfg0Quirk = PcdGet32 (PcdPcieCfg0Quirk);
+  INTN   Idx;
+
+  for (Idx = 0; Idx < BAIKAL_ACPI_PCIE_COUNT; Idx++) {
+    if (PcieCfg0Quirk & (1 << Mcfg.Table[Idx].PciSegmentGroupNumber)) {
+      Mcfg.Table[Idx].BaseAddress += 0x8000;
+    }
+  }
   Mcfg.Header.Header.OemRevision = 2;
   *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Mcfg;
   return EFI_SUCCESS;
