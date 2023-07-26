@@ -324,7 +324,9 @@
   # Network
 !include NetworkPkg/Network.dsc.inc
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
+!if !$(BAIKAL_ELP)
   Platform/Baikal/BM1000Rdb/Drivers/XGmacDxe/XGmacDxe.inf
+!endif
   Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
@@ -336,9 +338,11 @@
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   # SD
+!if !$(BAIKAL_ELP)
   Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
   Platform/Baikal/Drivers/SdFvbDxe/SdFvbDxe.inf
   Silicon/Baikal/BM1000/Drivers/NonDiscoverableSdhciDxe/NonDiscoverableSdhciDxe.inf
+!endif
 
   # Flash
   Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
@@ -405,7 +409,7 @@
   gArmTokenSpaceGuid.PcdSystemMemorySize|0x80000000
   gArmTokenSpaceGuid.PcdVFPEnabled|1
   gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x80000000
-!if $(BAIKAL_MBM10) || $(BAIKAL_MBM20)
+!if $(BAIKAL_MBM10) || $(BAIKAL_MBM20) || $(BAIKAL_ELP)
   gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase|0x240000
   gBaikalTokenSpaceGuid.PcdFlashNvStorageVarBase|0x2C0000
   gBaikalTokenSpaceGuid.PcdFlashNvStorageFatBase|0x380000

@@ -137,7 +137,9 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   INF Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
   INF Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/Drivers/SdFvbDxe/SdFvbDxe.inf
+!endif
   INF Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
 
   # PI DXE Drivers producing Architectural Protocols (EFI Services)
@@ -214,7 +216,9 @@ READ_LOCK_STATUS   = TRUE
   # Network
 !include NetworkPkg/Network.fdf.inc
   INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/BM1000Rdb/Drivers/XGmacDxe/XGmacDxe.inf
+!endif
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
@@ -227,11 +231,15 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   # SD
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
+!endif
 
   # Flash
   INF Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
+!if $(BAIKAL_ELP) == FALSE
   INF Platform/Baikal/Drivers/EspiFlashBlockIoDxe/EspiFlashBlockIoDxe.inf
+!endif
 
   # USB
   INF Silicon/Baikal/BM1000/Drivers/NonDiscoverableXhciDxe/NonDiscoverableXhciDxe.inf
