@@ -117,7 +117,7 @@ SpiFlashMain (
   SmcFlashLock (0);
 
   Print (L"SpiFlash: erasing...\n");
-  Err = SmcFlashErase (FlashAddr, FileSize);
+  Err = SmcFlashErase (FlashAddr, (FileSize + 0xffff) & ~0xffffUL);
   if (Err) {
     Print (L"SpiFlash: error %d\n", Err);
     goto Exit;
