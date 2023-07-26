@@ -26,6 +26,8 @@
 STATIC CHAR8  BaikalModel[] = "MBS-1S";
 #elif defined(BAIKAL_MBS_2S)
 STATIC CHAR8  BaikalModel[] = "MBS-2S";
+#elif defined(ELPITECH)
+STATIC CHAR8  BaikalModel[] = "ET-113";
 #else
 STATIC CHAR8  BaikalModel[] = "DBS";
 #endif
