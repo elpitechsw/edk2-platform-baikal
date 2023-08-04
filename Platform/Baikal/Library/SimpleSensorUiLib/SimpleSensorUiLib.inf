@@ -1,0 +1,42 @@
+[Defines]
+  INF_VERSION               = 0x00010005
+  BASE_NAME                 = SimpleSensorUiLib
+  MODULE_UNI_FILE           = SimpleSensorUiLib.uni
+  FILE_GUID                 = E051B500-5407-4884-B71E-1E90B015DE03
+  MODULE_TYPE               = DXE_DRIVER
+  VERSION_STRING            = 1.0
+  LIBRARY_CLASS             = NULL|DXE_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR               = SimpleSensorUiInitialize
+  DESTRUCTOR                = SimpleSensorUiFinalize
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[Sources]
+  SimpleSensorData.h
+  SimpleSensor.h
+  SimpleSensor.c
+  SimpleSensorStrings.uni
+  SimpleSensorForm.vfr
+
+[LibraryClasses]
+  MemoryAllocationLib
+  BaseMemoryLib
+  BaseLib
+  HiiLib
+  UefiLib
+  UefiBootServicesTableLib
+  DevicePathLib
+  DebugLib
+
+[Guids]
+  gEfiHiiPlatformSetupFormsetGuid               ## CONSUMES ## GUID (Indicate the formset class guid to be displayed)
+  gEfiIfrTianoGuid                              ## CONSUMES ## GUID (Extended IFR Guid Opcode)
+
+[Protocols]
+  gEfiDevicePathProtocolGuid                    ## PRODUCES
+  gEfiHiiConfigAccessProtocolGuid               ## PRODUCES
+  gEfiHiiConfigRoutingProtocolGuid              ## CONSUMES
+  gSimpleSensorProtocolGuid                     ## CONSUMES

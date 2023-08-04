@@ -1,0 +1,36 @@
+#include "SimpleSensorData.h"
+
+formset
+  guid      = SIMPLE_SENSOR_FORMSET_GUID,
+  title     = STRING_TOKEN(STR_SIMPLE_SENSOR_FORM_SET_TITLE),
+  help      = STRING_TOKEN(STR_SIMPLE_SENSOR_FORM_SET_HELP),
+  classguid = EFI_HII_PLATFORM_SETUP_FORMSET_GUID,
+  class     = ONBOARD_DEVICE,
+  subclass  = SETUP_APPLICATION,
+
+  //
+  // Define a Form (EFI_IFR_FORM)
+  //
+  form
+    formid = SIMPLE_SENSOR_VIEW_FORM_ID,
+    title  = STRING_TOKEN(STR_SIMPLE_SENSOR_FORM_TITLE);
+
+    subtitle text = STRING_TOKEN(STR_SIMPLE_SENSOR_FORM_SUBTITLE);
+
+    label SIMPLE_SENSOR_LIST_START;
+    label SIMPLE_SENSOR_LIST_END;
+
+    subtitle text = STRING_TOKEN(STR_SIMPLE_SENSOR_EMPTY);
+
+    subtitle text = STRING_TOKEN(STR_SIMPLE_SENSOR_EXIT_HINT);
+
+    action
+      prompt = STRING_TOKEN(STR_SIMPLE_SENSOR_EMPTY),
+      help = STRING_TOKEN(STR_SIMPLE_SENSOR_EMPTY),
+      flags = INTERACTIVE,
+      config = STRING_TOKEN(STR_SIMPLE_SENSOR_EMPTY),
+      refresh interval = 1
+    endaction;
+  endform;
+
+endformset;

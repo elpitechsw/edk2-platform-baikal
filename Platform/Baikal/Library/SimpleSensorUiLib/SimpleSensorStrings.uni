@@ -1,0 +1,10 @@
+#langdef en "English"
+
+#string STR_SIMPLE_SENSOR_FORM_SET_TITLE           #language en "System Sensors"
+#string STR_SIMPLE_SENSOR_FORM_SET_HELP            #language en "Press <Enter> to view sensors"
+
+#string STR_SIMPLE_SENSOR_FORM_TITLE               #language en "Sensors"
+#string STR_SIMPLE_SENSOR_FORM_SUBTITLE            #language en "View available sensors"
+
+#string STR_SIMPLE_SENSOR_EMPTY                    #language en ""
+#string STR_SIMPLE_SENSOR_EXIT_HINT                #language en "Press ESC to exit."

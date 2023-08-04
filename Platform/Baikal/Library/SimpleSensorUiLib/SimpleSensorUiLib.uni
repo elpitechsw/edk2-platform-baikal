@@ -1,0 +1,7 @@
+#string STR_MODULE_ABSTRACT
+#language en-US
+"Simple Sensor View Ui Library."
+
+#string STR_MODULE_DESCRIPTION
+#language en-US
+"Simple Sensor Viewing Library used by UiApp."
