@@ -28,7 +28,7 @@
 }
 
 #define BAIKAL_ACPI_PCIE0_SEGMENT   0
-#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20) || defined(ELP_1) || defined(ELP_4) || defined(ELP_7)
+#if defined(BAIKAL_DBM10) || defined(BAIKAL_DBM20) || defined(ELP_1) || defined(ELP_4) || defined(ELP_7) || defined(ELP_8)
 # define BAIKAL_ACPI_PCIE1_SEGMENT  1
 # define BAIKAL_ACPI_PCIE2_SEGMENT  2
 # define BAIKAL_ACPI_PCIE_COUNT     3
