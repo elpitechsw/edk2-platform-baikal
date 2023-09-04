@@ -547,7 +547,8 @@ PciHostBridgeLinkRetrain (
     PcieCfgBase = mPcieCfgBases[PcieIdx] + SIZE_1MB;
 
     /* Find device PCIe capability */
-    for (CapOff = 0x40; CapOff; ) {
+    CapOff = MmioRead32(PcieCfgBase + 0x34) & 0xff;
+    while (CapOff) {
       Reg = MmioRead32(PcieCfgBase + CapOff);
       if ((Reg & 0xff) == 0x10)
         break; //PCIe capability found
