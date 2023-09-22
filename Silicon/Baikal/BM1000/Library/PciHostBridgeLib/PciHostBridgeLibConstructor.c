@@ -6,6 +6,7 @@
 #include <IndustryStandard/Pci22.h>
 #include <Library/ArmLib.h>
 #include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/GpioLib.h>
@@ -15,11 +16,13 @@
 #include <Library/PciHostBridgeLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Platform/ConfigVars.h>
 #include <Protocol/FdtClient.h>
 #include <Protocol/PciHostBridgeResourceAllocation.h>
 #include <Protocol/PciIo.h>
 #include <Guid/EventGroup.h>
+#include "PciConfig.h"
 
 #include <BM1000.h>
 
@@ -158,6 +161,9 @@
 #define RANGES_FLAG_MEM  0x02000000
 
 BOOLEAN PciHostBridgeLibGetLink (UINTN  PcieIdx);
+extern EFI_STATUS PciConfigInstallHii(UINT32 SegmentMask);
+
+EFI_GUID gPciConfigGuid = PCI_CONFIG_GUID;
 
 #pragma pack(1)
 typedef struct {
@@ -746,9 +752,24 @@ PciHostBridgeLibConstructor (
   PCI_ROOT_BRIDGE      *lPcieRootBridge;
   CONST VOID           *Prop;
   UINT32                PropSize;
+  PCI_CONFIG_VARSTORE_DATA PciConfig;
+  UINT32                SegmentMask = 0;
+  UINTN                 Size;
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   ASSERT_EFI_ERROR (Status);
+
+  Size = sizeof(PCI_CONFIG_VARSTORE_DATA);
+  Status = gRT->GetVariable (
+                  L"PciConfig",
+                  &gPciConfigGuid,
+                  NULL,
+                  &Size,
+                  &PciConfig
+                  );
+  if (EFI_ERROR(Status)) {
+    ZeroMem(&PciConfig, sizeof(PCI_CONFIG_VARSTORE_DATA));
+  }
 
   // Acquire PCIe RC related data from FDT
   for (Node = 0, Iter = 0; Iter < ARRAY_SIZE (mEfiPciRootBridgeDevicePaths);) {
@@ -835,6 +856,8 @@ PciHostBridgeLibConstructor (
       continue;
     }
 
+    SegmentMask |= 1 << PcieIdx;
+
     if (FdtClient->GetNodeProperty (FdtClient, Node, "ranges", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize > 0 && (PropSize % (sizeof (UINT32) + 3 * sizeof (UINT64))) == 0) {
       UINTN  Entry;
@@ -876,8 +899,11 @@ PciHostBridgeLibConstructor (
       PcieNumLanes[PcieIdx] = 0;
     }
 
-    if (FdtClient->GetNodeProperty (FdtClient, Node, "max-link-speed", &Prop, &PropSize) == EFI_SUCCESS &&
-        PropSize == 4) {
+    if (PciConfig.MaxSpeed[PcieIdx]) {
+      mPcieMaxLinkSpeed[PcieIdx] = PciConfig.MaxSpeed[PcieIdx];
+    } else if (FdtClient->GetNodeProperty (FdtClient, Node, "max-link-speed", &Prop, &PropSize)
+                 == EFI_SUCCESS &&
+                 PropSize == 4) {
       mPcieMaxLinkSpeed[PcieIdx] = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
     } else {
       mPcieMaxLinkSpeed[PcieIdx] = 3;
@@ -1400,6 +1426,8 @@ PciHostBridgeLibConstructor (
       return Status;
     }
   }
+
+  Status = PciConfigInstallHii(SegmentMask);
 
   PciHostBridgeLinkRetrain();
 
