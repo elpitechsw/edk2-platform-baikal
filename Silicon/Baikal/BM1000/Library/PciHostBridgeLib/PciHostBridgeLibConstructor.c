@@ -361,6 +361,7 @@ PciHostBridgeLibSetupPhy (
     return FALSE;
   }
 
+#if 0 //vvv: Needs more testing
   if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_LOOP_CTRL, &PhyData)) {
     return FALSE;
   }
@@ -452,6 +453,7 @@ PciHostBridgeLibSetupPhy (
   if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_TX_CFG_1, PhyMask, PhyData)) {
     return FALSE;
   }
+#endif
 
   // Restore access to PHY registers and DBI2 mode
   MmioWrite32 (BM1000_PCIE_GPR_GEN (PcieIdx), OldGenCtl);
@@ -527,8 +529,6 @@ STATIC
 VOID
 EFIAPI
 PciHostBridgeLinkRetrain (
-  IN  EFI_EVENT   Event,
-  IN  VOID       *Context
   )
 {
   UINTN                 PcieIdx, Iter;
@@ -561,10 +561,17 @@ PciHostBridgeLinkRetrain (
         TargetSpeed = mPcieMaxLinkSpeed[PcieIdx];
       else
         TargetSpeed = DevCapSpeed;
-      if (TargetSpeed == ((MmioRead32(mPcieDbiBases[PcieIdx] +
-		BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG) >> 16) & 0x7)) {
+      Reg = MmioRead32(mPcieDbiBases[PcieIdx] + BM1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG);
+      Reg >>= 16;
+      if (TargetSpeed == (Reg & 0x7)) {
         DEBUG((EFI_D_INFO, "PcieRoot(0x%x): Speed %d is OK\n", PcieIdx, TargetSpeed));
-	continue;
+        continue;
+      }
+
+      if (TargetSpeed >= 3) {
+        Reg = MmioRead32(mPcieDbiBases[PcieIdx] + BM1000_PCIE_PF0_PCIE_CAP_LINK_CAPABILITIES_REG);
+        Reg = (Reg >> 4) & 0x3f; /* link width capability */
+        PciHostBridgeLibSetupPhy (PcieIdx, (1 << Reg) - 1);
       }
 
       MmioAndThenOr32 (
@@ -822,8 +829,6 @@ PciHostBridgeLibConstructor (
       continue;
     }
 
-    PcieIdx = mPcieIdxs[Iter];
-
     if (FdtClient->GetNodeProperty (FdtClient, Node, "ranges", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize > 0 && (PropSize % (sizeof (UINT32) + 3 * sizeof (UINT64))) == 0) {
       UINTN  Entry;
@@ -1045,10 +1050,6 @@ PciHostBridgeLibConstructor (
         ~BM1000_PCIE_PF0_PORT_LOGIC_GEN2_CTRL_OFF_NUM_OF_LANES_BITS,
          PcieNumLanes[PcieIdx] << BM1000_PCIE_PF0_PORT_LOGIC_GEN2_CTRL_OFF_NUM_OF_LANES_SHIFT
         );
-    }
-
-    if (!PciHostBridgeLibSetupPhy (PcieIdx, (1 << PcieNumLanes[PcieIdx]) - 1)) {
-      DEBUG ((EFI_D_ERROR, "PcieRoot(0x%x): cannot setup PHY\n", PcieIdx));
     }
 
     // Enable writing read-only registers using DBI
@@ -1396,14 +1397,7 @@ PciHostBridgeLibConstructor (
     }
   }
 
-  Status = gBS->CreateEventEx (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_NOTIFY,
-                  PciHostBridgeLinkRetrain,
-                  NULL,
-                  &gEfiEventReadyToBootGuid,
-                  &Event
-                  );
+  PciHostBridgeLinkRetrain();
 
   return EFI_SUCCESS;
 }
