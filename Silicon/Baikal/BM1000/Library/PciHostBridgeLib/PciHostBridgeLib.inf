@@ -17,6 +17,10 @@
 [Sources]
   PciHostBridgeLib.c
   PciHostBridgeLibConstructor.c
+  PciConfig.c
+  PciConfig.h
+  PciConfigHii.uni
+  PciConfigHii.vfr
 
 [Packages]
   Platform/Baikal/Baikal.dec
@@ -31,6 +35,7 @@
   BaseLib
   DebugLib
   GpioLib
+  HiiLib
   PcdLib
   UefiBootServicesTableLib
 

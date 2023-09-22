@@ -1,0 +1,70 @@
+/** @file
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+ **/
+
+#include <Guid/HiiPlatformSetupFormset.h>
+#include <Uefi/UefiMultiPhase.h>
+#include "PciConfig.h"
+
+formset
+  guid      = PCI_CONFIG_GUID,
+  title     = STRING_TOKEN(STR_PCI_FORM_TITLE),
+  help      = STRING_TOKEN(STR_NULL_STRING),
+  classguid = EFI_HII_PLATFORM_SETUP_FORMSET_GUID,
+
+  efivarstore PCI_CONFIG_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = PciConfig,
+    guid      = PCI_CONFIG_GUID;
+
+  efivarstore PCI_SEGMENT_MASK_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = SegmentMask,
+    guid      = PCI_CONFIG_GUID;
+
+  form formid = 100,
+    title         = STRING_TOKEN(STR_PCI_FORM_TITLE);
+    subtitle text = STRING_TOKEN(STR_NULL_STRING);
+
+
+    disableif ideqval SegmentMask.Val0 == 0;
+      oneof varid = PciConfig.MaxSpeed[0],
+        prompt      = STRING_TOKEN(STR_PCIE0_PROMPT),
+        help        = STRING_TOKEN(STR_PCIE_HELP),
+        flags       = NUMERIC_SIZE_1 | INTERACTIVE | RESET_REQUIRED,
+        option text = STRING_TOKEN(STR_PCIE_DEFAULT),     value = 0, flags = DEFAULT;
+        option text = STRING_TOKEN(STR_PCIE_GEN1),        value = 1, flags = 0;
+        option text = STRING_TOKEN(STR_PCIE_GEN2),        value = 2, flags = 0;
+        option text = STRING_TOKEN(STR_PCIE_GEN3),        value = 3, flags = 0;
+      endoneof;
+    endif;
+
+    disableif ideqval SegmentMask.Val1 == 0;
+      oneof varid = PciConfig.MaxSpeed[1],
+        prompt      = STRING_TOKEN(STR_PCIE1_PROMPT),
+        help        = STRING_TOKEN(STR_PCIE_HELP),
+        flags       = NUMERIC_SIZE_1 | INTERACTIVE | RESET_REQUIRED,
+        option text = STRING_TOKEN(STR_PCIE_DEFAULT),     value = 0, flags = DEFAULT;
+        option text = STRING_TOKEN(STR_PCIE_GEN1),        value = 1, flags = 0;
+        option text = STRING_TOKEN(STR_PCIE_GEN2),        value = 2, flags = 0;
+        option text = STRING_TOKEN(STR_PCIE_GEN3),        value = 3, flags = 0;
+      endoneof;
+    endif;
+
+
+    disableif ideqval SegmentMask.Val2 == 0;
+      oneof varid = PciConfig.MaxSpeed[2],
+        prompt      = STRING_TOKEN(STR_PCIE2_PROMPT),
+        help        = STRING_TOKEN(STR_PCIE_HELP),
+        flags       = NUMERIC_SIZE_1 | INTERACTIVE | RESET_REQUIRED,
+        option text = STRING_TOKEN(STR_PCIE_DEFAULT),     value = 0, flags = DEFAULT;
+        option text = STRING_TOKEN(STR_PCIE_GEN1),        value = 1, flags = 0;
+        option text = STRING_TOKEN(STR_PCIE_GEN2),        value = 2, flags = 0;
+        option text = STRING_TOKEN(STR_PCIE_GEN3),        value = 3, flags = 0;
+      endoneof;
+    endif;
+
+  endform;
+endformset;

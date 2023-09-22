@@ -1,0 +1,20 @@
+/** @file
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ *
+ **/
+
+#langdef en-US  "English"
+
+#string STR_NULL_STRING       #language en-US ""
+
+#string STR_PCI_FORM_TITLE    #language en-US "PCI-Express Configuration"
+
+#string STR_PCIE0_PROMPT      #language en-US "PCIe0 (x4) Max Speed"
+#string STR_PCIE1_PROMPT      #language en-US "PCIe1 (x4) Max Speed"
+#string STR_PCIE2_PROMPT      #language en-US "PCIe2 (x8) Max Speed"
+#string STR_PCIE_HELP         #language en-US "Set Max Speed (Gen) for PCIe Segment"
+#string STR_PCIE_DEFAULT      #language en-US "H/W Default"
+#string STR_PCIE_GEN1         #language en-US "Gen.1"
+#string STR_PCIE_GEN2         #language en-US "Gen.2"
+#string STR_PCIE_GEN3         #language en-US "Gen.3"
