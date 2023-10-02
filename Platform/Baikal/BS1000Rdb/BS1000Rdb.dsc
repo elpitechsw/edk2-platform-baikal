@@ -292,7 +292,7 @@
 
   # PCI
   Silicon/Baikal/BS1000/Drivers/PcieEndpointDxe/PcieEndpointDxe.inf
-  ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
+  Platform/Baikal/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 

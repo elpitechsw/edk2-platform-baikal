@@ -330,7 +330,7 @@
   Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
-  ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
+  Platform/Baikal/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 
