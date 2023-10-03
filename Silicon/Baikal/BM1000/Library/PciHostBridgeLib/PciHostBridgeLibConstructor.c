@@ -146,6 +146,10 @@
 #define BM1000_PCIE_PHY_LANE_TX_CFG_3_PCS_SDS_GAIN_SHIFT                             4
 #define BM1000_PCIE_PHY_LANE_TX_CFG_3_VBOOST_EN                                      BIT14
 
+#define BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_0                                         0x18048
+#define BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_1                                         0x18049
+#define BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_2                                         0x1804A
+
 #define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0                                       0x3800C
 #define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_0_VBOOST_EN_REQ_OVRRD_VAL               BIT13
 
@@ -466,6 +470,23 @@ PciHostBridgeLibSetupPhy (
     return FALSE;
   }
 #endif
+
+  // Disable DFE equalization and adaptation
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_1, &PhyData)) {
+    return FALSE;
+  }
+  PhyData &= ~0x7fff;
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_1, PhyMask, PhyData)) {
+    return FALSE;
+  }
+
+  if (!PciHostBridgeLibPhyRead (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_2, &PhyData)) {
+    return FALSE;
+  }
+  PhyData |= 0x3f;
+  if (!PciHostBridgeLibPhyWrite (PcieDbiBase, BM1000_PCIE_PHY_LANE_RX_AEQ_VALBBD_2, PhyMask, PhyData)) {
+    return FALSE;
+  }
 
   // Restore access to PHY registers and DBI2 mode
   MmioWrite32 (BM1000_PCIE_GPR_GEN (PcieIdx), OldGenCtl);
