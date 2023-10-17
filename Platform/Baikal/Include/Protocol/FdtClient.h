@@ -13,7 +13,7 @@
 #define __FDT_CLIENT_H__
 
 #define FDT_CLIENT_PROTOCOL_GUID { \
-  0x73E210F5, 0x29FF, 0x479A, {0xDA, 0xA1, 0x72, 0xBD, 0xC8, 0x79, 0x9D, 0x69} \
+  0x6BA38199, 0xA5EC, 0x47B6, { 0xAC, 0x91, 0x4F, 0x10, 0xD8, 0x1D, 0xCC, 0xCD} \
   }
 
 //
@@ -156,6 +156,14 @@ EFI_STATUS
   IN  INT32                    Node
   );
 
+typedef
+EFI_STATUS
+(EFIAPI *FDT_CLIENT_DELETE_PROPERTY) (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  INT32                    Node,
+  IN  CONST CHAR8             *Name
+  );
+
 struct _FDT_CLIENT_PROTOCOL {
   FDT_CLIENT_IS_NODE_ENABLED                IsNodeEnabled;
   FDT_CLIENT_GET_NODE_PROPERTY              GetNodeProperty;
@@ -175,6 +183,7 @@ struct _FDT_CLIENT_PROTOCOL {
   FDT_CLIENT_GET_OR_INSERT_CHOSEN_NODE      GetOrInsertChosenNode;
   FDT_CLIENT_FIND_NODE_BY_ALIAS             FindNodeByAlias;
   FDT_CLIENT_DELETE_NODE                    DeleteNode;
+  FDT_CLIENT_DELETE_PROPERTY                DeleteProperty;
 };
 
 extern EFI_GUID gFdtClientProtocolGuid;
