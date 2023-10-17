@@ -434,6 +434,23 @@ DeleteNode (
   return EFI_SUCCESS;
 }
 
+STATIC
+EFI_STATUS
+EFIAPI
+DeleteProperty (
+  IN  FDT_CLIENT_PROTOCOL     *This,
+  IN  INT32                    Node,
+  IN  CONST CHAR8             *Name
+  )
+{
+  ASSERT (mDeviceTreeBase != NULL);
+  ASSERT (Node != 0);
+
+  fdt_delprop(mDeviceTreeBase, Node, Name);
+
+  return EFI_SUCCESS;
+}
+
 STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
   IsNodeEnabled,
   GetNodeProperty,
@@ -449,7 +466,8 @@ STATIC FDT_CLIENT_PROTOCOL mFdtClientProtocol = {
   FindNextMemoryNodeReg,
   GetOrInsertChosenNode,
   FindNodeByAlias,
-  DeleteNode
+  DeleteNode,
+  DeleteProperty
 };
 
 STATIC
