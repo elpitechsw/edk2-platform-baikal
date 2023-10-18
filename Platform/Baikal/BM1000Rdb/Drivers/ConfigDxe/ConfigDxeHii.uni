@@ -39,3 +39,8 @@
 #string STR_PPOL_HELP         #language en-US "Wait for PowerButton or autoboot when power is connected"
 #string STR_PPOL_OFF          #language en-US "Off"
 #string STR_PPOL_AUTO         #language en-US "Auto"
+
+#string STR_MALI_PROMPT       #language en-US "Mali dma-coherent property"
+#string STR_MALI_HELP         #language en-US "Keep or remove dma-coherent property for Mali node"
+#string STR_MALI_NON_COH      #language en-US "Remove"
+#string STR_MALI_COH          #language en-US "Keep"
