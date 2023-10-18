@@ -159,6 +159,26 @@ SetupVariables (
     ASSERT_EFI_ERROR (Status);
   }
 
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"MaliCoherent",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Var32 = MALI_COHERENT_OFF;
+    Status = gRT->SetVariable (
+                  L"MaliCoherent",
+                  &gConfigDxeFormSetGuid,
+                  EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                  sizeof(Var32),
+                  &Var32
+                  );
+    ASSERT_EFI_ERROR (Status);
+  }
+
   Status = gBS->LocateProtocol (
                   &gFruClientProtocolGuid,
                   NULL,
@@ -203,9 +223,11 @@ FixupFdt (
   VOID
   )
 {
-  FDT_CLIENT_PROTOCOL             *FdtClient;
-  EFI_STATUS                       Status;
-  INT32                            Node = 0, SubNode;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  EFI_STATUS            Status;
+  INT32                 Node = 0, SubNode;
+  UINT32                Var32;
+  UINTN                 Size;
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   if (EFI_ERROR (Status)) {
@@ -240,6 +262,24 @@ FixupFdt (
     }
     if (EFI_ERROR(Status)) {
       DEBUG((EFI_D_ERROR, "Can't delete ps2mult node - %r\n", Status));
+    }
+  }
+
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
+                  L"MaliCoherent",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (Status == EFI_SUCCESS && Var32 == 0) {
+    Status = FdtClient->FindCompatibleNode (FdtClient, "arm,mali-midgard", &Node);
+    if (Status == EFI_SUCCESS) {
+      Status = FdtClient->DeleteProperty(FdtClient, Node, "dma-coherent");
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't delete dma-coherent property - %r\n", Status));
     }
   }
 }

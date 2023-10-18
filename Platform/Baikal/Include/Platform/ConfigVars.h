@@ -42,4 +42,10 @@ typedef struct {
   UINT32  Mode;
 } PPOL_VARSTORE_DATA;
 
+typedef struct {
+#define MALI_COHERENT_OFF 0
+#define MALI_COHERENT_ON  1
+  UINT32  Val;
+} MALI_VARSTORE_DATA;
+
 #endif // CONFIG_VARS_H_

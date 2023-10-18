@@ -47,6 +47,11 @@ formset
     name      = PowerPolicy,
     guid      = CONFIG_DXE_FORM_SET_GUID;
 
+  efivarstore MALI_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = MaliCoherent,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
   form formid = 1,
     title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
     subtitle text = STRING_TOKEN(STR_NULL_STRING);
@@ -91,6 +96,14 @@ formset
       flags       = NUMERIC_SIZE_4 | INTERACTIVE,
       option text = STRING_TOKEN(STR_PPOL_OFF),  value = PPOL_OFF,  flags = DEFAULT;
       option text = STRING_TOKEN(STR_PPOL_AUTO), value = PPOL_AUTO, flags = 0;
+    endoneof;
+
+    oneof varid = MaliCoherent.Val,
+      prompt      = STRING_TOKEN(STR_MALI_PROMPT),
+      help        = STRING_TOKEN(STR_MALI_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE,
+      option text = STRING_TOKEN(STR_MALI_NON_COH),  value = MALI_COHERENT_OFF,  flags = DEFAULT;
+      option text = STRING_TOKEN(STR_MALI_COH),      value = MALI_COHERENT_ON,   flags = 0;
     endoneof;
   endform;
 endformset;
