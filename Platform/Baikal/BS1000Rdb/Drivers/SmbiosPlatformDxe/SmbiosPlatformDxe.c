@@ -18,7 +18,11 @@
 #include <Protocol/SpdClient.h>
 
 #ifdef ELPITECH
+#ifdef ELP_6
 STATIC CHAR8  BaikalModel[] = "ET-113";
+#else // ELP_8
+STATIC CHAR8  BaikalModel[] = "ET-143";
+#endif
 #else
 STATIC CHAR8  BaikalModel[] = "DBS";
 #endif

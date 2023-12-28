@@ -437,6 +437,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       NATIVE_PCIE_OSC
     }
 
+#ifdef BAIKAL_ACPI_PCIE3_P0_SEGMENT
     Device (PCI6)
     {
       Name (_HID, EISAID ("PNP0A08"))
@@ -506,6 +507,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       NATIVE_PCIE_OSC
     }
+#endif
 
     Device (PCI7)
     {

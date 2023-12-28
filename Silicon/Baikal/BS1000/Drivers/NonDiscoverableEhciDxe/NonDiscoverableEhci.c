@@ -12,7 +12,7 @@
 
 #include <BS1000.h>
 
-#ifdef ELPITECH
+#ifdef ELP_6
 STATIC CONST UINT8 UsbHubCfg0[] = {
   0, /* start offset */
   17, /* size of data */
@@ -39,7 +39,7 @@ NonDiscoverableEhciEntryPoint (
 {
   EFI_STATUS  Status;
 
-#ifdef ELPITECH
+#ifdef ELP_6
   GpioOutRst(BS1000_GPIO32_BASE, 6);
   GpioDirSet(BS1000_GPIO32_BASE, 6);
   gBS->Stall(20);
