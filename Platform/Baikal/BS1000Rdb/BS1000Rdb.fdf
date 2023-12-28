@@ -232,6 +232,9 @@ READ_LOCK_STATUS   = TRUE
   INF ShellPkg/Application/Shell/Shell.inf
   INF ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf
 
+  # Aspeed2600 graphics driver
+  INF Drivers/ASpeed/ASpeedGopBinPkg/ASpeedAst2600GopDxe.inf
+
 [FV.FVMAIN_COMPACT]
 FvAlignment        = 16
 ERASE_POLARITY     = 1
