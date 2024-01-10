@@ -3,8 +3,8 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef SD_REG_H
-#define SD_REG_H
+#ifndef SD_REG_H_
+#define SD_REG_H_
 
 // Controller registers
 #define SDHCI_DMA_ADDRESS                 0x00
@@ -280,4 +280,4 @@
 #define SDHCI_EMMC_CRC_DISABLE            (1 << 1) // 0 = Enable, 1 = Disable
 #define SDHCI_EMMC_DONT_RESET             (1 << 2) // 0 = Reset,  1 = Don't
 
-#endif /* SD_REG_H */
+#endif // SD_REG_H_

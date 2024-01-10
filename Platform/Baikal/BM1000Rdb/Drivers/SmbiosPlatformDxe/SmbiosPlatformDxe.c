@@ -3,6 +3,7 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <IndustryStandard/ArmStdSmc.h>
 #include <Library/ArmLib.h>
 #include <Library/ArmSmcLib.h>
 #include <Library/BaikalSmbiosLib.h>
@@ -12,6 +13,7 @@
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
+#include <Library/SmcEfuseLib.h>
 #include <Library/TimeBaseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FdtClient.h>
@@ -473,47 +475,51 @@ SmbiosTable3Init (
 #define BAIKAL_PROCESSOR_VERSION             "BE-M1000"
 #define BAIKAL_PROCESSOR_CORE_COUNT          8
 #define BAIKAL_PROCESSOR_CLUSTER_COUNT       4
+#define BAIKAL_PROCESSOR_SERIAL_STR_SIZE     9
+#define BAIKAL_PROCESSOR_PART_STR_SIZE       7
 
 #pragma pack(1)
-STATIC VOID  *SmbiosTable4 = BAIKAL_SMBIOS_TABLE (
-  4,
-  BAIKAL_SMBIOS_STRING (BAIKAL_PROCESSOR_SOCKET_DESIGNATION)
-  BAIKAL_SMBIOS_STRING (BAIKAL_PROCESSOR_MANUFACTURER)
-  BAIKAL_SMBIOS_STRING (BAIKAL_PROCESSOR_VERSION),
+STATIC SMBIOS_TABLE_TYPE4 SmbiosTable4 = {
   {
-    {
-      SMBIOS_TYPE_PROCESSOR_INFORMATION,
-      sizeof (SMBIOS_TABLE_TYPE4),
-      BAIKAL_SMBIOS_TABLE_HANDLE (4, 0)
-    },
-    1,
-    CentralProcessor,
-    ProcessorFamilyIndicatorFamily2,
-    2,
-    {},
-    3,
-    {},
-    0,
-    1500,
-    1500,
-    BIT6 | 1,
-    ProcessorUpgradeNone,
-    BAIKAL_SMBIOS_TABLE_HANDLE (7, 1),
-    BAIKAL_SMBIOS_TABLE_HANDLE (7, 2),
-    BAIKAL_SMBIOS_TABLE_HANDLE (7, 3),
-    0,
-    0,
-    0,
-    BAIKAL_PROCESSOR_CORE_COUNT,
-    BAIKAL_PROCESSOR_CORE_COUNT,
-    BAIKAL_PROCESSOR_CORE_COUNT,
-    BIT2 | BIT3 | BIT5 | BIT6 | BIT7,
-    ProcessorFamilyARMv8,
-    BAIKAL_PROCESSOR_CORE_COUNT,
-    BAIKAL_PROCESSOR_CORE_COUNT,
-    BAIKAL_PROCESSOR_CORE_COUNT
-  }
-);
+    SMBIOS_TYPE_PROCESSOR_INFORMATION,
+    sizeof (SMBIOS_TABLE_TYPE4),
+    BAIKAL_SMBIOS_TABLE_HANDLE (4, 0)
+  },
+  1,
+  CentralProcessor,
+  ProcessorFamilyIndicatorFamily2,
+  2,
+  {},
+  3,
+  {},
+  0,
+  1500,
+  1500,
+  BIT6 | 1,
+  ProcessorUpgradeNone,
+  BAIKAL_SMBIOS_TABLE_HANDLE (7, 1),
+  BAIKAL_SMBIOS_TABLE_HANDLE (7, 2),
+  BAIKAL_SMBIOS_TABLE_HANDLE (7, 3),
+  0,
+  0,
+  0,
+  BAIKAL_PROCESSOR_CORE_COUNT,
+  BAIKAL_PROCESSOR_CORE_COUNT,
+  BAIKAL_PROCESSOR_CORE_COUNT,
+  BIT2 | BIT3 | BIT5 | BIT6 | BIT7,
+  ProcessorFamilyARMv8,
+  BAIKAL_PROCESSOR_CORE_COUNT,
+  BAIKAL_PROCESSOR_CORE_COUNT,
+  BAIKAL_PROCESSOR_CORE_COUNT
+};
+
+STATIC CHAR8 *SmbiosTable4Strings[] = {
+  BAIKAL_PROCESSOR_SOCKET_DESIGNATION,
+  BAIKAL_PROCESSOR_MANUFACTURER,
+  BAIKAL_PROCESSOR_VERSION,
+  (CHAR8[BAIKAL_PROCESSOR_SERIAL_STR_SIZE]){},
+  (CHAR8[BAIKAL_PROCESSOR_PART_STR_SIZE]){}
+};
 #pragma pack()
 
 #define BAIKAL_SMC_CMU_CMD           0xC2000000
@@ -527,17 +533,68 @@ SmbiosTable4Init (
   )
 {
   ARM_SMC_ARGS  ArmSmcArgs;
+  UINTN         ArmSmcParam;
+  INTN          PartNumber;
+  INTN          SerialNumber;
 
   ArmSmcArgs.Arg0 = BAIKAL_SMC_CMU_CMD;
   ArmSmcArgs.Arg1 = BM1000_CA57_0_BASE;
   ArmSmcArgs.Arg2 = BAIKAL_SMC_CMU_PLL_GET_RATE;
   ArmSmcArgs.Arg4 = 0;
   ArmCallSmc (&ArmSmcArgs);
+  SmbiosTable4.CurrentSpeed = ArmSmcArgs.Arg0 / 1000000;
 
-  ((SMBIOS_TABLE_TYPE4 *) SmbiosTable4)->CurrentSpeed = ArmSmcArgs.Arg0 / 1000000;
-  *(UINT64 *) &((SMBIOS_TABLE_TYPE4 *) SmbiosTable4)->ProcessorId = ArmReadMidr ();
+  ArmSmcParam = SMCCC_ARCH_SOC_ID;
+  if (ArmCallSmc1 (SMCCC_ARCH_FEATURES, &ArmSmcParam, NULL, NULL) == SMC_ARCH_CALL_SUCCESS) {
+    INT32  Jep106Code;
+    INT32  SocRevision;
 
-  return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable4, NULL, 0);
+    ArmSmcParam = 0;
+    Jep106Code  = ArmCallSmc1 (SMCCC_ARCH_SOC_ID, &ArmSmcParam, NULL, NULL);
+    ArmSmcParam = 1;
+    SocRevision = ArmCallSmc1 (SMCCC_ARCH_SOC_ID, &ArmSmcParam, NULL, NULL);
+
+    ((PROCESSOR_CHARACTERISTIC_FLAGS *) &SmbiosTable4.ProcessorCharacteristics)->ProcessorArm64SocId = 1;
+    *(UINT64 *) &SmbiosTable4.ProcessorId = ((UINT64)SocRevision << 32) | Jep106Code;
+  } else {
+    ((PROCESSOR_CHARACTERISTIC_FLAGS *) &SmbiosTable4.ProcessorCharacteristics)->ProcessorArm64SocId = 0;
+    *(UINT64 *) &SmbiosTable4.ProcessorId = ArmReadMidr ();
+  }
+
+  SerialNumber = SmcEfuseGetSerial ();
+  if (SerialNumber > 0) {
+    AsciiSPrint (
+      SmbiosTable4Strings[3],
+      BAIKAL_PROCESSOR_SERIAL_STR_SIZE,
+      "%d",
+      SerialNumber & 0xFFFFFF
+      );
+
+    SmbiosTable4.SerialNumber = 4;
+  }
+
+  PartNumber = SmcEfuseGetLot ();
+  if (PartNumber > 0) {
+    AsciiSPrint (
+      SmbiosTable4Strings[4],
+      BAIKAL_PROCESSOR_PART_STR_SIZE,
+      "%c%c%c%c%c%c",
+      (PartNumber >>  0) & 0xFF,
+      (PartNumber >>  8) & 0xFF,
+      (PartNumber >> 16) & 0xFF,
+      (PartNumber >> 24) & 0xFF,
+      (PartNumber >> 32) & 0xFF,
+      (PartNumber >> 40) & 0xFF
+      );
+
+    if (SmbiosTable4.SerialNumber == 0) {
+      SmbiosTable4.PartNumber = 4;
+    } else {
+      SmbiosTable4.PartNumber = 5;
+    }
+  }
+
+  return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable4, SmbiosTable4Strings, ARRAY_SIZE (SmbiosTable4Strings));
 }
 
 // Cache Information tables, type 7

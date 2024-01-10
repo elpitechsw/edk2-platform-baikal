@@ -203,7 +203,7 @@ FruClientDxeInitialize (
         FdtClient->IsNodeEnabled   (FdtClient, Node) &&
         FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize == 2 * sizeof (UINT64)) {
-      I2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+      I2cBase = SwapBytes64 (ReadUnaligned64 (Prop));
 
       if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
           FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&

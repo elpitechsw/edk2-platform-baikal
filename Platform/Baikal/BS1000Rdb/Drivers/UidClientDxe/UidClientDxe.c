@@ -9,6 +9,8 @@
 #include <Protocol/SpdClient.h>
 #include <Protocol/UidClient.h>
 
+#include <BS1000.h>
+
 STATIC
 UINT32
 EFIAPI
@@ -26,6 +28,7 @@ UidClientDxeInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  UINTN       ChipIdx;
   UINTN       DimmIdx;
   EFI_STATUS  Status;
 
@@ -61,20 +64,22 @@ UidClientDxeInitialize (
     return Status;
   }
 
-  for (DimmIdx = 0; ; ++DimmIdx) {
-    CONST UINT8  *SpdData = SpdClient->GetData (DimmIdx);
-    if (SpdData == NULL) {
-      break;
-    }
+  for (ChipIdx = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
+    for (DimmIdx = 0; ; ++DimmIdx) {
+      CONST UINT8  *SpdData = SpdClient->GetData (ChipIdx, DimmIdx);
+      if (SpdData == NULL) {
+        break;
+      }
 
-    if (Crc16 (SpdData, 126, 0) == ((SpdData[127] << 8) | SpdData[126])) {
-      CONST UINTN  BytesUsed = SpdData[0] & 0xF;
-      if (BytesUsed >= 3) { // Find DIMM with manufacturer's specific data
-        gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize ()), &Uid32);
-        return EFI_SUCCESS;
-      } else if (Uid32 == 0) {
-        // Use general data of any DIMM if there is no DIMM with specific data
-        gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize ()), &Uid32);
+      if (Crc16 (SpdData, 126, 0) == ((SpdData[127] << 8) | SpdData[126])) {
+        CONST UINTN  BytesUsed = SpdData[0] & 0xF;
+        if (BytesUsed >= 3) { // Find DIMM with manufacturer's specific data
+          gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize ()), &Uid32);
+          return EFI_SUCCESS;
+        } else if (Uid32 == 0) {
+          // Use general data of any DIMM if there is no DIMM with specific data
+          gBS->CalculateCrc32 ((VOID *) SpdData, MIN (BytesUsed * 128, SpdClient->GetMaxSize ()), &Uid32);
+        }
       }
     }
   }

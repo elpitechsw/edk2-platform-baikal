@@ -34,10 +34,10 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       Name (_PRT, Package()
       {
-        Package() { 0x0000FFFF, 0, Zero, Zero },
-        Package() { 0x0000FFFF, 1, Zero, Zero },
-        Package() { 0x0000FFFF, 2, Zero, Zero },
-        Package() { 0x0000FFFF, 3, Zero, Zero }
+        Package() { 0x0000FFFF, 0, Zero, Ones },
+        Package() { 0x0000FFFF, 1, Zero, Ones },
+        Package() { 0x0000FFFF, 2, Zero, Ones },
+        Package() { 0x0000FFFF, 3, Zero, Ones }
       })
 
       Method (_CRS, 0, Serialized)
@@ -123,10 +123,10 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       Name (_PRT, Package()
       {
-        Package() { 0x0000FFFF, 0, Zero, Zero },
-        Package() { 0x0000FFFF, 1, Zero, Zero },
-        Package() { 0x0000FFFF, 2, Zero, Zero },
-        Package() { 0x0000FFFF, 3, Zero, Zero }
+        Package() { 0x0000FFFF, 0, Zero, Ones },
+        Package() { 0x0000FFFF, 1, Zero, Ones },
+        Package() { 0x0000FFFF, 2, Zero, Ones },
+        Package() { 0x0000FFFF, 3, Zero, Ones }
       })
 
       Method (_CRS, 0, Serialized)
@@ -205,10 +205,10 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       Name (_PRT, Package()
       {
-        Package() { 0x0000FFFF, 0, Zero, Zero },
-        Package() { 0x0000FFFF, 1, Zero, Zero },
-        Package() { 0x0000FFFF, 2, Zero, Zero },
-        Package() { 0x0000FFFF, 3, Zero, Zero }
+        Package() { 0x0000FFFF, 0, Zero, Ones },
+        Package() { 0x0000FFFF, 1, Zero, Ones },
+        Package() { 0x0000FFFF, 2, Zero, Ones },
+        Package() { 0x0000FFFF, 3, Zero, Ones }
       })
 
       Method (_CRS, 0, Serialized)

@@ -269,6 +269,7 @@
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
   Platform/Baikal/BM1000Rdb/Drivers/ConfigDxe/ConfigDxe.inf
+  Platform/Baikal/BM1000Rdb/Drivers/RamMenu/RamMenu.inf
   Platform/Baikal/Logo/LogoDxe.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
     <LibraryClasses>
@@ -345,6 +346,7 @@
   }
 
   Platform/Baikal/Application/SpiFlash/SpiFlash.inf
+  Platform/Baikal/Application/DdrSettings/DdrSettings.inf
 
 [PcdsFeatureFlag.common]
   gArmTokenSpaceGuid.PcdRelocateVectorTable|FALSE

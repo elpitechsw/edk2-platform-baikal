@@ -431,7 +431,7 @@ LibRtcInitialize (
   )
 {
   FDT_CLIENT_PROTOCOL  *FdtClient;
-  INT32                 Node;
+  INT32                 Node = 0;
   CONST VOID           *Prop;
   UINT32                PropSize;
   EFI_STATUS            Status;
@@ -439,7 +439,6 @@ LibRtcInitialize (
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   ASSERT_EFI_ERROR (Status);
 
-  Node = 0;
   if (FdtClient->FindNextCompatibleNode (FdtClient, "abracon,abeoz9", Node, &Node) == EFI_SUCCESS) {
     RtcType = RtcTypeAbeoz9;
   } else if (FdtClient->FindNextCompatibleNode (FdtClient, "nxp,pcf2127", Node, &Node) == EFI_SUCCESS ||
@@ -459,7 +458,7 @@ LibRtcInitialize (
   if (FdtClient->FindParentNode (FdtClient, Node, &Node) == EFI_SUCCESS &&
       FdtClient->IsNodeEnabled (FdtClient, Node) &&
       FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
-    I2cBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+    I2cBase = SwapBytes64 (ReadUnaligned64 (Prop));
 
     if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
         FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&

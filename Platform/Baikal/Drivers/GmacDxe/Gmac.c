@@ -60,7 +60,7 @@ GmacDxeDriverEntry (
     if (FdtStatus == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
       BOOLEAN                      DmaCoherent;
       GMAC_ETH_DEVPATH            *EthDevPath;
-      volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+      volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (ReadUnaligned64 (Prop));
       EFI_HANDLE                  *Handle;
       EFI_MAC_ADDRESS              MacAddr;
       EFI_PHYSICAL_ADDRESS         ResetGpioBase;
@@ -106,7 +106,7 @@ GmacDxeDriverEntry (
                     if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
                       if (AsciiStrCmp (Prop, "baikal,bm1000-cmu") == 0) {
                         if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
-                          Tx2ClkChCtlAddr = SwapBytes64 (((CONST UINT64 *) Prop)[0]) + 0x20 + Tx2ClkChNum * 0x10;
+                          Tx2ClkChCtlAddr = SwapBytes64 (ReadUnaligned64 (Prop)) + 0x20 + Tx2ClkChNum * 0x10;
                         }
                       } else if (AsciiStrCmp (Prop, "baikal,bs1000-cmu") == 0) {
                         if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
@@ -221,7 +221,7 @@ GmacDxeDriverEntry (
           if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (((CONST UINT32 *) Prop)[0]), &ResetGpioNode) == EFI_SUCCESS &&
               FdtClient->FindParentNode    (FdtClient, ResetGpioNode, &ResetGpioNode) == EFI_SUCCESS &&
               FdtClient->GetNodeProperty   (FdtClient, ResetGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
-            ResetGpioBase = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+            ResetGpioBase = SwapBytes64 (ReadUnaligned64 (Prop));
             if (ResetGpioBase == 0 || ResetGpioPin > 31 || ResetPolarity > 1) {
               ResetGpioBase = 0;
               ResetGpioPin  = -1;

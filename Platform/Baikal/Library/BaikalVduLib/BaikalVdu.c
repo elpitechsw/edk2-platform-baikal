@@ -379,16 +379,42 @@ LcdSetMode (
     IsBgr = FALSE;
   }
 
-  Status = LcdPlatformGetLvdsInfo (ModeNumber, &LvdsPorts, &LvdsOutBpp);
-  if (EFI_ERROR (Status)) {
-    ASSERT_EFI_ERROR (Status);
-    return Status;
+  LcdSetTimings (BM1000_HDMI_VDU_BASE, Horizontal, Vertical, LcdBpp, IsBgr, 0, 0);
+
+  if (LvdsEnabled ()) {
+    Status = LcdPlatformGetLvdsInfo (ModeNumber, &LvdsPorts, &LvdsOutBpp);
+    if (EFI_ERROR (Status)) {
+      ASSERT_EFI_ERROR (Status);
+      return Status;
+    }
+    Status = LcdPlatformGetLvdsTimings (
+               &Horizontal,
+               &Vertical
+               );
+    if (EFI_ERROR (Status)) {
+      ASSERT_EFI_ERROR (Status);
+      return Status;
+    }
+    LcdSetTimings (BM1000_LVDS_VDU_BASE, Horizontal, Vertical, LcdBpp, IsBgr, LvdsPorts, LvdsOutBpp);
   }
 
-  LcdSetTimings (BM1000_HDMI_VDU_BASE, Horizontal, Vertical, LcdBpp, IsBgr, 0, 0);
-  LcdSetTimings (BM1000_LVDS_VDU_BASE, Horizontal, Vertical, LcdBpp, IsBgr, LvdsPorts, LvdsOutBpp);
-
   return EFI_SUCCESS;
+}
+
+VOID
+HdmiShutdown (
+  VOID
+  )
+{
+  MmioAnd32 (BAIKAL_VDU_CR1(BM1000_HDMI_VDU_BASE), ~BAIKAL_VDU_CR1_LCE);
+}
+
+VOID
+LvdsShutdown (
+  VOID
+  )
+{
+  MmioAnd32 (BAIKAL_VDU_CR1(BM1000_LVDS_VDU_BASE), ~BAIKAL_VDU_CR1_LCE);
 }
 
 // De-initializes the display
@@ -398,6 +424,6 @@ LcdShutdown (
   )
 {
   // Disable the controllers
-  MmioAnd32 (BAIKAL_VDU_CR1(BM1000_HDMI_VDU_BASE), ~BAIKAL_VDU_CR1_LCE);
-  MmioAnd32 (BAIKAL_VDU_CR1(BM1000_LVDS_VDU_BASE), ~BAIKAL_VDU_CR1_LCE);
+  HdmiShutdown();
+  LvdsShutdown();
 }

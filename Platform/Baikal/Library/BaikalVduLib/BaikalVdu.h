@@ -98,4 +98,15 @@ LvdsEnabled (
   VOID
   );
 
+VOID
+LvdsShutdown (
+  VOID
+  );
+
+EFI_STATUS
+LcdPlatformGetLvdsTimings (
+  OUT SCAN_TIMINGS  **Horizontal,
+  OUT SCAN_TIMINGS  **Vertical
+  );
+
 #endif // BAIKAL_VDU_H_

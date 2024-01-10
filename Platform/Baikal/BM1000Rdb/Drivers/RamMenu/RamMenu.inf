@@ -1,0 +1,56 @@
+
+[Defines]
+  INF_VERSION               = 0x00010005
+  BASE_NAME                 = RamMenu
+  FILE_GUID                 = e9535dd4-5d99-84a6-c830-0bcb75e62e5d
+  MODULE_TYPE               = UEFI_DRIVER
+  VERSION_STRING            = 0.19
+  ENTRY_POINT               = RamMenuEntryPoint
+  UNLOAD_IMAGE              = RamMenuUnload
+  UEFI_HII_RESOURCE_SECTION = TRUE
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[Sources]
+  RamMenu.c
+  RamMenu.h
+  RamMenuHii.c
+  RamMenuHii.h
+  RamMenuComponent.c
+  RamMenuComponent.h
+  RamStruc.c
+  RamStruc.h
+  RamMenuDataStruct.h
+  RamMenu.uni
+  RamMenu.vfr
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  BaseLib
+  UefiLib
+  DevicePathLib
+  DebugLib
+  HiiLib
+  SmcFlashLib
+
+[Protocols]
+  gEfiDriverBindingProtocolGuid
+  gEfiDriverSupportedEfiVersionProtocolGuid
+  gEfiHiiPackageListProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
+  gEfiComponentName2ProtocolGuid
+  gEfiComponentNameProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHiiStringProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+  gEfiFormBrowser2ProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
+
+[Guids]
+

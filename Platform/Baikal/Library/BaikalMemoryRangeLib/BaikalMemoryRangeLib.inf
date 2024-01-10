@@ -1,0 +1,30 @@
+## @file
+#
+#  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = BaikalMemoryRangeLib
+  FILE_GUID                      = 49968B35-D79E-4382-8DCD-D426FABC2341
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BaikalMemoryRangeLib
+
+[Sources]
+  BaikalMemoryRangeLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[LibraryClasses]
+  DebugLib
+
+[Protocols]
+  gFdtClientProtocolGuid
+
+[Depex]
+  TRUE

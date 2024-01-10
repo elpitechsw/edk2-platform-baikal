@@ -396,8 +396,10 @@ FruInternalsTypLenEncReadData (
   UINT8  EncType;
 
   ASSERT (EncBuf != NULL);
-  ASSERT ((DecBuf != NULL && DecLen != NULL && *DecLen > 0) ||
-          (DecBuf == NULL && DecLen == NULL));
+  ASSERT (
+    (DecBuf != NULL && DecLen != NULL && *DecLen > 0) ||
+    (DecBuf == NULL && DecLen == NULL)
+    );
 
   EncLen  = EncBuf[0] & 0x3F;
   EncType = EncBuf[0] >> 6;

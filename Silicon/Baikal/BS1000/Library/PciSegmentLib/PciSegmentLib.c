@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -41,8 +41,8 @@ PciSegmentLibGetConfigBase (
   CONST UINTN  Bus      = (PciSegLibAddr >> 20) & 0xFF;
   CONST UINTN  Device   = (PciSegLibAddr >> 15) & 0x1F;
   CONST UINTN  Function = (PciSegLibAddr >> 12) & 0x7;
-  extern EFI_PHYSICAL_ADDRESS  mPcieCfgBases[];
-  extern EFI_PHYSICAL_ADDRESS  mPcieDbiBases[];
+  extern EFI_PHYSICAL_ADDRESS  *mPcieCfgBases;
+  extern EFI_PHYSICAL_ADDRESS  *mPcieDbiBases;
 
   if (Bus == 0) {
     if (Device == 0) { // DBI access

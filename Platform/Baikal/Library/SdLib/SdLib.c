@@ -34,7 +34,7 @@
 #define IS_READ   TRUE
 #define IS_WRITE  FALSE
 
-#define SDHCI_PARTSIZE            (1024 * SDHCI_BLOCK_SIZE_DEFAULT)
+#define SDHCI_PARTSIZE  (1024 * SDHCI_BLOCK_SIZE_DEFAULT)
 
 STATIC EFI_PHYSICAL_ADDRESS  mBase = 0x202E0000;
 STATIC UINT64  mTotalSize = 0;
@@ -48,7 +48,7 @@ STATIC UINT8 buffer[SDHCI_BLOCK_SIZE_DEFAULT]; // TODO: allocate
       Ret = EFI_TIMEOUT;         \
       break;                     \
     }                            \
-    MicroSecondDelay(1);         \
+    MicroSecondDelay (1);        \
   };                             \
   Ret;                           \
 })
@@ -172,13 +172,20 @@ SdRegWrite (
   )
 {
   UINTN  RegSize = SdRegSize (Reg);
+
   if (EFI_ERROR (RegSize)) {
     return RegSize;
   }
   switch (RegSize) {
-  case 32: *(UINT32 *) (Base + Reg) = Val;  break;
-  case 16: *(UINT16 *) (Base + Reg) = Val;  break;
-  case 8:  *(UINT8 *)  (Base + Reg) = Val;  break;
+  case 32:
+    *(UINT32 *) (Base + Reg) = Val;
+    break;
+  case 16:
+    *(UINT16 *) (Base + Reg) = Val;
+    break;
+  case 8:
+    *(UINT8 *) (Base + Reg) = Val;
+    break;
   }
   return EFI_SUCCESS;
 }
@@ -191,13 +198,17 @@ SdRegRead (
   )
 {
   UINTN  RegSize = SdRegSize (Reg);
+
   if (EFI_ERROR (RegSize)) {
     return RegSize;
   }
   switch (RegSize) {
-  case 32: return *(UINT32 *) (Base + Reg);
-  case 16: return *(UINT16 *) (Base + Reg);
-  case 8:  return *(UINT8 *)  (Base + Reg);
+  case 32:
+    return *(UINT32 *) (Base + Reg);
+  case 16:
+    return *(UINT16 *) (Base + Reg);
+  case 8:
+    return *(UINT8 *)  (Base + Reg);
   }
   return EFI_INVALID_PARAMETER;
 }
@@ -341,6 +352,8 @@ SdReset (
   IN  EFI_PHYSICAL_ADDRESS  Base
   )
 {
+  UINTN  Reg;
+
   // Power
   SdRegWrite (Base, SDHCI_POWER_OFF, SDHCI_POWER_CONTROL);
   MicroSecondDelay (1000);
@@ -360,7 +373,8 @@ SdReset (
     SDHCI_CTRL_V4_MODE |
     SDHCI_CTRL_64BIT_ADDR |
     SDHCI_CTRL_ASYNC,
-    SDHCI_HOST_CONTROL2);
+    SDHCI_HOST_CONTROL2
+    );
   SdRegWrite (Base, 0, SDHCI_TRANSFER_MODE);
   SdRegWrite (Base, 0, SDHCI_16BIT_BLK_CNT);
   SdRegWrite (Base, 0, SDHCI_32BIT_BLK_CNT);
@@ -370,14 +384,14 @@ SdReset (
   SdRegWrite (Base, SDHCI_TIMEOUT_DEFAULT, SDHCI_TIMEOUT_CONTROL);
 
   // Clock
-  UINTN Reg = SdRegRead (Base, SDHCI_CLOCK_CONTROL);
+  Reg = SdRegRead (Base, SDHCI_CLOCK_CONTROL);
   Reg &= ~SDHCI_CLOCK_EN;
   Reg &= ~SDHCI_CLOCK_PLL_EN;
   Reg &= ~SDHCI_CLOCK_CARD_EN;
   SdRegWrite (Base, Reg, SDHCI_CLOCK_CONTROL);
   MicroSecondDelay (1000);
 
-  SdLed(Base, FALSE);
+  SdLed (Base, FALSE);
   return EFI_SUCCESS;
 }
 
@@ -387,7 +401,7 @@ SdInitHost (
   IN  EFI_PHYSICAL_ADDRESS  Base
   )
 {
-  SdReset    (Base);
+  SdReset (Base);
   SdRegWrite (Base, SDHCI_POWER_330 | SDHCI_POWER_ON, SDHCI_POWER_CONTROL);
   SdRegWrite (Base, SDHCI_CLOCK_EN, SDHCI_CLOCK_CONTROL);
   MicroSecondDelay (1000);
@@ -431,133 +445,129 @@ SdCmdExec (
   UINTN       Blocksize = Len < SDHCI_BLOCK_SIZE_DEFAULT ? Len : SDHCI_BLOCK_SIZE_DEFAULT;
 
   // Busy
-    Status = WAIT (SdRegRead (Base, SDHCI_PRESENT_STATE) & (SDHCI_CMD_INHIBIT | SDHCI_DATA_INHIBIT));
-    if (EFI_ERROR (Status)) {
-      goto exit;
-    }
+  Status = WAIT (SdRegRead (Base, SDHCI_PRESENT_STATE) & (SDHCI_CMD_INHIBIT | SDHCI_DATA_INHIBIT));
+  if (EFI_ERROR (Status)) {
+    goto exit;
+  }
 
   // Clean
-    SdRegWrite (Base, 0xFFFF, SDHCI_INT_STATUS);
-    SdRegWrite (Base, 0xFFFF, SDHCI_ERR_STATUS);
-    SdRegWrite (Base, 0x0, SDHCI_RESPONSE_0);
-    SdRegWrite (Base, 0x0, SDHCI_RESPONSE_1);
-    SdRegWrite (Base, 0x0, SDHCI_RESPONSE_2);
-    SdRegWrite (Base, 0x0, SDHCI_RESPONSE_3);
+  SdRegWrite (Base, 0xFFFF, SDHCI_INT_STATUS);
+  SdRegWrite (Base, 0xFFFF, SDHCI_ERR_STATUS);
+  SdRegWrite (Base, 0x0, SDHCI_RESPONSE_0);
+  SdRegWrite (Base, 0x0, SDHCI_RESPONSE_1);
+  SdRegWrite (Base, 0x0, SDHCI_RESPONSE_2);
+  SdRegWrite (Base, 0x0, SDHCI_RESPONSE_3);
 
   // Mode
-    if (Len) {
-      Blocks = Len / Blocksize;
-      if (Blocks > 1) {
-        Mode |= BIT5; // Multi Block Select
-        Mode |= BIT2; // AUTO CMD12 Enable
-        Mode |= BIT1; // Block Count Enable
-      }
-
-      if (IsRead) {
-        Mode |= BIT4; // Data Transfer Direction Select
-      }
+  if (Len) {
+    Blocks = Len / Blocksize;
+    if (Blocks > 1) {
+      Mode |= BIT5; // Multi Block Select
+      Mode |= BIT2; // AUTO CMD12 Enable
+      Mode |= BIT1; // Block Count Enable
     }
+
+    if (IsRead) {
+      Mode |= BIT4; // Data Transfer Direction Select
+    }
+  }
 
   // Cmd
-    if (CmdType == SdCommandTypeAdtc) {
-      Cmd |= BIT5;
-    }
-    switch (RespType) {
-      case SdResponseTypeR1:
-      case SdResponseTypeR5:
-      case SdResponseTypeR6:
-      case SdResponseTypeR7:
-        Cmd |= BIT1 | BIT3 | BIT4;
-        break;
-      case SdResponseTypeR1b:
-      case SdResponseTypeR5b:
-        Cmd |= BIT0 | BIT1 | BIT3 | BIT4;
-      case SdResponseTypeR2:
-        Cmd |= BIT0 | BIT3;
-        break;
-      case SdResponseTypeR3:
-      case SdResponseTypeR4:
-        Cmd |= BIT1;
-        break;
-        break;
-      case SdResponseTypeNo:
-        break;
-      default:
-        Status = EFI_INVALID_PARAMETER;
-        goto exit;
-    }
+  if (CmdType == SdCommandTypeAdtc) {
+    Cmd |= BIT5;
+  }
+  switch (RespType) {
+  case SdResponseTypeR1:
+  case SdResponseTypeR5:
+  case SdResponseTypeR6:
+  case SdResponseTypeR7:
+    Cmd |= BIT1 | BIT3 | BIT4;
+    break;
+  case SdResponseTypeR1b:
+  case SdResponseTypeR5b:
+    Cmd |= BIT0 | BIT1 | BIT3 | BIT4;
+  case SdResponseTypeR2:
+    Cmd |= BIT0 | BIT3;
+    break;
+  case SdResponseTypeR3:
+  case SdResponseTypeR4:
+    Cmd |= BIT1;
+    break;
+    break;
+  case SdResponseTypeNo:
+    break;
+  default:
+    Status = EFI_INVALID_PARAMETER;
+    goto exit;
+  }
 
   // Exec
-    SdLed (Base, TRUE);
-    SdRegWrite (Base, Blocks,    SDHCI_32BIT_BLK_CNT);
-    SdRegWrite (Base, Blocksize, SDHCI_BLOCK_SIZE);
-    SdRegWrite (Base, Mode,      SDHCI_TRANSFER_MODE);
-    SdRegWrite (Base, Arg,       SDHCI_ARGUMENT);
-    SdRegWrite (Base, Cmd,       SDHCI_COMMAND);
+  SdLed (Base, TRUE);
+  SdRegWrite (Base, Blocks,    SDHCI_32BIT_BLK_CNT);
+  SdRegWrite (Base, Blocksize, SDHCI_BLOCK_SIZE);
+  SdRegWrite (Base, Mode,      SDHCI_TRANSFER_MODE);
+  SdRegWrite (Base, Arg,       SDHCI_ARGUMENT);
+  SdRegWrite (Base, Cmd,       SDHCI_COMMAND);
 
   // Wait
-    Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_RESPONSE));
-    SdRegWrite (Base, SDHCI_INT_RESPONSE, SDHCI_INT_STATUS);
+  Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_RESPONSE));
+  SdRegWrite (Base, SDHCI_INT_RESPONSE, SDHCI_INT_STATUS);
+  if (EFI_ERROR (Status)) {
+    goto exit;
+  }
+
+  // Check
+  if (SdRegRead (Base, SDHCI_ERR_STATUS)) {
+    Status = EFI_DEVICE_ERROR;
+    goto exit;
+  }
+
+  // Data
+  if (Len) {
+    UINT32  *P = Buf;
+    for (UINTN J = 0; J < Blocks; J++) {
+      if (IsRead) { // Read
+        // Wait
+        Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_DATA_AVAIL));
+        SdRegWrite (Base, SDHCI_INT_DATA_AVAIL, SDHCI_INT_STATUS);
+        if (EFI_ERROR (Status)) {
+          goto exit;
+        }
+        // Copy
+        for (UINTN Iter = 0; Iter < Blocksize / sizeof (UINT32); ++Iter) {
+          *P++ = *(UINT32 *) (Base + SDHCI_BUFFER);
+        }
+      } else { // Write
+        // Wait
+        Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_SPACE_AVAIL));
+        SdRegWrite (Base, SDHCI_INT_SPACE_AVAIL, SDHCI_INT_STATUS);
+        if (EFI_ERROR (Status)) {
+          goto exit;
+        }
+        // Copy
+        for (UINTN Iter = 0; Iter < Blocksize / sizeof (UINT32); ++Iter) {
+          *(UINT32 *) (Base + SDHCI_BUFFER) = *P++;
+        }
+      }
+    }
+
+    // Complete
+    Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_DATA_END));
+    SdRegWrite (Base, SDHCI_INT_DATA_END, SDHCI_INT_STATUS);
     if (EFI_ERROR (Status)) {
       goto exit;
     }
 
-  // Check
-    if (SdRegRead (Base, SDHCI_ERR_STATUS)) {
-      Status = EFI_DEVICE_ERROR;
-      goto exit;
-    }
-
-  // DATA
-    if (Len) {
-      UINT32  *P = Buf;
-      for (UINTN J = 0; J < Blocks; J++) {
-
-        // READ
-        if (IsRead) {
-          // Wait
-          Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_DATA_AVAIL));
-          SdRegWrite (Base, SDHCI_INT_DATA_AVAIL, SDHCI_INT_STATUS);
-          if (EFI_ERROR (Status)) {
-            goto exit;
-          }
-          // Copy
-          for (UINTN Iter = 0; Iter < Blocksize / sizeof (UINT32); ++Iter) {
-            *P++ = *(UINT32 *) (Base + SDHCI_BUFFER);
-          }
-
-        // WRITE
-        } else {
-          // Wait
-          Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_SPACE_AVAIL));
-          SdRegWrite (Base, SDHCI_INT_SPACE_AVAIL, SDHCI_INT_STATUS);
-          if (EFI_ERROR (Status)) {
-            goto exit;
-          }
-          // Copy
-          for (UINTN Iter = 0; Iter < Blocksize / sizeof (UINT32); ++Iter) {
-            *(UINT32 *) (Base + SDHCI_BUFFER) = *P++;
-          }
-        }
-      }
-
-      // Complete
-      Status = WAIT (!(SdRegRead (Base, SDHCI_INT_STATUS) & SDHCI_INT_DATA_END));
-      SdRegWrite (Base, SDHCI_INT_DATA_END, SDHCI_INT_STATUS);
-      if (EFI_ERROR (Status)) {
+    if (Mode & BIT5) { // Multi Block Select
+      if (SdRegRead (Base, SDHCI_32BIT_BLK_CNT)) {
+        Status = EFI_DEVICE_ERROR;
         goto exit;
       }
-
-      if (Mode & BIT5) { // Multi Block Select
-        if (SdRegRead (Base, SDHCI_32BIT_BLK_CNT)) {
-          Status = EFI_DEVICE_ERROR;
-          goto exit;
-        }
-      }
     }
+  }
 
 exit:
-  SdLed(Base, FALSE);
+  SdLed (Base, FALSE);
   if (SdRegRead (Base, SDHCI_ERR_STATUS)) {
     Status = EFI_DEVICE_ERROR;
   }
@@ -1262,7 +1272,7 @@ SdCalcXpc (
     return -1;
   }
 
-  return (MaxCurrent >= 150);
+  return MaxCurrent >= 150;
 }
 
 UINTN
@@ -1461,11 +1471,11 @@ SdIdentificationMmc (
   if (EFI_ERROR (Status)) {
     goto exit;
   }
+
   Status = SdSpeedMode (Base, SD_DEFAULT);
   if (EFI_ERROR (Status)) {
     goto exit;
   }
-
 
   Status = SdResetCmd (Base); // CMD0
   if (EFI_ERROR (Status)) {
@@ -1644,9 +1654,9 @@ SdReadBlocks (
   OUT VOID                   *Buffer
   )
 {
-  EFI_STATUS Status;
-  UINT8  *Buf = Buffer;
-  UINTN  Size = BufferSize;
+  EFI_STATUS   Status;
+  UINT8       *Buf = Buffer;
+  UINTN        Size = BufferSize;
 
   while (Size) {
     UINTN  Part = Size > SDHCI_PARTSIZE ? SDHCI_PARTSIZE : Size;
@@ -1668,9 +1678,9 @@ SdWriteBlocks (
   IN  VOID                   *Buffer
   )
 {
-  EFI_STATUS Status;
-  UINT8  *Buf = Buffer;
-  UINTN  Size = BufferSize;
+  EFI_STATUS   Status;
+  UINT8       *Buf = Buffer;
+  UINTN        Size = BufferSize;
 
   while (Size) {
     UINTN  Part = Size > SDHCI_PARTSIZE ? SDHCI_PARTSIZE : Size;
@@ -1697,7 +1707,7 @@ SdReadBlocksIo (
   OUT VOID                   *Buffer
   )
 {
-  return SdReadBlocks(Lba, BufferSize, Buffer);
+  return SdReadBlocks (Lba, BufferSize, Buffer);
 }
 
 EFI_STATUS
@@ -1709,7 +1719,7 @@ SdWriteBlocksIo (
   IN  VOID                   *Buffer
   )
 {
-  return SdWriteBlocks(Lba, BufferSize, Buffer);
+  return SdWriteBlocks (Lba, BufferSize, Buffer);
 }
 
 EFI_STATUS
@@ -1729,37 +1739,36 @@ SdResetIo (
   return EFI_SUCCESS;
 }
 
-
 // ------------------------------
 // nonblock access
 // ------------------------------
 EFI_STATUS
 SdRead (
-  IN UINT64  adr,
-  IN VOID   *dst_,
-  IN UINT64  size)
+  IN UINT64   adr,
+  IN VOID    *dst_,
+  IN UINT64   size
+  )
 {
-  EFI_STATUS Status;
-  UINT64 lba;
-  UINT64 part;
-  UINT64 offset;
-  UINT8 *dst = dst_;
+  EFI_STATUS   Status;
+  UINT64       lba;
+  UINT64       part;
+  UINT64       offset;
+  UINT8       *dst = dst_;
 
   while (size) {
-
-    /* read */
+    // Read
     lba = adr / SDHCI_BLOCK_SIZE_DEFAULT;
-    Status = SdReadBlocks(lba, sizeof(buffer), buffer);
+    Status = SdReadBlocks (lba, sizeof (buffer), buffer);
     if (EFI_ERROR (Status)) {
       return Status;
     }
 
-    /* copy */
+    // Copy
     offset = adr % SDHCI_BLOCK_SIZE_DEFAULT;
-    part = MIN(size, sizeof(buffer)-offset);
-    CopyMem (dst, buffer+offset, part);
+    part = MIN (size, sizeof (buffer) - offset);
+    CopyMem (dst, buffer + offset, part);
 
-    /* next */
+    // Next
     adr  += part;
     dst  += part;
     size -= part;
@@ -1770,37 +1779,37 @@ SdRead (
 
 EFI_STATUS
 SdWrite (
-  IN UINT64  adr,
-  IN VOID   *src_,
-  IN UINT64  size)
+  IN UINT64   adr,
+  IN VOID    *src_,
+  IN UINT64   size
+  )
 {
-  EFI_STATUS Status;
-  UINT64 lba;
-  UINT64 part;
-  UINT64 offset;
-  UINT8 *src = src_;
+  EFI_STATUS   Status;
+  UINT64       lba;
+  UINT64       part;
+  UINT64       offset;
+  UINT8       *src = src_;
 
   while (size) {
-
-    /* read */
+    // Read
     lba = adr / SDHCI_BLOCK_SIZE_DEFAULT;
-    Status = SdReadBlocks(lba, sizeof(buffer), buffer);
+    Status = SdReadBlocks (lba, sizeof (buffer), buffer);
     if (EFI_ERROR (Status)) {
       return Status;
     }
 
-    /* modify */
+    // Modify
     offset = adr % SDHCI_BLOCK_SIZE_DEFAULT;
-    part = MIN(size, sizeof(buffer)-offset);
-    CopyMem (buffer+offset, src, part);
+    part = MIN (size, sizeof (buffer) - offset);
+    CopyMem (buffer + offset, src, part);
 
-    /* write */
-    Status = SdWriteBlocks(lba, sizeof(buffer), buffer);
+    // Write
+    Status = SdWriteBlocks (lba, sizeof (buffer), buffer);
     if (EFI_ERROR (Status)) {
       return Status;
     }
 
-    /* next */
+    // Next
     adr  += part;
     src  += part;
     size -= part;

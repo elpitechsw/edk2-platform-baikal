@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -13,6 +13,9 @@
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = AcpiPlatformDxeInitialize
 
+[BuildOptions]
+  GCC:*_*_*_ASL_FLAGS       = -vw2173
+
 [Sources]
   AcpiPlatformDxe.c
   Dbg2.c
@@ -24,19 +27,25 @@
   Mcfg.c
   Pmtt.c
   Pptt.c
+  Slit.c
   Spcr.c
+  Srat.c
   SsdtPcie.asl
 
 [Packages]
+  Platform/Baikal/Baikal.dec
   ArmPkg/ArmPkg.dec
   MdePkg/MdePkg.dec
   Silicon/Baikal/BS1000/BS1000.dec
 
 [LibraryClasses]
+  BaikalMemoryRangeLib
+  MemoryAllocationLib
   UefiDriverEntryPoint
 
 [Protocols]
   gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+  gFdtClientProtocolGuid                        # PROTOCOL ALWAYS_CONSUMED
 
 [FixedPcd]
   gArmTokenSpaceGuid.PcdGicDistributorBase
@@ -49,4 +58,4 @@
   gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
 
 [Depex]
-  TRUE
+  gFdtClientProtocolGuid

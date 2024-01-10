@@ -67,7 +67,7 @@ typedef struct {
     /* UINT32  NumIds          */                                 \
     0xFFFF,                                                       \
     /* UINT32  OutputBase      */                                 \
-    ((RealSegment + 1) << 16) + (RidBus << 8),                    \
+    ((RealSegment) << 16) + (RidBus << 8),                        \
     /* UINT32  OutputReference */                                 \
     OFFSET_OF (BAIKAL_ACPI_IORT, Its),                            \
     /* UINT32  Flags           */                                 \
@@ -226,12 +226,19 @@ IortInit (
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE1_SEGMENT].Map.NumIds = 0x7;
-#endif
+
     if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE2_IDX)) == 0) {
       Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.OutputBase += 0x8;
     }
 
     Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT].Map.NumIds = 0x7;
+#else
+    if ((PcdGet32 (PcdPcieCfg0FilteringWorks) & (1 << BM1000_PCIE2_IDX)) == 0) {
+      Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT - 1].Map.OutputBase += 0x8;
+    }
+
+    Iort.Rc[BAIKAL_ACPI_PCIE2_SEGMENT - 1].Map.NumIds = 0x7;
+#endif
     *Table = (EFI_ACPI_DESCRIPTION_HEADER *) &Iort;
     return EFI_SUCCESS;
   }

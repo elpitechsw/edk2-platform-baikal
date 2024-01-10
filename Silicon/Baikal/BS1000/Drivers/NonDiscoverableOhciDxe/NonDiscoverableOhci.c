@@ -16,27 +16,29 @@ NonDiscoverableOhciEntryPoint (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  UINTN       ChipIdx;
   EFI_STATUS  Status;
 
-  Status = RegisterNonDiscoverableMmioDevice (
-             NonDiscoverableDeviceTypeOhci,
-             NonDiscoverableDeviceDmaTypeCoherent,
-             NULL,
-             NULL,
-             1,
-             BS1000_OHCI_BASE,
-             BS1000_OHCI_SIZE
-             );
+  for (ChipIdx = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
+    Status = RegisterNonDiscoverableMmioDevice (
+               NonDiscoverableDeviceTypeOhci,
+               NonDiscoverableDeviceDmaTypeCoherent,
+               NULL,
+               NULL,
+               1,
+               PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_OHCI_BASE),
+               BS1000_OHCI_SIZE
+               );
 
-  if (EFI_ERROR (Status)) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: unable to register, Status: %r\n",
-      __func__,
-      Status
-      ));
-
-    return Status;
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        EFI_D_ERROR,
+        "%a: unable to register 0x%llx, Status: %r\n",
+        __func__,
+        PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_OHCI_BASE),
+        Status
+        ));
+    }
   }
 
   return EFI_SUCCESS;

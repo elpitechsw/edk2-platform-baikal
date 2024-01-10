@@ -137,6 +137,8 @@ STATIC DISPLAY_MODE mDisplayModes[] = {
   },
 };
 
+STATIC DISPLAY_MODE mLvdsDisplayMode;
+
 STATIC EFI_EDID_DISCOVERED_PROTOCOL mEdidDiscovered = {
   0,
   NULL
@@ -147,30 +149,30 @@ STATIC EFI_EDID_ACTIVE_PROTOCOL mEdidActive = {
   NULL
 };
 
-#define FdtGetTimingProperty(PropertyName, PropertyResult)                                 \
-  do {                                                                                     \
-    Status = FdtClient->GetNodeProperty (FdtClient, Node, PropertyName, &Prop, &PropSize); \
-    if (EFI_ERROR (Status)) {                                                              \
-      goto Out;                                                                            \
-    }                                                                                      \
-    if (PropSize == sizeof (UINT32)) {                                                     \
-      PropertyResult = SwapBytes32 (*(CONST UINT32 *) Prop);                               \
-    } else if (PropSize == 3 * sizeof (UINT32)) {                                          \
-      PropertyResult = SwapBytes32 (((CONST UINT32 *) Prop)[1]);                           \
-    } else {                                                                               \
-      Status = EFI_INVALID_PARAMETER;                                                      \
-      goto Out;                                                                            \
-    }                                                                                      \
+#define FdtGetTimingProperty(PropName, PropResult)                                     \
+  do {                                                                                 \
+    Status = FdtClient->GetNodeProperty (FdtClient, Node, PropName, &Prop, &PropSize); \
+    if (EFI_ERROR (Status)) {                                                          \
+      goto Out;                                                                        \
+    }                                                                                  \
+    if (PropSize == sizeof (UINT32)) {                                                 \
+      PropResult = SwapBytes32 (((CONST UINT32 *) Prop)[0]);                           \
+    } else if (PropSize == 3 * sizeof (UINT32)) {                                      \
+      PropResult = SwapBytes32 (((CONST UINT32 *) Prop)[1]);                           \
+    } else {                                                                           \
+      Status = EFI_INVALID_PARAMETER;                                                  \
+      goto Out;                                                                        \
+    }                                                                                  \
   } while (0)
 
-STATIC BOOLEAN  mFdtDisplayModeInitialized = FALSE;
-STATIC EFI_STATUS mFdtGetPanelTimingsStatus = EFI_SUCCESS;
-STATIC DISPLAY_MODE mFdtDisplayMode;
+STATIC BOOLEAN       mFdtDisplayModeInitialized = FALSE;
+STATIC EFI_STATUS    mFdtGetPanelTimingsStatus = EFI_SUCCESS;
+STATIC DISPLAY_MODE  mFdtDisplayMode;
 
-STATIC BOOLEAN  mDisplayInitialized = FALSE;
-STATIC EFI_STATUS mInitializeDisplayStatus = EFI_SUCCESS;
+STATIC BOOLEAN       mDisplayInitialized = FALSE;
+STATIC EFI_STATUS    mInitializeDisplayStatus = EFI_SUCCESS;
 
-STATIC UINT32 mActiveDisplayModes = 0;
+STATIC UINT32        mActiveDisplayModes;
 
 /** Helper function to tell if LVDS is enabled or disabled.
   @retval TRUE                   LVDS is enabled in the FDT.
@@ -551,6 +553,7 @@ SetVideoModePcds (
   PcdSet32S (PcdVideoVerticalResolution, Height);
   PcdSet32S (PcdConOutColumn, Width / EFI_GLYPH_WIDTH);
   PcdSet32S (PcdConOutRow, Height / EFI_GLYPH_HEIGHT);
+
 }
 
 /** Display initialization function.
@@ -599,32 +602,36 @@ InitializeDisplay (
   // and make this mode the only available.
   if (FdtDisplayMode->LvdsPorts != 0) {
     for (Index = 0; Index < MaxMode; ++Index) {
-      // Override hard-coded timings by FDT timings
-      // once a compatible video mode is found.
+      // Once a compatible video mode is found, keep HDMI timings intact
+      // (hard-coded or obtained from EDID), but save FDT timings
+      // for future LVDS initialization.
       if (FdtDisplayMode->Vertical.Resolution == mDisplayModes[Index].Vertical.Resolution &&
           FdtDisplayMode->Horizontal.Resolution == mDisplayModes[Index].Horizontal.Resolution)
       {
+        mDisplayModes[Index].IsActive = TRUE;
         SetVideoModePcds (FdtDisplayMode->Horizontal.Resolution,
                           FdtDisplayMode->Vertical.Resolution);
 
-        mDisplayModes[Index].OscFreq = FdtDisplayMode->OscFreq;
+        mLvdsDisplayMode.Horizontal.Resolution = FdtDisplayMode->Horizontal.Resolution;
+        mLvdsDisplayMode.Vertical.Resolution = FdtDisplayMode->Vertical.Resolution;
+        mLvdsDisplayMode.OscFreq = FdtDisplayMode->OscFreq;
 
-        mDisplayModes[Index].Horizontal.Sync = FdtDisplayMode->Horizontal.Sync;
-        mDisplayModes[Index].Horizontal.FrontPorch = FdtDisplayMode->Horizontal.FrontPorch;
-        mDisplayModes[Index].Horizontal.BackPorch = FdtDisplayMode->Horizontal.BackPorch;
+        mLvdsDisplayMode.Horizontal.Sync = FdtDisplayMode->Horizontal.Sync;
+        mLvdsDisplayMode.Horizontal.FrontPorch = FdtDisplayMode->Horizontal.FrontPorch;
+        mLvdsDisplayMode.Horizontal.BackPorch = FdtDisplayMode->Horizontal.BackPorch;
 
-        mDisplayModes[Index].Vertical.Sync = FdtDisplayMode->Vertical.Sync;
-        mDisplayModes[Index].Vertical.FrontPorch = FdtDisplayMode->Vertical.FrontPorch;
-        mDisplayModes[Index].Vertical.BackPorch = FdtDisplayMode->Vertical.BackPorch;
+        mLvdsDisplayMode.Vertical.Sync = FdtDisplayMode->Vertical.Sync;
+        mLvdsDisplayMode.Vertical.FrontPorch = FdtDisplayMode->Vertical.FrontPorch;
+        mLvdsDisplayMode.Vertical.BackPorch = FdtDisplayMode->Vertical.BackPorch;
 
-        mDisplayModes[Index].LvdsPorts = FdtDisplayMode->LvdsPorts;
-        mDisplayModes[Index].LvdsOutBpp = FdtDisplayMode->LvdsOutBpp;
+        mLvdsDisplayMode.LvdsPorts = FdtDisplayMode->LvdsPorts;
+        mLvdsDisplayMode.LvdsOutBpp = FdtDisplayMode->LvdsOutBpp;
 
-        mDisplayModes[Index].IsActive = TRUE;
         break;
       }
     }
   } else {
+    LvdsShutdown();
     for (Index = 0; Index < MaxMode; ++Index) {
       if (mDisplayModes[Index].Mode == VGA) {
         mInitializeDisplayStatus = HdmiReadEdid (
@@ -812,7 +819,7 @@ LcdPlatformSetMode (
   BaikalSetVduFrequency (
     BM1000_LVDS_CMU_BASE,
     FixedPcdGet32 (PcdLvdsRefFrequency),
-    DisplayMode->OscFreq * 7
+    mLvdsDisplayMode.OscFreq * 7
     );
 
   return Status;
@@ -857,7 +864,10 @@ LcdPlatformQueryMode (
   return EFI_SUCCESS;
 }
 
-/** Return display timing information for the requested mode number.
+/** Return display timing information for the requested mode number (HDMI only).
+
+  Note: use LcdPlatformGetLvdsTimings() function (see below) to obtain
+  timings for accompanying LVDS mode (as they may sligthly differ from HDMI).
 
   @param[in]  ModeNumber          Mode Number.
 
@@ -891,6 +901,33 @@ LcdPlatformGetTimings (
 
   *Horizontal = &DisplayMode->Horizontal;
   *Vertical   = &DisplayMode->Vertical;
+
+  return EFI_SUCCESS;
+}
+
+/** Return display timing information for LVDS mode corresponding to active HDMI mode.
+
+  @param[out] Horizontal          Pointer to horizontal timing parameters.
+                                  (Resolution, Sync, Back porch, Front porch)
+  @param[out] Vertical            Pointer to vertical timing parameters.
+                                  (Resolution, Sync, Back porch, Front porch)
+
+  @retval EFI_SUCCESS             Display timing information for the requested
+                                  mode returned successfully.
+**/
+EFI_STATUS
+LcdPlatformGetLvdsTimings (
+  OUT SCAN_TIMINGS  **Horizontal,
+  OUT SCAN_TIMINGS  **Vertical
+  )
+{
+
+  // One of the pointers is NULL
+  ASSERT (Horizontal != NULL);
+  ASSERT (Vertical != NULL);
+
+  *Horizontal = &mLvdsDisplayMode.Horizontal;
+  *Vertical   = &mLvdsDisplayMode.Vertical;
 
   return EFI_SUCCESS;
 }

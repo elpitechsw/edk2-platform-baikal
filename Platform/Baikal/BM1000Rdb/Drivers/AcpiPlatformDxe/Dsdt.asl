@@ -1472,7 +1472,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
             Package () { "reg", Zero },
             Package () { "snps,nr-gpios", 32 },
 #if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
-            Package () { "line-name", "pcie-x8-clock" },
+            Package () { "line-name", "PCIe2_PRSNT#" },
             Package () { "gpio-hog", One },
             Package () { "gpios", Package () { One, One } },
             Package () { "output-high", One }
@@ -1517,7 +1517,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
 
       Device (PR00)
       {
-        Name (_HID, "PRP0001")
+        Name (_ADR, Zero)
         Name (_UID, 0x20210000)
         Method (_STA)
         {
@@ -3001,14 +3001,14 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x20220000, 0x10000)
-        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 136, /* 137, */ 138, 139 }
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 136, 137, 138, 139 }
       })
       Name (_DSD, Package ()
       {
         ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
         Package ()
         {
-          Package () { "compatible", "snps,designware-i2s" },
+          Package () { "compatible", "baikal,bm1000-i2s" },
           Package () { "system-clock-frequency", 12000000 }
         }
       })

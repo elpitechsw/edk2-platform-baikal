@@ -10,8 +10,16 @@
 #include <Library/PcdLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-#define CTLR_ENABLE_LPIS_BIT  BIT0
-#define PENDBASER_PTZ_BIT     BIT62
+#include <BS1000.h>
+
+#define ARM_GICD_TYPER               0x0004
+#define ARM_GICD_TYPER_IDBITS_SHIFT  19
+#define ARM_GICD_TYPER_IDBITS_MASK   (0x1F << ARM_GICD_TYPER_IDBITS_SHIFT)
+#define ARM_GICR_CTLR                0x0000
+#define ARM_GICR_CTLR_ENABLE_LPIS    BIT0
+#define ARM_GICR_PROPBASER           0x0070
+#define ARM_GICR_PENDBASER           0x0078
+#define ARM_GICR_PENDBASER_PTZ       BIT62
 
 EFI_STATUS
 EFIAPI
@@ -20,20 +28,22 @@ ArmGicLpiDxeInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  UINTN                 ChipIdx;
   UINTN                 Core;
   EFI_PHYSICAL_ADDRESS  GicDistributorBase;
   EFI_PHYSICAL_ADDRESS  GicRedistributorsBase;
+  UINTN                 IdBits;
   EFI_PHYSICAL_ADDRESS  LpiTablesBase;
   UINTN                 LpiTablesSize;
-  EFI_PHYSICAL_ADDRESS  PendTableAddr[48];
-  EFI_PHYSICAL_ADDRESS  PropTableAddr;
+  EFI_PHYSICAL_ADDRESS  PendTableAddr;
+  UINT64                PropBaser;
   EFI_STATUS            Status;
 
   GicDistributorBase    = FixedPcdGet64 (PcdGicDistributorBase);
   GicRedistributorsBase = FixedPcdGet64 (PcdGicRedistributorsBase);
 
   LpiTablesBase = (EFI_PHYSICAL_ADDRESS) (BASE_4GB - 1);
-  LpiTablesSize = 64 * 1024 * (48 + 16 * 2 + 4);
+  LpiTablesSize = SIZE_64KB * (1 + BS1000_CORE_COUNT * PLATFORM_CHIP_COUNT);
 
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
@@ -47,23 +57,24 @@ ArmGicLpiDxeInitialize (
   }
 
   ZeroMem ((VOID *) LpiTablesBase, LpiTablesSize);
+  IdBits = (MmioRead32 (GicDistributorBase + ARM_GICD_TYPER) & ARM_GICD_TYPER_IDBITS_MASK) >>
+           ARM_GICD_TYPER_IDBITS_SHIFT;
 
-  PropTableAddr    = LpiTablesBase;
-  PendTableAddr[0] = LpiTablesBase + 64 * 1024;
+  PropBaser     = LpiTablesBase | IdBits;
+  PendTableAddr = LpiTablesBase + SIZE_64KB;
 
-  for (Core = 0; Core < 48; ++Core) {
-    EFI_PHYSICAL_ADDRESS  GicRdistBase = GicRedistributorsBase + 0x20000 * Core;
-    UINT8                 IdBits = (MmioRead32 (GicDistributorBase + 0x04) >> 19) & 0x1F;
-    UINT64                PendBaser;
-    UINT64                PropBaser = PropTableAddr | IdBits;
+  for (ChipIdx = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
+    for (Core = 0; Core < BS1000_CORE_COUNT; ++Core) {
+      EFI_PHYSICAL_ADDRESS  GicRdistBase =
+        PLATFORM_ADDR_OUT_CHIP(ChipIdx, GicRedistributorsBase) + 0x20000 * Core;
+      UINT64                PendBaser = ARM_GICR_PENDBASER_PTZ | PendTableAddr;
 
-    PendTableAddr[Core] = PendTableAddr[0] + 64 * 1024 * Core;
-    PendBaser = PENDBASER_PTZ_BIT | PendTableAddr[Core];
-    MmioWrite64 (GicRdistBase + 0x70, PropBaser);
-    MmioWrite64 (GicRdistBase + 0x78, PendBaser);
-    MmioWrite32 (GicRdistBase + 0x00, MmioRead32 (GicRdistBase + 0x00) | CTLR_ENABLE_LPIS_BIT);
+      MmioWrite64 (GicRdistBase + ARM_GICR_PROPBASER, PropBaser);
+      MmioWrite64 (GicRdistBase + ARM_GICR_PENDBASER, PendBaser);
+      MmioOr32 (GicRdistBase + ARM_GICR_CTLR, ARM_GICR_CTLR_ENABLE_LPIS);
 
-    while (MmioRead64 (GicRdistBase + 0x00) & 1);
+      PendTableAddr += SIZE_64KB;
+    }
   }
 
   return EFI_SUCCESS;

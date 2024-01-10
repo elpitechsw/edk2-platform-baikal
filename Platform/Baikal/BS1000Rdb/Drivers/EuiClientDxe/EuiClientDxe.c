@@ -8,8 +8,6 @@
 #include <Protocol/EuiClient.h>
 #include <Protocol/UidClient.h>
 
-#include <BS1000.h>
-
 STATIC
 VOID
 EFIAPI
@@ -90,7 +88,7 @@ EuiClientGetEui48 (
     MacAddr->Addr[2] = 0x15;
     MacAddr->Addr[3] = (UidClient->Get32 () >> 16) & 0xFF;
     MacAddr->Addr[4] = (UidClient->Get32 () >>  8) & 0xFF;
-    MacAddr->Addr[5] = (UidClient->Get32 () & 0xFE) | (Base == BS1000_GMAC0_BASE ? 0 : 1);
+    MacAddr->Addr[5] = (UidClient->Get32 () & 0xF8) | (DevIdx & 0x7);
   }
 }
 

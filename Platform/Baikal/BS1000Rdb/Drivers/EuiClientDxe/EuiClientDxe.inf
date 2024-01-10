@@ -19,7 +19,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   Platform/Baikal/Baikal.dec
-  Silicon/Baikal/BS1000/BS1000.dec
 
 [LibraryClasses]
   DebugLib

@@ -225,9 +225,9 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[Index++].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
   // End of Table
-  ZeroMem (&VirtualMemoryTable[Index], sizeof (ARM_MEMORY_REGION_DESCRIPTOR));
+  ZeroMem (&VirtualMemoryTable[Index++], sizeof (ARM_MEMORY_REGION_DESCRIPTOR));
 
-  ASSERT (Index < MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS);
+  ASSERT (Index == MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS);
 
   *VirtualMemoryMap = VirtualMemoryTable;
 }

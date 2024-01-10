@@ -5,6 +5,8 @@
 
 #include "AcpiPlatform.h"
 
+#include <BS1000.h>
+
 #define BAIKAL_DSDT_CPU_NODE(Id, CpuId) \
   Device (CPU##Id)                      \
   {                                     \
@@ -17,10 +19,10 @@
   }
 
 #define BAIKAL_DSDT_CLUSTER_NODE(Id, ClusterId, CpuId0, CpuId1, CpuId2, CpuId3) \
-  Device (CLU##Id)                                                              \
+  Device (CL##Id)                                                               \
   {                                                                             \
     Name (_HID, "ACPI0010")                                                     \
-    Name (_UID, ClusterId)                                                      \
+    Name (_UID, BAIKAL_ACPI_CLUSTER_ID(ClusterId))                              \
     Method (_STA)                                                               \
     {                                                                           \
       Return (0xF)                                                              \
@@ -35,32 +37,23 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
 {
   Scope (_SB_)
   {
-    Device (PKG)
-    {
-      Name (_HID, "ACPI0010")
-      Name (_UID, 60)
-      Method (_STA)
-      {
-        Return (0xF)
-      }
-
-      BAIKAL_DSDT_CLUSTER_NODE (0, 48, 0, 1, 2, 3)
-      BAIKAL_DSDT_CLUSTER_NODE (1, 49, 4, 5, 6, 7)
-      BAIKAL_DSDT_CLUSTER_NODE (2, 50, 8, 9, 10, 11)
-      BAIKAL_DSDT_CLUSTER_NODE (3, 51, 12, 13, 14, 15)
-      BAIKAL_DSDT_CLUSTER_NODE (4, 52, 16, 17, 18, 19)
-      BAIKAL_DSDT_CLUSTER_NODE (5, 53, 20, 21, 22, 23)
-      BAIKAL_DSDT_CLUSTER_NODE (6, 54, 24, 25, 26, 27)
-      BAIKAL_DSDT_CLUSTER_NODE (7, 55, 28, 29, 30, 31)
-      BAIKAL_DSDT_CLUSTER_NODE (8, 56, 32, 33, 34, 35)
-      BAIKAL_DSDT_CLUSTER_NODE (9, 57, 36, 37, 38, 39)
-      BAIKAL_DSDT_CLUSTER_NODE (A, 58, 40, 41, 42, 43)
-      BAIKAL_DSDT_CLUSTER_NODE (B, 59, 44, 45, 46, 47)
-    }
+    /* Chip 0 CPUs */
+    BAIKAL_DSDT_CLUSTER_NODE (00, 0, 0, 1, 2, 3)
+    BAIKAL_DSDT_CLUSTER_NODE (01, 1, 4, 5, 6, 7)
+    BAIKAL_DSDT_CLUSTER_NODE (02, 2, 8, 9, 10, 11)
+    BAIKAL_DSDT_CLUSTER_NODE (03, 3, 12, 13, 14, 15)
+    BAIKAL_DSDT_CLUSTER_NODE (04, 4, 16, 17, 18, 19)
+    BAIKAL_DSDT_CLUSTER_NODE (05, 5, 20, 21, 22, 23)
+    BAIKAL_DSDT_CLUSTER_NODE (06, 6, 24, 25, 26, 27)
+    BAIKAL_DSDT_CLUSTER_NODE (07, 7, 28, 29, 30, 31)
+    BAIKAL_DSDT_CLUSTER_NODE (08, 8, 32, 33, 34, 35)
+    BAIKAL_DSDT_CLUSTER_NODE (09, 9, 36, 37, 38, 39)
+    BAIKAL_DSDT_CLUSTER_NODE (10, 10, 40, 41, 42, 43)
+    BAIKAL_DSDT_CLUSTER_NODE (11, 11, 44, 45, 46, 47)
 
     Device (CLK0)
     {
-      Name (_HID, "BKLE0001")
+      Name (_HID, "BKLE1001")
       Name (_UID, Zero)
       Name (_CCA, Zero)
       Method (_STA)
@@ -70,7 +63,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       /* CMU addr, clock name */
       Name (PROP, Package ()
       {
-        0x00410000, "cmu_sc_1"
+        0x00410000, "socket0_sc_cmu1"
       })
       /* Device reference, clock name, clock id, con_id */
       Name (CLKS, Package ()
@@ -84,7 +77,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
 
     Device (CLK1)
     {
-      Name (_HID, "BKLE0001")
+      Name (_HID, "BKLE1001")
       Name (_UID, One)
       Name (_CCA, Zero)
       Method (_STA)
@@ -94,7 +87,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       /* CMU addr, clock name */
       Name (PROP, Package ()
       {
-        0x00420000, "cmu_sc_2"
+        0x00420000, "socket0_sc_cmu2"
       })
       /* Device reference, clock name, clock id, con_id */
       Name (CLKS, Package ()
@@ -107,7 +100,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER0
-    Device (PVC0)
+    Device (PV00)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x04030000)
@@ -131,7 +124,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER1
-    Device (PVC1)
+    Device (PV01)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x08030000)
@@ -155,7 +148,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER2
-    Device (PVC2)
+    Device (PV02)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x0C030000)
@@ -179,7 +172,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER3
-    Device (PVC3)
+    Device (PV03)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x10030000)
@@ -203,7 +196,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER4
-    Device (PVC4)
+    Device (PV04)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x14030000)
@@ -227,7 +220,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER5
-    Device (PVC5)
+    Device (PV05)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x18030000)
@@ -251,7 +244,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER6
-    Device (PVC6)
+    Device (PV06)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x1C030000)
@@ -275,7 +268,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER7
-    Device (PVC7)
+    Device (PV07)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x20030000)
@@ -299,7 +292,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER8
-    Device (PVC8)
+    Device (PV08)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x24030000)
@@ -323,7 +316,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER9
-    Device (PVC9)
+    Device (PV09)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x28030000)
@@ -347,7 +340,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER10
-    Device (PVCA)
+    Device (PV10)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x2C030000)
@@ -371,7 +364,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_CLUSTER11
-    Device (PVCB)
+    Device (PV11)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x30030000)
@@ -395,7 +388,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_PCIE0
-    Device (PVP0)
+    Device (PV12)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x38030000)
@@ -420,7 +413,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_PCIE1
-    Device (PVP1)
+    Device (PV13)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x3C030000)
@@ -445,7 +438,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_PCIE2
-    Device (PVP2)
+    Device (PV14)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x44030000)
@@ -470,7 +463,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_PCIE3
-    Device (PVP3)
+    Device (PV15)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x48030000)
@@ -495,7 +488,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_PCIE4
-    Device (PVP4)
+    Device (PV16)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x4C030000)
@@ -507,7 +500,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x4C030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 376 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -520,7 +515,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_DDR0
-    Device (PVD0)
+    Device (PV17)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x50030000)
@@ -532,7 +527,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x50030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 395 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -545,7 +542,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_DDR1
-    Device (PVD1)
+    Device (PV18)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x54030000)
@@ -557,7 +554,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x54030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 412 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -570,7 +569,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_DDR2
-    Device (PVD2)
+    Device (PV19)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x58030000)
@@ -582,7 +581,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x58030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 429 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -595,7 +596,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_DDR3
-    Device (PVD3)
+    Device (PV20)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x60030000)
@@ -607,7 +608,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x60030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 446 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -620,7 +623,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_DDR4
-    Device (PVD4)
+    Device (PV21)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x64030000)
@@ -632,7 +635,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x64030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 463 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -645,7 +650,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // PVT_DDR5
-    Device (PVD5)
+    Device (PV22)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x68030000)
@@ -657,7 +662,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x68030000, 0x1000)
+#ifndef BAIKAL_MBS_2S
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 480 }
+#endif
       })
       Name (_DSD, Package ()
       {
@@ -670,7 +677,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // USB OHCI
-    Device (USB1)
+    Device (USB0)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x00A00000)
@@ -694,8 +701,8 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       })
     }
 
-    // USB2
-    Device (USB2)
+    // USB EHCI
+    Device (USB1)
     {
       Name (_HID, "PNP0D20")
       Name (_UID, Zero)
@@ -712,7 +719,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // QSPI_1
-    Device (QSP1)
+    Device (QSP0)
     {
       Name (_HID, "HISI0173")
       Name (_UID, Zero)
@@ -737,38 +744,55 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
 
       Device (PR00)
       {
-        Name (_HID, "PRP0001")
-        Name (_UID, 0x00C20000)
         Name (_ADR, Zero)
+        Name (_UID, 0x00C20000)
         Method (_STA)
         {
           Return (0xF)
         }
         Name (_CRS, ResourceTemplate ()
         {
-          SPISerialBusV2 (Zero, PolarityHigh, FourWireMode, 8, ControllerInitiated, 10000000, ClockPolarityLow, ClockPhaseFirst, "\\_SB.QSP1")
+          SPISerialBusV2 (Zero, PolarityLow, FourWireMode, 8, ControllerInitiated, 10000000, ClockPolarityLow, ClockPhaseFirst, "\\_SB.QSP0")
         })
         Name (_DSD, Package ()
         {
           ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package ()
           {
-            Package () { "compatible", "jedec,spi-nor" },
-            Package () { "reg", Zero }
+            Package () { "baikal,partitions", Package ()
+            {
+#ifdef BAIKAL_MBS_2S
+              "bl1",       0x000000, 0x040000,
+              "dtb",       0x040000, 0x0A0000,
+              "trfw",      0x0E0000, 0x020000,
+              "uefi-vars", 0x100000, 0x0C0000,
+              "fip",       0x1C0000, 0x640000
+#else
+              "bl1",       0x000000, 0x040000,
+              "dtb",       0x040000, 0x020000,
+              "trfw",      0x060000, 0x020000,
+              "uefi-vars", 0x080000, 0x0C0000,
+              "fip",       0x140000, 0x6C0000
+#endif
+            }}
           }
         })
       }
     }
 
     // QSPI_2
-    Device (QSP2)
+    Device (QSP1)
     {
       Name (_HID, "HISI0173")
       Name (_UID, One)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX1.STA1)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -778,14 +802,18 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // ESPI
-    Device (ESPI)
+    Device (ESP0)
     {
       Name (_HID, "PRP0001")
       Name (_UID, 0x00C40000)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX2.STA1)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -803,7 +831,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // GPIO32
-    Device (GP32)
+    Device (GP00)
     {
       Name (_HID, "APMC0D07")
       Name (_UID, 0x00C50000)
@@ -839,14 +867,18 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // GPIO16
-    Device (GP16)
+    Device (GP01)
     {
       Name (_HID, "APMC0D07")
       Name (_UID, 0x00C60000)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX2.STA0)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -875,14 +907,18 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // GPIO8_1
-    Device (GP81)
+    Device (GP02)
     {
       Name (_HID, "APMC0D07")
       Name (_UID, 0x00C70000)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX0.STA0)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -911,14 +947,18 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // GPIO8_2
-    Device (GP82)
+    Device (GP03)
     {
       Name (_HID, "APMC0D07")
       Name (_UID, 0x00C80000)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX1.STA0)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -947,7 +987,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // SMBUS_I2C2
-    Device (I2C2)
+    Device (I202)
     {
       Name (_HID, "APMC0D0F")
       Name (_UID, Zero)
@@ -973,7 +1013,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // SMBUS_I2C3
-    Device (I2C3)
+    Device (I203)
     {
       Name (_HID, "APMC0D0F")
       Name (_UID, One)
@@ -999,7 +1039,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // SMBUS_I2C4
-    Device (I2C4)
+    Device (I204)
     {
       Name (_HID, "APMC0D0F")
       Name (_UID, 2)
@@ -1025,14 +1065,18 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // SMBUS_I2C5
-    Device (I2C5)
+    Device (I205)
     {
       Name (_HID, "APMC0D0F")
       Name (_UID, 3)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX0.STA1)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -1051,14 +1095,18 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     }
 
     // SMBUS_I2C6
-    Device (I2C6)
+    Device (I206)
     {
       Name (_HID, "APMC0D0F")
       Name (_UID, 4)
       Name (_CCA, Zero)
       Method (_STA, 0, Serialized)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (\_SB.MUX0.STA1)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
@@ -1076,33 +1124,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       })
     }
 
-    // UART_S
-    Device (COMS)
-    {
-      Name (_HID, "HISI0031")
-      Name (_UID, Zero)
-      Name (_CCA, Zero)
-      Method (_STA, 0, Serialized)
-      {
-        Return (\_SB.MUX0.STA1)
-      }
-      Name (_CRS, ResourceTemplate ()
-      {
-        Memory32Fixed (ReadWrite, 0x00E00000, 0x100)
-        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 92 }
-      })
-      Name (_DSD, Package ()
-      {
-        ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-        Package ()
-        {
-          Package () { "reg-shift", 2 },
-          Package () { "reg-io-width", 4 },
-          Package () { "clock-frequency", 7372800 }
-        }
-      })
-    }
-
+    // UART_A1
     Device (COM0)
     {
       Name (_HID, "ARMH0011")
@@ -1119,6 +1141,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       })
     }
 
+    // UART_A2
     Device (COM1)
     {
       Name (_HID, "ARMH0011")
@@ -1126,12 +1149,47 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CCA, Zero)
       Method (_STA)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (0xF)
+#endif
       }
       Name (_CRS, ResourceTemplate ()
       {
         Memory32Fixed (ReadWrite, 0x00C10000, 0x1000)
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 94 }
+      })
+    }
+
+    // UART_S
+    Device (COM2)
+    {
+      Name (_HID, "HISI0031")
+      Name (_UID, Zero)
+      Name (_CCA, Zero)
+      Method (_STA, 0, Serialized)
+      {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
+        Return (\_SB.MUX0.STA1)
+#endif
+      }
+      Name (_CRS, ResourceTemplate ()
+      {
+        Memory32Fixed (ReadWrite, 0x00E00000, 0x100)
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 92 }
+      })
+      Name (_DSD, Package ()
+      {
+        ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+        Package ()
+        {
+          Package () { "reg-shift", 2 },
+          Package () { "reg-io-width", 4 },
+          Package () { "clock-frequency", 7372800 }
+        }
       })
     }
 
@@ -1156,6 +1214,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
         Package ()
         {
           Package () { "compatible", "baikal,bs1000-gmac" },
+          Package () { "max-speed", 1000 },
           Package () { "reg", One },
           Package () { "phy-mode", "rgmii-rxid" },
         }
@@ -1192,6 +1251,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
         Package ()
         {
           Package () { "compatible", "baikal,bs1000-gmac" },
+          Package () { "max-speed", 1000 },
           Package () { "reg", One },
           Package () { "phy-mode", "rgmii-rxid" },
         }
@@ -1207,14 +1267,21 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       }
     }
 
-    Device (MUXC)
+    Device (MXC0)
     {
       Name (_HID, "BKLE0002")
       Name (_UID, Zero)
       Name (_CCA, Zero)
       Method (_STA)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (0xF)
+#endif
+      }
+      Method (_PXM, 0, NotSerialized) {
+        Return(0)
       }
     }
 
@@ -1225,11 +1292,15 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CCA, Zero)
       Method (_STA)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (0xF)
+#endif
       }
-      Name (MUX, Package () { ^MUXC, 0 })
-      Name (DEV0, Package () { ^GP81 })
-      Name (DEV1, Package () { ^COMS, I2C5, I2C6 })
+      Name (MUX, Package () { ^MXC0, 0 })
+      Name (DEV0, Package () { ^GP02 })
+      Name (DEV1, Package () { ^COM2, I205, I206 })
       Name (STA0, Zero)
       Name (STA1, Zero)
       Method (INIT, 1, Serialized)
@@ -1252,11 +1323,15 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CCA, Zero)
       Method (_STA)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (0xF)
+#endif
       }
-      Name (MUX, Package () { ^MUXC, 1 })
-      Name (DEV0, Package () { ^GP82 })
-      Name (DEV1, Package () { ^QSP2 })
+      Name (MUX, Package () { ^MXC0, 1 })
+      Name (DEV0, Package () { ^GP03 })
+      Name (DEV1, Package () { ^QSP1 })
       Name (STA0, Zero)
       Name (STA1, Zero)
       Method (INIT, 1, Serialized)
@@ -1279,11 +1354,15 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Name (_CCA, Zero)
       Method (_STA)
       {
+#ifdef BAIKAL_MBS_2S
+        Return (Zero)
+#else
         Return (0xF)
+#endif
       }
-      Name (MUX, Package () { ^MUXC, 2 })
-      Name (DEV0, Package () { ^GP16 })
-      Name (DEV1, Package () { ^ESPI })
+      Name (MUX, Package () { ^MXC0, 2 })
+      Name (DEV0, Package () { ^GP01 })
+      Name (DEV1, Package () { ^ESP0 })
       Name (STA0, Zero)
       Name (STA1, Zero)
       Method (INIT, 1, Serialized)
@@ -1298,5 +1377,9 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
         }
       }
     }
+
+#if (PLATFORM_CHIP_COUNT > 1)
+    Include("Dsdt-S1.asi")
+#endif
   }
 }

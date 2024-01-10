@@ -76,8 +76,10 @@ SmbusTxRx (
 
   ASSERT (SmbusRegs != NULL);
   ASSERT (SclClk >= 10000);
-  ASSERT ((Sht == SmbusSht100kHz && SclClk <= 100000) ||
-          (Sht == SmbusSht400kHz && SclClk <= 400000));
+  ASSERT (
+    (Sht == SmbusSht100kHz && SclClk <= 100000) ||
+    (Sht == SmbusSht400kHz && SclClk <= 400000)
+    );
   ASSERT (SclClkDiv <= 1023);
   ASSERT (TargetAddr <= 0x7F);
   ASSERT (TxBuf != NULL || !TxBufSize);

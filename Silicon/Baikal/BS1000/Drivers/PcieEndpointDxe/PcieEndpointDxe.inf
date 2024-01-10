@@ -1,0 +1,33 @@
+## @file
+#
+#  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = PcieEndpointDxe
+  FILE_GUID                      = 6D420E28-53FC-415D-898C-F70271F14501
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = PcieEndpointEntryPoint
+
+[Sources.common]
+  PcieEndpoint.c
+
+[Packages]
+  Platform/Baikal/Baikal.dec
+  MdePkg/MdePkg.dec
+  Silicon/Baikal/BS1000/BS1000.dec
+
+[LibraryClasses]
+  IoLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gFdtClientProtocolGuid   ## CONSUMES
+
+[Depex]
+  TRUE

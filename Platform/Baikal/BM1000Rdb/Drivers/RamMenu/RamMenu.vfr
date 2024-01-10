@@ -1,0 +1,543 @@
+#include "RamMenuDataStruct.h"
+
+formset
+  guid      = BAIKALFORMSET_GUID,
+  title     = STRING_TOKEN(BKL_MAIN_MENU_TITLE),
+  help      = STRING_TOKEN(BKL_MAIN_MENU_HELPER),
+  classguid = EFI_HII_PLATFORM_SETUP_FORMSET_GUID,
+
+  // Vars and store;
+  varstore RAM_MENU_STRUC,
+  name  = BaikalRamStruc,
+  guid  = BAIKALFORMSET_GUID;
+
+  form formid = 1,
+    title = STRING_TOKEN(BKL_MAIN_MENU_TITLE);
+    subtitle text = STRING_TOKEN(BKL_SC_MENU_TITLE);
+    goto 2,
+       prompt = STRING_TOKEN(BKL_DDR_PORT0_TITLE),
+       help   = STRING_TOKEN(BKL_DDR_PORT0_HELPER);
+    goto 3,
+       prompt = STRING_TOKEN(BKL_DDR_PORT1_TITLE),
+       help   = STRING_TOKEN(BKL_DDR_PORT1_HELPER);
+  endform;
+
+  form formid = 2,
+    title = STRING_TOKEN(BKL_DDR_PORT0_HELPER);
+    subtitle text = STRING_TOKEN(BKL_SC_MAIN_MENU_TITLE);
+    oneof name = SelectDDR0,
+      varid   = BaikalRamStruc.Speedbin0,
+      prompt  = STRING_TOKEN(BKL_SB_SETTING_FIELD),
+      help    = STRING_TOKEN(BKL_SB_SETTING_HELPER),
+      option text = STRING_TOKEN(BKL_SB_SETTING_2400), value = 0x3F77, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_SB_SETTING_2133), value = 0x3E33, flags = 0;
+      option text = STRING_TOKEN(BKL_SB_SETTING_1866), value = 0x1622, flags = 0;
+      option text = STRING_TOKEN(BKL_SB_SETTING_1600), value = 0x1600, flags = 0;
+    endoneof;
+    checkbox varid  = BaikalRamStruc.Flash0,
+      prompt   = STRING_TOKEN(BKL_SPD_FLASH_FLAG),
+      help     = STRING_TOKEN(BKL_SPD_FLASH_HELPER),
+      flags    = CHECKBOX_DEFAULT,
+      key      = 0,
+      default  = 0,
+    endcheckbox;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    subtitle text = STRING_TOKEN(BKL_SB_TIMNG_MENU_TTL);
+    oneof name = SelectCL0,
+      varid   = BaikalRamStruc.Cl0,
+      prompt  = STRING_TOKEN(BKL_CL_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_CL_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_9T),  value = 9,  flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_10T), value = 10, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_11T), value = 11, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_12T), value = 12, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_13T), value = 13, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_14T), value = 14, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_15T), value = 15, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_25T), value = 25, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_26T), value = 26, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_27T), value = 27, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_28T), value = 28, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_29T), value = 29, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_30T), value = 30, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_31T), value = 31, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_32T), value = 32, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_33T), value = 33, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_34T), value = 34, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_35T), value = 35, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_36T), value = 36, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_37T), value = 37, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_38T), value = 38, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_39T), value = 39, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_40T), value = 40, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_41T), value = 41, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_42T), value = 42, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_43T), value = 43, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_44T), value = 44, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_45T), value = 45, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_46T), value = 46, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_47T), value = 47, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_48T), value = 48, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_49T), value = 49, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_50T), value = 50, flags = 0;
+    endoneof;
+    oneof name = SelecttRCD0,
+      varid   = BaikalRamStruc.tRCD0,
+      prompt  = STRING_TOKEN(BKL_RCD_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_RCD_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_9T),  value = 9,  flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_10T), value = 10, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_11T), value = 11, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_12T), value = 12, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_13T), value = 13, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_14T), value = 14, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_15T), value = 15, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+    endoneof;
+    oneof name = SelecttRP0,
+      varid   = BaikalRamStruc.tRP0,
+      prompt  = STRING_TOKEN(BKL_RP_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_RP_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_9T),  value = 9,  flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_10T), value = 10, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_11T), value = 11, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_12T), value = 12, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_13T), value = 13, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_14T), value = 14, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_15T), value = 15, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+    endoneof;
+    oneof name = SelecttRAS0,
+      varid   = BaikalRamStruc.tRAS0,
+      prompt  = STRING_TOKEN(BKL_RAS_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_RAS_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_25T), value = 25, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_26T), value = 26, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_27T), value = 27, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_28T), value = 28, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_29T), value = 29, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_30T), value = 30, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_31T), value = 31, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_32T), value = 32, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_33T), value = 33, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_34T), value = 34, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_35T), value = 35, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_36T), value = 36, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_37T), value = 37, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_38T), value = 38, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_39T), value = 39, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_40T), value = 40, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_41T), value = 41, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_42T), value = 42, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_43T), value = 43, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_44T), value = 44, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_45T), value = 45, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_46T), value = 46, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_47T), value = 47, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_48T), value = 48, flags = 0;
+    endoneof;
+    oneof name = SelecttFAW0,
+      varid   = BaikalRamStruc.tFAW0,
+      prompt  = STRING_TOKEN(BKL_FAW_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_FAW_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_25T), value = 25, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_26T), value = 26, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_27T), value = 27, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_28T), value = 28, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_29T), value = 29, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_30T), value = 30, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_31T), value = 31, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_32T), value = 32, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_33T), value = 33, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_34T), value = 34, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_35T), value = 35, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_36T), value = 36, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_37T), value = 37, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_38T), value = 38, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_39T), value = 39, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_40T), value = 40, flags = 0;
+    endoneof;
+    checkbox varid  = BaikalRamStruc.t1T2T0,
+      prompt   = STRING_TOKEN(BKL_1T2T_TMNG_MENU),
+      help     = STRING_TOKEN(BKL_1T2T_TMNG_HELP),
+      flags    = CHECKBOX_DEFAULT,
+      key      = 0,
+      default  = 0,
+    endcheckbox;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    subtitle text = STRING_TOKEN(BKL_SB_RTT_MENU_TITLE);
+    oneof name = SelectDic0,
+      varid   = BaikalRamStruc.Dic0,
+      prompt  = STRING_TOKEN(BKL_RTT_ODI_MENU),
+      help    = STRING_TOKEN(BKL_RTT_ODI_HELP),
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_7), value = 0x0FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_5), value = 0x0F0F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    oneof name = SelectRttWr0,
+      varid   = BaikalRamStruc.RttWr0,
+      prompt  = STRING_TOKEN(BKL_RTT_WR_MENU),
+      help    = STRING_TOKEN(BKL_RTT_WR_HELP),
+      option text = STRING_TOKEN(BKL_RTTWR_DYN_OFF), value = 0x7FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_4), value = 0x07FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_2), value = 0x03FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTTWR_HI_Z),    value = 0x01FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_3), value = 0x00FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    oneof name = SelectRttNom0,
+      varid   = BaikalRamStruc.RttNom0,
+      prompt  = STRING_TOKEN(BKL_RTT_NOM_MENU),
+      help    = STRING_TOKEN(BKL_RTT_NOM_HELP),
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIS),   value = 0x7FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_4), value = 0x07FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_2), value = 0x03FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_6), value = 0x01FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_1), value = 0x00FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_5), value = 0x007F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_3), value = 0x003F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_7), value = 0x0037, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    oneof name = SelectRttPark0,
+      varid   = BaikalRamStruc.RttPark0,
+      prompt  = STRING_TOKEN(BKL_RTT_PARK_MENU),
+      help    = STRING_TOKEN(BKL_RTT_PARK_HELP),
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIS),   value = 0x7FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_4), value = 0x07FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_2), value = 0x03FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_6), value = 0x01FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_1), value = 0x00FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_5), value = 0x007F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_3), value = 0x003F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_7), value = 0x0037, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    subtitle text = STRING_TOKEN(BKL_SB_VRF_MENU_TITLE);
+    checkbox varid  = BaikalRamStruc.VrefFlag0,
+      prompt   = STRING_TOKEN(BKL_VRF_ENABLE_MENU),
+      help     = STRING_TOKEN(BKL_VRF_ENABLE_HELP),
+      flags    = CHECKBOX_DEFAULT,
+      key      = 0,
+      default  = 0,
+    endcheckbox;
+    suppressif ideqval BaikalRamStruc.VrefFlag0 == 0x0;
+      numeric varid = BaikalRamStruc.DramVref0,
+        prompt   = STRING_TOKEN(BKL_VRF_DRAM_MENU),
+        help     = STRING_TOKEN(BKL_VRF_DRAM_HELP),
+        flags    = INTERACTIVE,
+        minimum  = 0,
+        maximum  = 50,
+        default  = 0,
+      endnumeric;
+      numeric varid = BaikalRamStruc.HostVref0,
+        prompt   = STRING_TOKEN(BKL_VRF_HOST_MENU),
+        help     = STRING_TOKEN(BKL_VRF_HOST_HELP),
+        flags    = INTERACTIVE,
+        minimum  = 0,
+        maximum  = 50,
+        default  = 9,
+      endnumeric;
+    endif;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    goto 1,
+       prompt = STRING_TOKEN(BKL_DDR_BACK_TO_MAIN),
+       help   = STRING_TOKEN(BKL_EMPTY);
+  endform;
+
+  form formid = 3,
+    title = STRING_TOKEN(BKL_DDR_PORT1_HELPER);
+    subtitle text = STRING_TOKEN(BKL_SC_MAIN_MENU_TITLE);
+    oneof name = SelectDDR1,
+      varid   = BaikalRamStruc.Speedbin1,
+      prompt  = STRING_TOKEN(BKL_SB_SETTING_FIELD),
+      help    = STRING_TOKEN(BKL_SB_SETTING_HELPER),
+      option text = STRING_TOKEN(BKL_SB_SETTING_2400), value = 0x3F77, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_SB_SETTING_2133), value = 0x3E33, flags = 0;
+      option text = STRING_TOKEN(BKL_SB_SETTING_1866), value = 0x1622, flags = 0;
+      option text = STRING_TOKEN(BKL_SB_SETTING_1600), value = 0x1600, flags = 0;
+    endoneof;
+    checkbox varid  = BaikalRamStruc.Flash1,
+      prompt   = STRING_TOKEN(BKL_SPD_FLASH_FLAG),
+      help     = STRING_TOKEN(BKL_SPD_FLASH_HELPER),
+      flags    = CHECKBOX_DEFAULT,
+      key      = 0,
+      default  = 0,
+    endcheckbox;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    subtitle text = STRING_TOKEN(BKL_SB_TIMNG_MENU_TTL);
+    oneof name = SelectCL1,
+      varid   = BaikalRamStruc.Cl1,
+      prompt  = STRING_TOKEN(BKL_CL_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_CL_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_9T),  value = 9,  flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_10T), value = 10, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_11T), value = 11, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_12T), value = 12, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_13T), value = 13, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_14T), value = 14, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_15T), value = 15, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_25T), value = 25, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_26T), value = 26, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_27T), value = 27, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_28T), value = 28, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_29T), value = 29, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_30T), value = 30, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_31T), value = 31, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_32T), value = 32, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_33T), value = 33, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_34T), value = 34, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_35T), value = 35, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_36T), value = 36, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_37T), value = 37, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_38T), value = 38, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_39T), value = 39, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_40T), value = 40, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_41T), value = 41, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_42T), value = 42, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_43T), value = 43, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_44T), value = 44, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_45T), value = 45, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_46T), value = 46, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_47T), value = 47, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_48T), value = 48, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_49T), value = 49, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_50T), value = 50, flags = 0;
+    endoneof;
+    oneof name = SelecttRCD1,
+      varid   = BaikalRamStruc.tRCD1,
+      prompt  = STRING_TOKEN(BKL_RCD_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_RCD_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_9T),  value = 9,  flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_10T), value = 10, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_11T), value = 11, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_12T), value = 12, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_13T), value = 13, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_14T), value = 14, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_15T), value = 15, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+    endoneof;
+    oneof name = SelecttRP1,
+      varid   = BaikalRamStruc.tRP1,
+      prompt  = STRING_TOKEN(BKL_RP_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_RP_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_9T),  value = 9,  flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_10T), value = 10, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_11T), value = 11, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_12T), value = 12, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_13T), value = 13, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_14T), value = 14, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_15T), value = 15, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+    endoneof;
+    oneof name = SelecttRAS1,
+      varid   = BaikalRamStruc.tRAS1,
+      prompt  = STRING_TOKEN(BKL_RAS_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_RAS_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 0x5FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_25T), value = 25, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_26T), value = 26, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_27T), value = 27, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_28T), value = 28, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_29T), value = 29, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_30T), value = 30, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_31T), value = 31, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_32T), value = 32, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_33T), value = 33, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_34T), value = 34, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_35T), value = 35, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_36T), value = 36, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_37T), value = 37, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_38T), value = 38, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_39T), value = 39, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_40T), value = 40, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_41T), value = 41, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_42T), value = 42, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_43T), value = 43, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_44T), value = 44, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_45T), value = 45, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_46T), value = 46, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_47T), value = 47, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_48T), value = 48, flags = 0;
+    endoneof;
+    oneof name = SelecttFAW1,
+      varid   = BaikalRamStruc.tFAW1,
+      prompt  = STRING_TOKEN(BKL_FAW_TMNG_MENU),
+      help    = STRING_TOKEN(BKL_FAW_TMNG_HELP),
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_16T), value = 16, flags = DEFAULT;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_17T), value = 17, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_18T), value = 18, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_19T), value = 19, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_20T), value = 20, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_21T), value = 21, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_22T), value = 22, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_23T), value = 23, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_24T), value = 24, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_25T), value = 25, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_26T), value = 26, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_27T), value = 27, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_28T), value = 28, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_29T), value = 29, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_30T), value = 30, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_31T), value = 31, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_32T), value = 32, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_33T), value = 33, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_34T), value = 34, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_35T), value = 35, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_36T), value = 36, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_37T), value = 37, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_38T), value = 38, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_39T), value = 39, flags = 0;
+      option text = STRING_TOKEN(BKL_TMG_MENU_SEL_40T), value = 40, flags = 0;
+    endoneof;
+    checkbox varid  = BaikalRamStruc.t1T2T1,
+      prompt   = STRING_TOKEN(BKL_1T2T_TMNG_MENU),
+      help     = STRING_TOKEN(BKL_1T2T_TMNG_HELP),
+      flags    = CHECKBOX_DEFAULT,
+      key      = 0,
+      default  = 0,
+    endcheckbox;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    subtitle text = STRING_TOKEN(BKL_SB_RTT_MENU_TITLE);
+    oneof name = SelectDic1,
+      varid   = BaikalRamStruc.Dic1,
+      prompt  = STRING_TOKEN(BKL_RTT_ODI_MENU),
+      help    = STRING_TOKEN(BKL_RTT_ODI_HELP),
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_7), value = 0x0FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_5), value = 0x0F0F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    oneof name = SelectRttWr1,
+      varid   = BaikalRamStruc.RttWr1,
+      prompt  = STRING_TOKEN(BKL_RTT_WR_MENU),
+      help    = STRING_TOKEN(BKL_RTT_WR_HELP),
+      option text = STRING_TOKEN(BKL_RTTWR_DYN_OFF), value = 0x7FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_4), value = 0x07FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_2), value = 0x03FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTTWR_HI_Z),    value = 0x01FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_3), value = 0x00FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    oneof name = SelectRttNom1,
+      varid   = BaikalRamStruc.RttNom1,
+      prompt  = STRING_TOKEN(BKL_RTT_NOM_MENU),
+      help    = STRING_TOKEN(BKL_RTT_NOM_HELP),
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIS),   value = 0x7FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_4), value = 0x07FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_2), value = 0x03FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_6), value = 0x01FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_1), value = 0x00FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_5), value = 0x007F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_3), value = 0x003F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_7), value = 0x0037, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    oneof name = SelectRttPark1,
+      varid   = BaikalRamStruc.RttPark1,
+      prompt  = STRING_TOKEN(BKL_RTT_PARK_MENU),
+      help    = STRING_TOKEN(BKL_RTT_PARK_HELP),
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIS),   value = 0x7FFF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_4), value = 0x07FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_2), value = 0x03FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_6), value = 0x01FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_1), value = 0x00FF, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_5), value = 0x007F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_3), value = 0x003F, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_RZQ_DIV_7), value = 0x0037, flags = 0;
+      option text = STRING_TOKEN(BKL_RTT_DEFAULT),   value = 0x0000, flags = DEFAULT;
+    endoneof;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    subtitle text = STRING_TOKEN(BKL_SB_VRF_MENU_TITLE);
+    checkbox varid  = BaikalRamStruc.VrefFlag1,
+      prompt   = STRING_TOKEN(BKL_VRF_ENABLE_MENU),
+      help     = STRING_TOKEN(BKL_VRF_ENABLE_HELP),
+      flags    = CHECKBOX_DEFAULT,
+      key      = 0,
+      default  = 0,
+    endcheckbox;
+    suppressif ideqval BaikalRamStruc.VrefFlag1 == 0x0;
+      numeric varid = BaikalRamStruc.DramVref1,
+        prompt   = STRING_TOKEN(BKL_VRF_DRAM_MENU),
+        help     = STRING_TOKEN(BKL_VRF_DRAM_HELP),
+        flags    = INTERACTIVE,
+        minimum  = 0,
+        maximum  = 50,
+        default  = 0,
+      endnumeric;
+      numeric varid = BaikalRamStruc.HostVref1,
+        prompt   = STRING_TOKEN(BKL_VRF_HOST_MENU),
+        help     = STRING_TOKEN(BKL_VRF_HOST_HELP),
+        flags    = INTERACTIVE,
+        minimum  = 0,
+        maximum  = 50,
+        default  = 9,
+      endnumeric;
+    endif;
+    subtitle text = STRING_TOKEN(BKL_EMPTY);
+    goto 1,
+       prompt = STRING_TOKEN(BKL_DDR_BACK_TO_MAIN),
+       help   = STRING_TOKEN(BKL_EMPTY);
+  endform;
+
+endformset;

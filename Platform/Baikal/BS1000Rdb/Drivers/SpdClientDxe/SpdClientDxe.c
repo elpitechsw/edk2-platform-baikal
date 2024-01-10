@@ -13,7 +13,6 @@
 
 #include <BS1000.h>
 
-#define DIMM_NUM     12
 #define SPD_MAXSIZE  512
 
 #define SPD_SPA0     0x36
@@ -23,6 +22,7 @@ STATIC
 CONST VOID *
 EFIAPI
 SpdClientGetData (
+  IN  CONST UINTN  ChipIdx,
   IN  CONST UINTN  DimmIdx
   );
 
@@ -33,7 +33,7 @@ SpdClientGetMaxSize (
   VOID
   );
 
-STATIC UINT8  SpdData[DIMM_NUM][SPD_MAXSIZE];
+STATIC UINT8  SpdData[PLATFORM_CHIP_COUNT][BS1000_DIMM_COUNT][SPD_MAXSIZE];
 
 EFI_STATUS
 EFIAPI
@@ -42,6 +42,7 @@ SpdClientDxeInitialize (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  UINTN                 ChipIdx;
   UINTN                 DimmIdx;
   FDT_CLIENT_PROTOCOL  *FdtClient;
   EFI_STATUS            Status;
@@ -79,53 +80,57 @@ SpdClientDxeInitialize (
     return Status;
   }
 
-  for (DimmIdx = 0; DimmIdx < ARRAY_SIZE (SpdData); ++DimmIdx) {
-    UINT8                        *Buf  = SpdData[DimmIdx];
-    CONST  EFI_PHYSICAL_ADDRESS   I2cBase = DimmIdx < 6 ? BS1000_I2C2_BASE : BS1000_I2C3_BASE;
-    UINTN                         I2cIclk;
-    INT32                         Node = 0;
-    INTN                          RxSize;
-    CONST  UINTN                  SpdAddr = 0x50 + DimmIdx % 6;
-    UINT8                         StartAddr = 0;
+  for (ChipIdx = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
+    for (DimmIdx = 0; DimmIdx < BS1000_DIMM_COUNT; ++DimmIdx) {
+      UINT8                        *Buf  = SpdData[ChipIdx][DimmIdx];
+      CONST  EFI_PHYSICAL_ADDRESS   I2cBase = DimmIdx < (BS1000_DIMM_COUNT / 2) ?
+                                      PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C2_BASE) :
+                                      PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C3_BASE);
+      UINTN                         I2cIclk;
+      INT32                         Node = 0;
+      INTN                          RxSize;
+      CONST  UINTN                  SpdAddr = 0x50 + DimmIdx % 6;
+      UINT8                         StartAddr = 0;
 
-    for (;;) {
-      CONST VOID  *Prop;
-      UINT32       PropSize;
+      for (;;) {
+        CONST VOID  *Prop;
+        UINT32       PropSize;
 
-      if (FdtClient->FindNextCompatibleNode (FdtClient, "snps,designware-i2c", Node, &Node) != EFI_SUCCESS) {
-        return EFI_DEVICE_ERROR;
+        if (FdtClient->FindNextCompatibleNode (FdtClient, "snps,designware-i2c", Node, &Node) != EFI_SUCCESS) {
+          return EFI_DEVICE_ERROR;
+        }
+
+        if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64) &&
+            SwapBytes64 (ReadUnaligned64 (Prop)) == I2cBase &&
+            FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
+            FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
+            FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+          I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
+          break;
+        }
       }
 
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64) &&
-          SwapBytes64 (((CONST UINT64 *) Prop)[0]) == I2cBase &&
-          FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
-          FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
-          FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
-        I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
-        break;
-      }
-    }
+      gBS->SetMem (Buf, SPD_MAXSIZE, 0xFF);
 
-    gBS->SetMem (Buf, sizeof (SpdData[0]), 0xFF);
+      I2cTxRx (I2cBase, I2cIclk, SPD_SPA0, &StartAddr, sizeof (StartAddr), NULL, 0);
+      RxSize = I2cTxRx (I2cBase, I2cIclk, SpdAddr, &StartAddr, sizeof (StartAddr), Buf, 128);
 
-    I2cTxRx (I2cBase, I2cIclk, SPD_SPA0, &StartAddr, sizeof (StartAddr), NULL, 0);
-    RxSize = I2cTxRx (I2cBase, I2cIclk, SpdAddr, &StartAddr, sizeof (StartAddr), Buf, 128);
+      if (RxSize == 128 &&
+          Crc16 (Buf, 126, 0) == ((Buf[127] << 8) | Buf[126])) {
+        CONST UINTN  BytesUsed = Buf[0] & 0xF;
 
-    if (RxSize == 128 &&
-        Crc16 (Buf, 126, 0) == ((Buf[127] << 8) | Buf[126])) {
-      CONST UINTN  BytesUsed = Buf[0] & 0xF;
-
-      if (BytesUsed > 1 && BytesUsed < 5) {
-        Buf += RxSize;
-        StartAddr += RxSize;
-        RxSize = I2cTxRx (I2cBase, I2cIclk, SpdAddr, &StartAddr, sizeof (StartAddr), Buf, 128);
-
-        if (RxSize == 128 && BytesUsed > 2) {
+        if (BytesUsed > 1 && BytesUsed < 5) {
           Buf += RxSize;
-          StartAddr = 0;
-          I2cTxRx (I2cBase, I2cIclk, SPD_SPA1, &StartAddr, sizeof (StartAddr), NULL, 0);
-          I2cTxRx (I2cBase, I2cIclk, SpdAddr,  &StartAddr, sizeof (StartAddr), Buf, BytesUsed == 3 ? 128 : 256);
-          I2cTxRx (I2cBase, I2cIclk, SPD_SPA0, &StartAddr, sizeof (StartAddr), NULL, 0);
+          StartAddr += RxSize;
+          RxSize = I2cTxRx (I2cBase, I2cIclk, SpdAddr, &StartAddr, sizeof (StartAddr), Buf, 128);
+
+          if (RxSize == 128 && BytesUsed > 2) {
+            Buf += RxSize;
+            StartAddr = 0;
+            I2cTxRx (I2cBase, I2cIclk, SPD_SPA1, &StartAddr, sizeof (StartAddr), NULL, 0);
+            I2cTxRx (I2cBase, I2cIclk, SpdAddr,  &StartAddr, sizeof (StartAddr), Buf, BytesUsed == 3 ? 128 : 256);
+            I2cTxRx (I2cBase, I2cIclk, SPD_SPA0, &StartAddr, sizeof (StartAddr), NULL, 0);
+          }
         }
       }
     }
@@ -138,14 +143,15 @@ STATIC
 CONST VOID *
 EFIAPI
 SpdClientGetData (
+  IN  CONST UINTN  ChipIdx,
   IN  CONST UINTN  DimmIdx
   )
 {
-  if (DimmIdx >= ARRAY_SIZE (SpdData)) {
+  if (ChipIdx >= PLATFORM_CHIP_COUNT || DimmIdx >= BS1000_DIMM_COUNT) {
     return NULL;
   }
 
-  return SpdData[DimmIdx];
+  return SpdData[ChipIdx][DimmIdx];
 }
 
 STATIC
@@ -155,5 +161,5 @@ SpdClientGetMaxSize (
   VOID
   )
 {
-  return sizeof (SpdData[0]);
+  return SPD_MAXSIZE;
 }

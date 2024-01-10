@@ -52,7 +52,7 @@ XGmacDxeDriverEntry (
 
     Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
     if (Status == EFI_SUCCESS && PropSize > 0 && (PropSize % (2 * sizeof (UINT64))) == 0) {
-      XGmacRegs = SwapBytes64 (((CONST UINT64 *) Prop)[0]);
+      XGmacRegs = SwapBytes64 (ReadUnaligned64 (Prop));
     } else {
       continue;
     }

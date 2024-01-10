@@ -95,6 +95,14 @@ STATIC PLATFORM_USB_KEYBOARD  mUsbKeyboard = {
 };
 
 /**
+  Background and foreground colors.
+
+  Initializer format is as follows:                 {Blue,  Green, Red,   0}
+**/
+STATIC EFI_GRAPHICS_OUTPUT_BLT_PIXEL  mBackground = {0,     0,     0,     0};
+STATIC EFI_GRAPHICS_OUTPUT_BLT_PIXEL  mForeground = {0xFF,  0xFF,  0xFF,  0};
+
+/**
   Check if the handle satisfies a particular condition.
 
   @param[in] Handle      The handle to check.
@@ -768,10 +776,11 @@ PlatformBootManagerAfterConsole (
   VOID
   )
 {
-  EFI_INPUT_KEY  Key;
-  EFI_STATUS     Status;
-  UINTN          VersionLen;
-  CHAR16         VersionStr[80];
+  EFI_INPUT_KEY                  Key;
+  EFI_STATUS                     Status;
+  UINTN                          VersionLen;
+  CHAR16                         VersionStr[80];
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
 
   VersionLen = UnicodeSPrint (
     VersionStr,
@@ -784,6 +793,29 @@ PlatformBootManagerAfterConsole (
     TIME_BUILD_DAY
     );
 
+  Status = gBS->HandleProtocol (
+                gST->ConsoleOutHandle,
+                &gEfiGraphicsOutputProtocolGuid,
+                (VOID **) &GraphicsOutput
+                );
+  if (EFI_ERROR (Status)) {
+    GraphicsOutput = NULL;
+  }
+  if (GraphicsOutput != NULL) {
+    Status = GraphicsOutput->Blt (
+                               GraphicsOutput,
+                               &mBackground,
+                               EfiBltVideoFill,
+                               0,
+                               0,
+                               0,
+                               0,
+                               GraphicsOutput->Mode->Info->HorizontalResolution,
+                               GraphicsOutput->Mode->Info->VerticalResolution,
+                               0
+                               );
+  }
+
   Status = BootLogoEnableLogo ();
   if (EFI_ERROR (Status)) {
     if (VersionLen > 0) {
@@ -792,28 +824,16 @@ PlatformBootManagerAfterConsole (
 
     Print (L"Press <Esc> or <F2> to enter setup, <S> to enter shell, <Enter> to continue...");
   } else if (VersionLen > 0) {
-    EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
-
-    Status = gBS->HandleProtocol (
-                    gST->ConsoleOutHandle,
-                    &gEfiGraphicsOutputProtocolGuid,
-                    (VOID **) &GraphicsOutput
-                    );
-    if (!EFI_ERROR (Status)) {
-      EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Black;
-      EFI_GRAPHICS_OUTPUT_BLT_PIXEL  White;
-      UINTN                          PosX;
-
-      Black.Blue = Black.Green = Black.Red = Black.Reserved = 0;
-      White.Blue = White.Green = White.Red = White.Reserved = 0xFF;
+    if (GraphicsOutput != NULL) {
+      UINTN  PosX;
 
       PosX = (GraphicsOutput->Mode->Info->HorizontalResolution -
               VersionLen * EFI_GLYPH_WIDTH) / 2;
-      PrintXY (PosX, 10, NULL, NULL, L"%s", VersionStr);
+      PrintXY (PosX, 10, &mForeground, &mBackground, L"%s", VersionStr);
 
-      PrintXY (10, 30, &White, &Black, L"Press <Esc> or <F2> to enter setup");
-      PrintXY (10, 50, &White, &Black, L"Press <S> to enter shell");
-      PrintXY (10, 70, &White, &Black, L"Press <Enter> to continue");
+      PrintXY (10, 30, &mForeground, &mBackground, L"Press <Esc> or <F2> to enter setup");
+      PrintXY (10, 50, &mForeground, &mBackground, L"Press <S> to enter shell");
+      PrintXY (10, 70, &mForeground, &mBackground, L"Press <Enter> to continue");
     }
   }
 
@@ -837,6 +857,112 @@ PlatformBootManagerAfterConsole (
 }
 
 /**
+
+  Update progress bar with title above it. It only works in Graphics mode.
+
+  @param TitleForeground Foreground color for Title.
+  @param TitleBackground Background color for Title.
+  @param Title           Title above progress bar.
+  @param ProgressColor   Progress bar color.
+  @param Progress        Progress (0-100)
+  @param PreviousValue   The previous value of the progress.
+
+  @retval  EFI_STATUS       Success update the progress bar
+
+**/
+STATIC
+EFI_STATUS
+EFIAPI
+UpdateProgress (
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  TitleForeground,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  TitleBackground,
+  IN CHAR16                         *Title,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  ProgressForeground,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  ProgressBackground,
+  IN UINTN                          Progress,
+  IN UINTN                          PreviousValue
+  )
+{
+  EFI_STATUS                     Status;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL   *GraphicsOutput;
+  UINT32                         SizeOfX;
+  UINT32                         SizeOfY;
+  UINTN                          BlockHeight;
+  UINTN                          BlockWidth;
+  UINTN                          BlockNum;
+  UINTN                          PosX;
+  UINTN                          PosY;
+  UINTN                          Index;
+
+  if (Progress > 100) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status  = gBS->HandleProtocol (gST->ConsoleOutHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **)&GraphicsOutput);
+  if (EFI_ERROR (Status)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  SizeOfX = GraphicsOutput->Mode->Info->HorizontalResolution;
+  SizeOfY = GraphicsOutput->Mode->Info->VerticalResolution;
+
+  BlockWidth  = SizeOfX / 100;
+  BlockHeight = SizeOfY / 50;
+
+  BlockNum = Progress;
+
+  PosX = 0;
+  PosY = SizeOfY * 48 / 50;
+
+  if (BlockNum == 0) {
+    //
+    // Clear progress area
+    //
+    Status = GraphicsOutput->Blt (
+                               GraphicsOutput,
+                               &ProgressBackground,
+                               EfiBltVideoFill,
+                               0,
+                               0,
+                               0,
+                               PosY - EFI_GLYPH_HEIGHT - 1,
+                               SizeOfX,
+                               SizeOfY - (PosY - EFI_GLYPH_HEIGHT - 1),
+                               SizeOfX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                               );
+  }
+
+  //
+  // Show progress by drawing blocks
+  //
+  for (Index = PreviousValue; Index < BlockNum; Index++) {
+    PosX = Index * BlockWidth;
+    Status = GraphicsOutput->Blt (
+                               GraphicsOutput,
+                               &ProgressForeground,
+                               EfiBltVideoFill,
+                               0,
+                               0,
+                               PosX,
+                               PosY,
+                               BlockWidth - 1,
+                               BlockHeight,
+                               (BlockWidth) * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                               );
+  }
+
+  PrintXY (
+    (SizeOfX - StrLen (Title) * EFI_GLYPH_WIDTH) / 2,
+    PosY - EFI_GLYPH_HEIGHT - 1,
+    &TitleForeground,
+    &TitleBackground,
+    Title
+    );
+
+  return EFI_SUCCESS;
+}
+
+/**
   This function is called each second during the boot manager waits the
   timeout.
 
@@ -848,8 +974,6 @@ PlatformBootManagerWaitCallback (
   UINT16  TimeoutRemain
   )
 {
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION  Black;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION  White;
   UINT16                               Timeout;
   EFI_STATUS                           Status;
 
@@ -859,16 +983,14 @@ PlatformBootManagerWaitCallback (
 
   Timeout = PcdGet16 (PcdPlatformBootTimeOut);
 
-  Black.Raw = 0;
-  White.Raw = 0xFFFFFF;
-
-  Status = BootLogoUpdateProgress (
-             White.Pixel,
-             Black.Pixel,
+  Status = UpdateProgress (
+             mForeground,
+             mBackground,
              TimeoutRemain > 0 ?
                L"Wait for a key press..." :
                L"                       ",
-             White.Pixel,
+             mForeground,
+             mBackground,
              (Timeout - TimeoutRemain) * 100 / Timeout,
              0
              );
@@ -912,19 +1034,14 @@ PlatformBootManagerUnableToBoot (
   // (e.g. UiApp + UEFI Shell + something else).
   //
   if (OldBootOptionCount > 2) {
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION  Black;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION  White;
-
     Print (L"\nUnable to boot. Press Ctrl+Alt+Del to restart\n");
 
-    Black.Raw = 0;
-    White.Raw = 0xFFFFFF;
-
-    BootLogoUpdateProgress (
-      White.Pixel,
-      Black.Pixel,
+    UpdateProgress (
+      mForeground,
+      mBackground,
       L"                                                  ",
-      White.Pixel,
+      mForeground,
+      mBackground,
       0,
       0
       );

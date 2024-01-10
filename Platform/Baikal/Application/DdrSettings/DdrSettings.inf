@@ -1,0 +1,33 @@
+## @file
+#
+#  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = DdrSettings
+  FILE_GUID                      = B9689D96-7C6B-A43C-C480-6480413631D9
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DdrSettingsAppMain
+
+[Sources]
+  DdrSettings.c
+  DdrSettings.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Platform/Baikal/Baikal.dec
+  ShellPkg/ShellPkg.dec
+
+[Protocols]
+  gEfiShellParametersProtocolGuid               # PROTOCOL ALWAYS_CONSUMED
+  gEfiShellProtocolGuid                         # PROTOCOL ALWAYS_CONSUMED
+
+[LibraryClasses]
+  ShellLib
+  SmcFlashLib
+  UefiApplicationEntryPoint
+  UefiLib

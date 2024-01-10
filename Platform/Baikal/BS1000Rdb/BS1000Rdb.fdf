@@ -205,6 +205,7 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
+  INF Silicon/Baikal/BS1000/Drivers/PcieEndpointDxe/PcieEndpointDxe.inf
   INF ArmPkg/Drivers/ArmPciCpuIo2Dxe/ArmPciCpuIo2Dxe.inf
   INF Emulator/X86EmulatorDxe/X86EmulatorDxe.inf
   INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf

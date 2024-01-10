@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -10,6 +10,12 @@
 PCI_ROOT_BRIDGE *
 PciHostBridgeLibGetRootBridges (
   OUT UINTN * CONST  Count
+);
+
+VOID
+PciHostBridgeLibFreeRootBridges (
+  PCI_ROOT_BRIDGE  *Bridges,
+  UINTN             Count
 );
 
 PCI_ROOT_BRIDGE *
@@ -28,7 +34,7 @@ PciHostBridgeFreeRootBridges (
   UINTN             Count
   )
 {
-  FreePool (Bridges);
+  PciHostBridgeLibFreeRootBridges (Bridges, Count);
 }
 
 GLOBAL_REMOVE_IF_UNREFERENCED

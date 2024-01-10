@@ -19,6 +19,7 @@
 [Packages]
   ArmPkg/ArmPkg.dec
   MdePkg/MdePkg.dec
+  Silicon/Baikal/BS1000/BS1000.dec
 
 [LibraryClasses]
   IoLib
