@@ -32,6 +32,9 @@
   DebugLib
   GpioLib
 
+[Pcd]
+  gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk
+
 [Protocols]
   gFdtClientProtocolGuid   ## CONSUMES
 
