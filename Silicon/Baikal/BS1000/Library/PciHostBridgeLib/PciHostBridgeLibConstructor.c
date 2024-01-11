@@ -334,7 +334,7 @@ PciHostBridgeLibRootBridgeLinkUp (
   TimeStart = GetTimeInNanoSecond (GetPerformanceCounter ());
   for (;;) {
     CONST UINT32  PcieApbPeLinkDbg2 = MmioRead32 (mPcieApbBases[PcieIdx] + BS1000_PCIE_APB_PE_LINK_DBG2);
-    CONST UINT64  PerformanceCounter = GetPerformanceCounter ();
+    UINT64        PerformanceCounter = GetPerformanceCounter ();
 
     if (!ComponentExists) {
       if ((PcieApbPeLinkDbg2 & BS1000_PCIE_APB_PE_LINK_DBG2_LTSSM_STATE_MASK) > 0x1) {
@@ -395,6 +395,16 @@ PciHostBridgeLibRootBridgeLinkUp (
             BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT
           ));
 #endif
+        // Wait until device starts responding to cfg requests
+        while (MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20)) == 0) {
+          PerformanceCounter = GetPerformanceCounter ();
+          MmioWrite32(mPcieCfgBases[PcieIdx] + (1 << 20), 0xffffffff);
+          gBS->Stall (1000);
+          if (((GetTimeInNanoSecond (PerformanceCounter) - TimeStart) / 1000000) > 1000) {
+            break;
+          }
+        }
+
         if (MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20)) != 0xFFFFFFFF &&
             MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20) + 0x8000) == 0xFFFFFFFF) {
           //
@@ -409,6 +419,14 @@ PciHostBridgeLibRootBridgeLinkUp (
           DEBUG ((EFI_D_INFO, ", Cfg0Filter-\n"));
 #endif
         }
+#if !defined(MDEPKG_NDEBUG)
+        DEBUG((EFI_D_INFO,
+          "PcieRoot(0x%x): [%dms]: dev_id at 1:0.0 - %x, dev_id at 1:1.0 - %x\n",
+          PcieIdx,
+          (GetTimeInNanoSecond (PerformanceCounter) - TimeStart) / 1000000,
+          MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20)),
+          MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20) + 0x8000)));
+#endif
 
         break;
       } else if (GetTimeInNanoSecond (PerformanceCounter) - TimeStart > 100000000) {
