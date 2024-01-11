@@ -395,8 +395,8 @@ PciHostBridgeLibRootBridgeLinkUp (
             BS1000_PCIE_PF0_PCIE_CAP_LINK_CONTROL_LINK_STATUS_REG_NEGO_LINK_WIDTH_SHIFT
           ));
 #endif
-        if (MmioRead32 (mPcieCfgBases[PcieIdx]) != 0xFFFFFFFF &&
-            MmioRead32 (mPcieCfgBases[PcieIdx] + 0x8000) == 0xFFFFFFFF) {
+        if (MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20)) != 0xFFFFFFFF &&
+            MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20) + 0x8000) == 0xFFFFFFFF) {
           //
           // Device appears to filter CFG0 requests, so the 64 KiB granule for the iATU
           // isn't a problem. We don't have to ignore fn > 0 or shift MCFG by 0x8000.
@@ -524,7 +524,7 @@ PciHostBridgeLibRootBrigeInit (
   MmioAndThenOr32 (
     mPcieDbiBases[PcieIdx] + BS1000_PCIE_PF0_TYPE1_HDR_TYPE1_CLASS_CODE_REV_ID_REG,
     0x000000FF,
-    0x06040000
+    0x06040100
     );
 
   if (PciePortLinkCapableLanesVal) {
@@ -567,9 +567,9 @@ PciHostBridgeLibRootBrigeInit (
   PciHostBridgeLibCfgWindow (
     mPcieDbiBases[PcieIdx],
     0,
-    mPcieCfgBases[PcieIdx],
+    mPcieCfgBases[PcieIdx] + SIZE_1MB,
     0, // See AcpiPlatformDxe/Iort.c for implications of using 0 here instead of encoding the bus
-    CfgSize >= SIZE_2MB ? SIZE_2MB : CfgSize,
+    SIZE_64KB,
     BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG0,
     BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
     );
@@ -578,9 +578,9 @@ PciHostBridgeLibRootBrigeInit (
   PciHostBridgeLibCfgWindow (
     mPcieDbiBases[PcieIdx],
     1,
-    mPcieCfgBases[PcieIdx],
+    mPcieCfgBases[PcieIdx] + SIZE_2MB,
     0,
-    CfgSize, // 0..0x1FFFFF is masked by CFG0
+    CfgSize - SIZE_2MB,
     BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_1_OFF_OUTBOUND_0_TYPE_CFG1,
     BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_CTRL_2_OFF_OUTBOUND_0_CFG_SHIFT_MODE
     );
@@ -841,7 +841,7 @@ PciHostBridgeLibConstructor (
     mPcieRootBridges[mPcieRootBridgesNum].DmaAbove4G = TRUE;
     mPcieRootBridges[mPcieRootBridgesNum].NoExtendedConfigSpace = FALSE;
     mPcieRootBridges[mPcieRootBridgesNum].ResourceAssigned      = FALSE;
-    mPcieRootBridges[mPcieRootBridgesNum].AllocationAttributes  = EFI_PCI_HOST_BRIDGE_MEM64_DECODE | EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
+    mPcieRootBridges[mPcieRootBridgesNum].AllocationAttributes  = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM;
 
     mPcieRootBridges[mPcieRootBridgesNum].Bus.Base           = 0;
     mPcieRootBridges[mPcieRootBridgesNum].Bus.Limit          = CfgSize / SIZE_1MB - 1;
@@ -865,6 +865,7 @@ PciHostBridgeLibConstructor (
     }
 
     if (MemAbove4GSize > 0) {
+      mPcieRootBridges[mPcieRootBridgesNum].AllocationAttributes  |= EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
       mPcieRootBridges[mPcieRootBridgesNum].MemAbove4G.Base  = MemAbove4GBase;
       mPcieRootBridges[mPcieRootBridgesNum].MemAbove4G.Limit = MemAbove4GBase + MemAbove4GSize - 1;
     } else {
