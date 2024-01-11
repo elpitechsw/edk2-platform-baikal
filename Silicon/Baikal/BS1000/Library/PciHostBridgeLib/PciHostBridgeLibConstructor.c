@@ -209,7 +209,9 @@ STATIC EFI_PHYSICAL_ADDRESS  *mPcieApbBases;
 EFI_PHYSICAL_ADDRESS         *mPcieDbiBases;
 EFI_PHYSICAL_ADDRESS         *mPcieCfgBases;
 STATIC PCI_ROOT_BRIDGE       *mPcieRootBridges;
+STATIC UINTN                 *mPcieSegIds;
 STATIC UINTN                  mPcieRootBridgesNum;
+STATIC UINTN                  mPcieCfg0Quirk;
 
 STATIC
 VOID
@@ -414,10 +416,15 @@ PciHostBridgeLibRootBridgeLinkUp (
 #if !defined(MDEPKG_NDEBUG)
           DEBUG ((EFI_D_INFO, ", Cfg0Filter+\n"));
 #endif
+	} else if (((MmioRead32 (mPcieCfgBases[PcieIdx] + (1 << 20) + 0xc) >> 16) & 0xff) == 0x1) {
+#if !defined(MDEPKG_NDEBUG)
+          DEBUG ((EFI_D_INFO, ", Cfg0Filter- (Type 1)\n"));
+#endif
         } else {
 #if !defined(MDEPKG_NDEBUG)
           DEBUG ((EFI_D_INFO, ", Cfg0Filter-\n"));
 #endif
+          mPcieCfg0Quirk |= 1 << mPcieSegIds[PcieIdx];
         }
 #if !defined(MDEPKG_NDEBUG)
         DEBUG((EFI_D_INFO,
@@ -668,6 +675,7 @@ PciHostBridgeLibConstructor (
     UINTN                             PerstGpio;
     UINTN                             PerstGpioPolarity;
     EFI_PHYSICAL_ADDRESS              PerstGpioBase;
+    UINTN                             SegId;
 
     Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bs1000-pcie", Node, &Node);
     if (EFI_ERROR (Status)) {
@@ -732,6 +740,7 @@ PciHostBridgeLibConstructor (
           ASSERT (CfgSize >  SIZE_2MB);
           ASSERT (CfgSize <= mPcieMmioSizeList[ListIdx]);
           ASSERT ((CfgSize & (SIZE_1MB - 1)) == 0);
+          SegId = ListIdx + PLATFORM_ADDR_CHIP(DbiBase) * ARRAY_SIZE (mPcieDbiBaseList);
           break;
         }
       }
@@ -846,6 +855,12 @@ PciHostBridgeLibConstructor (
                       mPcieCfgBases
                       );
     ASSERT (mPcieCfgBases != NULL);
+    mPcieSegIds = ReallocatePool (
+                      mPcieRootBridgesNum       * sizeof (UINTN),
+                      (mPcieRootBridgesNum + 1) * sizeof (UINTN),
+                      mPcieSegIds
+                      );
+    ASSERT (mPcieSegIds != NULL);
     DevicePath = AllocateCopyPool (
                    sizeof (mEfiPciRootBridgeDevicePathTemplate),
                    &mEfiPciRootBridgeDevicePathTemplate
@@ -900,12 +915,15 @@ PciHostBridgeLibConstructor (
     mPcieApbBases[mPcieRootBridgesNum] = ApbBase;
     mPcieDbiBases[mPcieRootBridgesNum] = DbiBase;
     mPcieCfgBases[mPcieRootBridgesNum] = CfgBase;
+    mPcieSegIds[mPcieRootBridgesNum] = SegId;
 
     PciHostBridgeLibRootBrigeInit (mPcieRootBridgesNum, MaxSpeed, NumLanes, CfgSize, MemBase, IoBase);
     PciHostBridgeLibRootBridgeLinkUp (mPcieRootBridgesNum, PerstGpioBase, PerstGpio, PerstGpioPolarity);
 
     ++mPcieRootBridgesNum;
   }
+
+  PcdSet32S (PcdPcieCfg0Quirk, mPcieCfg0Quirk);
 
   return EFI_SUCCESS;
 }

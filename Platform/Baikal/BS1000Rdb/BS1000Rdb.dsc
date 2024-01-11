@@ -397,6 +397,7 @@
 !endif
 
 [PcdsDynamicDefault.common]
+  gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|80
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|25
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn|100
