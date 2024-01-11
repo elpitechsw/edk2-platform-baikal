@@ -6,6 +6,7 @@
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/IoRemappingTable.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/PcdLib.h>
 #include "AcpiPlatform.h"
 
 #include <BS1000.h>
@@ -159,6 +160,7 @@ IortInit (
   UINTN  ChipIdx;
   UINTN  Idx;
   UINTN  Num;
+  UINT32 PcieCfg0Quirk = PcdGet32 (PcdPcieCfg0Quirk);
 
   /* ITS nodes */
   for (ChipIdx = 0, Num = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
@@ -184,6 +186,8 @@ IortInit (
       RcNodePointer->Node.Node.Identifier = PLATFORM_CHIP_COUNT * BAIKAL_IORT_ITS_COUNT + Segment;
       RcNodePointer->Node.PciSegmentNumber = Segment;
       RcNodePointer->Map.OutputBase = PcieToItsMap[Idx].BaseId << 16;
+      if (PcieCfg0Quirk & (1 << Segment))
+        RcNodePointer->Map.OutputBase += 0x8;
       RcNodePointer->Map.OutputReference = OFFSET_OF (BAIKAL_ACPI_IORT, Its[ItsId]);
     }
   }
