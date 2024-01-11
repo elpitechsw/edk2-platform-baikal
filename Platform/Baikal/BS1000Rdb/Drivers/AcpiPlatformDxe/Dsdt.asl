@@ -9,6 +9,8 @@
   #include "DsdtDbsOv.asl"
 #elif defined(BAIKAL_MBS_1S)
   #include "DsdtMbs1s.asl"
+#elif defined(ELPITECH)
+  #include "DsdtElp.asl"
 #elif defined(BAIKAL_MBS_2S)
   #include "DsdtMbs2s.asl"
 #elif defined(BAIKAL_QEMU_S)

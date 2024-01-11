@@ -439,7 +439,7 @@
     })                                                                 \
   }
 
-#define BUS_RES  WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x0, 0xFF, 0x0, 0x100)
+#define BUS_RES  WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x1, 0xFE, 0x0, 0xFE)
 
 #define BAIKAL_DSDT_PCIE_NODES(ChipId, Id, PcieId, PortId, Irq1, Irq2, Irq3)                            \
   Device (PC##ChipId##Id)                                                                               \
@@ -473,7 +473,7 @@
         PLATFORM_ADDR_OUT_CHIP(ChipId, BAIKAL_ACPI_PCIE##PcieId##_P##PortId##_MEM_OFFSET),              \
         BAIKAL_ACPI_PCIE_MEM_SIZE)                                                                      \
       QWORDBUFSET(02,                                                                                   \
-        BAIKAL_ACPI_PCIE##PcieId##_P##PortId##_IO_BASE,                                                 \
+        BAIKAL_ACPI_PCIE_IO_BASE,                                                 \
         PLATFORM_ADDR_OUT_CHIP(ChipId, BAIKAL_ACPI_PCIE##PcieId##_P##PortId##_IO_OFFSET),               \
         BAIKAL_ACPI_PCIE_IO_SIZE)                                                                       \
                                                                                                         \

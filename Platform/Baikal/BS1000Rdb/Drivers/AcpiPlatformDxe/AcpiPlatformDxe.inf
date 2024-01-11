@@ -52,6 +52,7 @@
   gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
   gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
   gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
+  gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk
 
 [Depex]
-  gFdtClientProtocolGuid
+  gFdtClientProtocolGuid AND gEfiPciRootBridgeIoProtocolGuid

@@ -6,6 +6,7 @@
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/MemoryMappedConfigurationSpaceAccessTable.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/PcdLib.h>
 #include "AcpiPlatform.h"
 
 #include <BS1000.h>
@@ -16,7 +17,7 @@ STATIC EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATI
   /* UINT16  PciSegmentGroupNumber */
   0,
   /* UINT8   StartBusNumber        */
-  0,
+  1,
   /* UINT8   EndBusNumber          */
   255,
   /* UINT32  Reserved              */
@@ -71,6 +72,7 @@ McfgInit (
   UINTN  ChipIdx;
   UINTN  Idx;
   UINTN  Num;
+  UINT32 PcieCfg0Quirk = PcdGet32 (PcdPcieCfg0Quirk);
 
   for (ChipIdx = 0, Num = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
     for (Idx = 0; Idx < BAIKAL_ACPI_PCIE_COUNT; ++Idx, ++Num) {
@@ -78,6 +80,9 @@ McfgInit (
       Mcfg.Table[Num].BaseAddress = PLATFORM_ADDR_OUT_CHIP (ChipIdx, PcieCfg[Idx].BaseAddr);
       Mcfg.Table[Num].PciSegmentGroupNumber = ChipIdx * BAIKAL_ACPI_PCIE_COUNT +
                                               PcieCfg[Idx].Segment;
+      if (PcieCfg0Quirk & (1 << Mcfg.Table[Num].PciSegmentGroupNumber)) {
+        Mcfg.Table[Num].BaseAddress += 0x8000;
+      }
     }
   }
 
