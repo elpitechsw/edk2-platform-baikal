@@ -6,6 +6,7 @@
 #include <Library/ArmLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/GpioLib.h>
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PciHostBridgeLib.h>
@@ -290,11 +291,32 @@ PciHostBridgeLibCfgWindow (
 STATIC
 VOID
 PciHostBridgeLibRootBridgeLinkUp (
-  IN CONST UINTN  PcieIdx
+  IN CONST UINTN  PcieIdx,
+  IN EFI_PHYSICAL_ADDRESS PerstGpioBase,
+  IN INTN                 PerstGpio,
+  IN INTN                 PerstGpioPolarity
   )
 {
   BOOLEAN  ComponentExists = FALSE;
   UINT64   TimeStart;
+
+  if (PerstGpioBase) {
+    if (PerstGpioPolarity) {
+      GpioOutRst (PerstGpioBase, PerstGpio);
+    } else {
+      GpioOutSet (PerstGpioBase, PerstGpio);
+    }
+    GpioDirSet (PerstGpioBase, PerstGpio);
+
+    gBS->Stall (1000);
+
+    if (PerstGpioPolarity) {
+      GpioOutSet (PerstGpioBase, PerstGpio);
+    } else {
+      GpioOutRst (PerstGpioBase, PerstGpio);
+    }
+    GpioDirSet (PerstGpioBase, PerstGpio);
+  }
 
   MmioOr32 (
     mPcieApbBases[PcieIdx] +
@@ -588,8 +610,6 @@ PciHostBridgeLibRootBrigeInit (
       0
       );
   }
-
-  PciHostBridgeLibRootBridgeLinkUp (PcieIdx);
 }
 
 EFI_STATUS
@@ -627,6 +647,9 @@ PciHostBridgeLibConstructor (
     CONST VOID                       *Prop;
     UINT32                            PropSize;
     EFI_PCI_ROOT_BRIDGE_DEVICE_PATH  *DevicePath;
+    UINTN                             PerstGpio;
+    UINTN                             PerstGpioPolarity;
+    EFI_PHYSICAL_ADDRESS              PerstGpioBase;
 
     Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bs1000-pcie", Node, &Node);
     if (EFI_ERROR (Status)) {
@@ -759,6 +782,28 @@ PciHostBridgeLibConstructor (
       NumLanes = 0;
     }
 
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reset-gpios", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize >= (3 * sizeof (UINT32))) {
+      INT32        PerstGpioPhandle;
+      INT32        PerstGpioNode;
+      PerstGpioPhandle  = SwapBytes32 (*(CONST UINT32 *) Prop);
+      PerstGpio         = SwapBytes32 (((CONST UINT32 *) Prop)[1]);
+      PerstGpioPolarity = SwapBytes32 (((CONST UINT32 *) Prop)[2]);
+      if ((FdtClient->FindNodeByPhandle (FdtClient, PerstGpioPhandle, &PerstGpioNode) == EFI_SUCCESS) &&
+        (FdtClient->FindParentNode (FdtClient, PerstGpioNode, &PerstGpioNode) == EFI_SUCCESS)) {
+        if (FdtClient->GetNodeProperty (FdtClient, PerstGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+            PropSize == 2 * sizeof (UINT64)) {
+          PerstGpioBase = SwapBytes64 (*(CONST UINT64 *) Prop);
+        } else {
+          PerstGpioBase = 0;
+        }
+      } else {
+        PerstGpioBase = 0;
+      }
+    } else {
+      PerstGpioBase = 0;
+    }
+
     mPcieRootBridges = ReallocatePool (
                          mPcieRootBridgesNum       * sizeof (PCI_ROOT_BRIDGE),
                          (mPcieRootBridgesNum + 1) * sizeof (PCI_ROOT_BRIDGE),
@@ -838,6 +883,7 @@ PciHostBridgeLibConstructor (
     mPcieCfgBases[mPcieRootBridgesNum] = CfgBase;
 
     PciHostBridgeLibRootBrigeInit (mPcieRootBridgesNum, MaxSpeed, NumLanes, CfgSize, MemBase, IoBase);
+    PciHostBridgeLibRootBridgeLinkUp (mPcieRootBridgesNum, PerstGpioBase, PerstGpio, PerstGpioPolarity);
 
     ++mPcieRootBridgesNum;
   }
