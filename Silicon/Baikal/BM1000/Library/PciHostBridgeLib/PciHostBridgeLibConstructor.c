@@ -143,6 +143,11 @@
 #define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2                                       0x3800E
 #define BM1000_PCIE_PHY_LANE_PCS_CTLIFC_CTRL_2_VBOOST_EN_REQ_OVRRD_EN                BIT8
 
+#define BM1000_PCIE_CAP_PM_OFF          0x40
+#define BM1000_PCIE_CAP_MSI_OFF         0x50
+#define BM1000_PCIE_CAP_PCIE_OFF        0x70
+#define BM1000_PCIE_CAP_MSIX_OFF        0xB0
+
 #define RANGES_FLAG_IO   0x01000000
 #define RANGES_FLAG_MEM  0x02000000
 
@@ -1066,6 +1071,19 @@ PciHostBridgeLibConstructor (
          PcieNumLanes[PcieIdx] << BM1000_PCIE_PF0_PCIE_CAP_LINK_CAPABILITIES_REG_MAX_WIDTH_SHIFT
         );
     }
+
+    /* Hide MSI/MSI-X capabilities */
+    MmioWrite8 (
+       mPcieDbiBases[PcieIdx] +
+       BM1000_PCIE_CAP_PM_OFF + 1,
+       BM1000_PCIE_CAP_PCIE_OFF
+       );
+
+    MmioWrite8 (
+       mPcieDbiBases[PcieIdx] +
+       BM1000_PCIE_CAP_PCIE_OFF + 1,
+       0
+       );
 
     // Disable writing read-only registers using DBI
     MmioAnd32 (
