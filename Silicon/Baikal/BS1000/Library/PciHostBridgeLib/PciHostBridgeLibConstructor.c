@@ -88,6 +88,11 @@
 #define BS1000_PCIE_PF0_ATU_CAP_IATU_UPPER_TARGET_ADDR_OFF_OUTBOUND_0                0x300018
 #define BS1000_PCIE_PF0_ATU_CAP_IATU_REGION_SIZE                                     0x200
 
+#define BS1000_PCIE_CAP_PM_OFF          0x40
+#define BS1000_PCIE_CAP_MSI_OFF         0x50
+#define BS1000_PCIE_CAP_PCIE_OFF        0x70
+#define BS1000_PCIE_CAP_MSIX_OFF        0xB0
+
 #define RANGES_FLAG_IO   0x01000000
 #define RANGES_FLAG_MEM  0x02000000
 
@@ -596,7 +601,7 @@ PciHostBridgeLibRootBrigeInit (
     MmioAnd32 (mPcieDbiBases[PcieIdx] + 0x2A8, ~BIT31);
   }
 
-#ifdef BAIKAL_MBS_1S
+#if PLATFORM_CHIP_COUNT == 1
   // Enable PCIe0p0 and PCIe1p0 Hot-Plug support
   if (PLATFORM_ADDR_IN_CHIP(mPcieDbiBases[PcieIdx]) == BS1000_PCIE0_P0_DBI_BASE ||
       PLATFORM_ADDR_IN_CHIP(mPcieDbiBases[PcieIdx]) == BS1000_PCIE1_P0_DBI_BASE) {
@@ -629,6 +634,19 @@ PciHostBridgeLibRootBrigeInit (
        );
   }
 #endif
+
+  /* Hide MSI/MSI-X capabilities */
+  MmioWrite8 (
+     mPcieDbiBases[PcieIdx] +
+     BS1000_PCIE_CAP_PM_OFF + 1,
+     BS1000_PCIE_CAP_PCIE_OFF
+     );
+
+  MmioWrite8 (
+     mPcieDbiBases[PcieIdx] +
+     BS1000_PCIE_CAP_PCIE_OFF + 1,
+     0
+     );
 
   // Disable writing read-only registers using DBI
   MmioAnd32 (
