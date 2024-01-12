@@ -441,8 +441,8 @@ PciHostBridgeLibRootBridgeLinkUp (
 #endif
 
         break;
-      } else if (GetTimeInNanoSecond (PerformanceCounter) - TimeStart > 100000000) {
-        // Wait up to 100 ms for link up
+      } else if (GetTimeInNanoSecond (PerformanceCounter) - TimeStart > 500000000) {
+        // Wait up to 500 ms for link up
         DEBUG ((
           EFI_D_INFO,
           "PcieRoot(0x%x|0x%llx)[%03ums: LTSSM:0x%02x SMLH%c RDLH%c]: link is inactive\n",
