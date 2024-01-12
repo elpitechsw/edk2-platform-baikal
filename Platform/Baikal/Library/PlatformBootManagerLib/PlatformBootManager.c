@@ -340,6 +340,7 @@ Connect (
     ));
 }
 
+#ifndef UEFI_NO_CONSOLE
 /**
   This CALLBACK_FUNCTION retrieves the EFI_DEVICE_PATH_PROTOCOL from the
   handle, and adds it to ConOut and ErrOut.
@@ -401,6 +402,7 @@ AddOutput (
     ReportText
     ));
 }
+#endif
 
 STATIC
 VOID
@@ -684,7 +686,9 @@ PlatformBootManagerBeforeConsole (
   // Now add the device path of all handles with GOP on them to ConOut and
   // ErrOut.
   //
+#ifndef UEFI_NO_CONSOLE
   FilterAndProcess (&gEfiGraphicsOutputProtocolGuid, NULL, AddOutput);
+#endif
 
   //
   // The core BDS code connects short-form USB device paths by explicitly
@@ -831,11 +835,15 @@ PlatformBootManagerAfterConsole (
     TIME_BUILD_DAY
     );
 
+#ifndef UEFI_NO_CONSOLE
   Status = gBS->HandleProtocol (
                 gST->ConsoleOutHandle,
                 &gEfiGraphicsOutputProtocolGuid,
                 (VOID **) &GraphicsOutput
                 );
+#else
+  Status = EFI_UNSUPPORTED;
+#endif
   if (EFI_ERROR (Status)) {
     GraphicsOutput = NULL;
   }
@@ -854,7 +862,11 @@ PlatformBootManagerAfterConsole (
                                );
   }
 
+#ifndef UEFI_NO_CONSOLE
   Status = BootLogoEnableLogo ();
+#else
+  Status = EFI_UNSUPPORTED;
+#endif
   if (EFI_ERROR (Status)) {
     if (VersionLen > 0) {
       Print (L"%s\n", VersionStr);
