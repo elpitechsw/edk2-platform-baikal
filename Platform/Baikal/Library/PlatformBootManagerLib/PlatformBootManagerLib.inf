@@ -22,6 +22,7 @@
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
   ShellPkg/ShellPkg.dec
+  ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
   BootLogoLib
@@ -36,19 +37,26 @@
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
   gBaikalTokenSpaceGuid.PcdPs2MultUartBaseAddr
+  gArmTokenSpaceGuid.PcdUefiShellDefaultBootEnable
 
 [Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootDiscoveryPolicy
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
 
 [Guids]
+  gBootDiscoveryPolicyMgrFormsetGuid
   gEdkiiNonDiscoverableEhciDeviceGuid
   gEdkiiNonDiscoverableUhciDeviceGuid
   gEdkiiNonDiscoverableXhciDeviceGuid
   gEfiEndOfDxeEventGroupGuid
   gEfiTtyTermGuid
   gUefiShellFileGuid
+  gEfiBootManagerPolicyNetworkGuid
+  gEfiBootManagerPolicyConnectAllGuid
 
 [Protocols]
+  gEfiBootManagerPolicyProtocolGuid
   gEdkiiNonDiscoverableDeviceProtocolGuid
   gEfiGraphicsOutputProtocolGuid
   gEfiLoadedImageProtocolGuid
