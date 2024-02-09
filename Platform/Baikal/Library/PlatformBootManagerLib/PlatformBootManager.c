@@ -8,6 +8,7 @@
 #include <Guid/NonDiscoverableDevice.h>
 #include <Guid/SerialPortLibVendor.h>
 #include <Guid/TtyTerm.h>
+#include <Guid/BootDiscoveryPolicy.h>
 #include <IndustryStandard/Pci22.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -24,6 +25,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
+#include <Protocol/BootManagerPolicy.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/EsrtManagement.h>
 #include <Protocol/GraphicsOutput.h>
@@ -479,6 +481,64 @@ PlatformRegisterFvBootOption (
   EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
 }
 
+/** Boot a Fv Boot Option.
+
+  This function is useful for booting the UEFI Shell as it is loaded
+  as a non active boot option.
+
+  @param[in] FileGuid      The File GUID.
+  @param[in] Description   String describing the Boot Option.
+
+**/
+STATIC
+VOID
+PlatformBootFvBootOption (
+  IN  CONST EFI_GUID  *FileGuid,
+  IN  CHAR16          *Description
+  )
+{
+  EFI_STATUS                         Status;
+  EFI_BOOT_MANAGER_LOAD_OPTION       NewOption;
+  MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  FileNode;
+  EFI_LOADED_IMAGE_PROTOCOL          *LoadedImage;
+  EFI_DEVICE_PATH_PROTOCOL           *DevicePath;
+
+  Status = gBS->HandleProtocol (
+                  gImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage
+                  );
+  ASSERT_EFI_ERROR (Status);
+
+  //
+  // The UEFI Shell was registered in PlatformRegisterFvBootOption ()
+  // previously, thus it must still be available in this FV.
+  //
+  EfiInitializeFwVolDevicepathNode (&FileNode, FileGuid);
+  DevicePath = DevicePathFromHandle (LoadedImage->DeviceHandle);
+  ASSERT (DevicePath != NULL);
+  DevicePath = AppendDevicePathNode (
+                 DevicePath,
+                 (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
+                 );
+  ASSERT (DevicePath != NULL);
+
+  Status = EfiBootManagerInitializeLoadOption (
+             &NewOption,
+             LoadOptionNumberUnassigned,
+             LoadOptionTypeBoot,
+             LOAD_OPTION_ACTIVE,
+             Description,
+             DevicePath,
+             NULL,
+             0
+             );
+  ASSERT_EFI_ERROR (Status);
+  FreePool (DevicePath);
+
+  EfiBootManagerBoot (&NewOption);
+}
+
 STATIC
 VOID
 GetPlatformOptions (
@@ -802,6 +862,117 @@ HandleCapsules (
 }
 
 /**
+  This functions checks the value of BootDiscoverPolicy variable and
+  connect devices of class specified by that variable. Then it refreshes
+  Boot order for newly discovered boot device.
+
+  @retval  EFI_SUCCESS  Devices connected successfully or connection
+                        not required.
+  @retval  others       Return values from GetVariable(), LocateProtocol()
+                        and ConnectDeviceClass().
+**/
+STATIC
+EFI_STATUS
+BootDiscoveryPolicyHandler (
+  VOID
+  )
+{
+  EFI_STATUS                        Status;
+  UINT32                            DiscoveryPolicy;
+  UINT32                            DiscoveryPolicyOld;
+  UINTN                             Size;
+  EFI_BOOT_MANAGER_POLICY_PROTOCOL  *BMPolicy;
+  EFI_GUID                          *Class;
+
+  Size   = sizeof (DiscoveryPolicy);
+  Status = gRT->GetVariable (
+                  BOOT_DISCOVERY_POLICY_VAR,
+                  &gBootDiscoveryPolicyMgrFormsetGuid,
+                  NULL,
+                  &Size,
+                  &DiscoveryPolicy
+                  );
+  if (Status == EFI_NOT_FOUND) {
+    DiscoveryPolicy = PcdGet32 (PcdBootDiscoveryPolicy);
+    Status          = PcdSet32S (PcdBootDiscoveryPolicy, DiscoveryPolicy);
+    if (Status == EFI_NOT_FOUND) {
+      return EFI_SUCCESS;
+    } else if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  } else if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if (DiscoveryPolicy == BDP_CONNECT_MINIMAL) {
+    return EFI_SUCCESS;
+  }
+
+  switch (DiscoveryPolicy) {
+    case BDP_CONNECT_NET:
+      Class = &gEfiBootManagerPolicyNetworkGuid;
+      break;
+    case BDP_CONNECT_ALL:
+      Class = &gEfiBootManagerPolicyConnectAllGuid;
+      break;
+    default:
+      DEBUG ((
+        DEBUG_INFO,
+        "%a - Unexpected DiscoveryPolicy (0x%x). Run Minimal Discovery Policy\n",
+        __func__,
+        DiscoveryPolicy
+        ));
+      return EFI_SUCCESS;
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gEfiBootManagerPolicyProtocolGuid,
+                  NULL,
+                  (VOID **)&BMPolicy
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_INFO,
+      "%a - Failed to locate gEfiBootManagerPolicyProtocolGuid."
+      "Driver connect will be skipped.\n",
+      __func__
+      ));
+    return Status;
+  }
+
+  Status = BMPolicy->ConnectDeviceClass (BMPolicy, Class);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - ConnectDeviceClass returns - %r\n", __func__, Status));
+    return Status;
+  }
+
+  //
+  // Refresh Boot Options if Boot Discovery Policy has been changed
+  //
+  Size   = sizeof (DiscoveryPolicyOld);
+  Status = gRT->GetVariable (
+                  BOOT_DISCOVERY_POLICY_OLD_VAR,
+                  &gBootDiscoveryPolicyMgrFormsetGuid,
+                  NULL,
+                  &Size,
+                  &DiscoveryPolicyOld
+                  );
+  if ((Status == EFI_NOT_FOUND) || (DiscoveryPolicyOld != DiscoveryPolicy)) {
+    EfiBootManagerRefreshAllBootOption ();
+
+    Status = gRT->SetVariable (
+                    BOOT_DISCOVERY_POLICY_OLD_VAR,
+                    &gBootDiscoveryPolicyMgrFormsetGuid,
+                    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                    sizeof (DiscoveryPolicyOld),
+                    &DiscoveryPolicy
+                    );
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Do the platform specific action after the console is ready
   Possible things that can be done in PlatformBootManagerAfterConsole:
   > Console post action:
@@ -886,6 +1057,12 @@ PlatformBootManagerAfterConsole (
       PrintXY (10, 70, &mForeground, &mBackground, L"Press <Enter> to continue");
     }
   }
+  
+  //
+  // Connect device specified by BootDiscoverPolicy variable and
+  // refresh Boot order for newly discovered boot devices
+  //
+  BootDiscoveryPolicyHandler ();
 
   //
   // On ARM, there is currently no reason to use the phased capsule
@@ -896,10 +1073,8 @@ PlatformBootManagerAfterConsole (
   //
   HandleCapsules ();
 
-  EfiBootManagerConnectAll ();
-
   //
-  // Register Rescue UEFI Shell
+  // Register UEFI Shell
   //
   Key.ScanCode    = SCAN_NULL;
   Key.UnicodeChar = L's';
@@ -1066,8 +1241,6 @@ PlatformBootManagerUnableToBoot (
   EFI_BOOT_MANAGER_LOAD_OPTION  *BootOptions;
   UINTN                          OldBootOptionCount;
   UINTN                          NewBootOptionCount;
-  UINTN                          Idx;
-  EFI_INPUT_KEY                  Key;
   EFI_STATUS                     Status;
 
   //
@@ -1080,37 +1253,21 @@ PlatformBootManagerUnableToBoot (
   EfiBootManagerFreeLoadOptions (BootOptions, OldBootOptionCount);
 
   //
-  // Do not refresh boot options if there are at least three options,
-  // (e.g. UiApp + UEFI Shell + something else).
-  //
-  if (OldBootOptionCount > 2) {
-    Print (L"\nUnable to boot. Press Ctrl+Alt+Del to restart\n");
-
-    UpdateProgress (
-      mForeground,
-      mBackground,
-      L"                                                  ",
-      mForeground,
-      mBackground,
-      0,
-      0
-      );
-
-    return;
-  }
-
-  //
   // Connect all devices, and regenerate all boot options
   //
   EfiBootManagerConnectAll ();
   EfiBootManagerRefreshAllBootOption ();
 
+  // Boot the 'UEFI Shell'. If the Pcd is not set, the UEFI Shell is not
+  // an active boot option and must be manually selected through UiApp
+  // (at least during the fist boot).
   //
-  // Register UEFI Shell
-  //
-  Key.ScanCode    = SCAN_NULL;
-  Key.UnicodeChar = L'S';
-  PlatformRegisterFvBootOption (&gUefiShellFileGuid, L"UEFI Shell", LOAD_OPTION_ACTIVE, &Key);
+  if (FixedPcdGetBool (PcdUefiShellDefaultBootEnable)) {
+    PlatformBootFvBootOption (
+      &gUefiShellFileGuid,
+      L"UEFI Shell (default)"
+      );
+  }
 
   //
   // Record the updated number of boot configured boot options
@@ -1120,57 +1277,24 @@ PlatformBootManagerUnableToBoot (
                   LoadOptionTypeBoot
                   );
 
-  //
-  // Deactivate PXE boot options by default
-  //
-  for (Idx = 0; Idx < NewBootOptionCount; ++Idx) {
-    EFI_DEVICE_PATH_PROTOCOL  *Node;
-
-    Node = BootOptions[Idx].FilePath;
-    if (DevicePathType (Node) == MESSAGING_DEVICE_PATH &&
-        DevicePathSubType (Node) == MSG_MAC_ADDR_DP) {
-      VOID    *BootOptionVar;
-      UINTN    OptionSize;
-      CHAR16   VarName[100];
-
-      UnicodeSPrint (VarName, sizeof (VarName), L"Boot%04x", BootOptions[Idx].OptionNumber);
-      GetEfiGlobalVariable2 (VarName, (VOID **) &BootOptionVar, &OptionSize);
-      if (BootOptionVar != NULL) {
-        UINT32  *Attribute;
-
-        Attribute   = (UINT32 *) BootOptionVar;
-        *Attribute &= ~LOAD_OPTION_ACTIVE;
-
-        Status = gRT->SetVariable (
-                        VarName,
-                        &gEfiGlobalVariableGuid,
-                        EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                        EFI_VARIABLE_RUNTIME_ACCESS     |
-                        EFI_VARIABLE_NON_VOLATILE,
-                        OptionSize,
-                        BootOptionVar
-                        );
-
-        FreePool (BootOptionVar);
-      }
-    }
-  }
-
   EfiBootManagerFreeLoadOptions (BootOptions, NewBootOptionCount);
 
   //
   // If the number of configured boot options has changed, reboot
   // the system so the new boot options will be taken into account
   // while executing the ordinary BDS bootflow sequence.
+  // *Unless* persistent varstore is being emulated, since we would
+  // then end up in an endless reboot loop.
   //
-  if (NewBootOptionCount != OldBootOptionCount) {
-    DEBUG ((
-      DEBUG_WARN,
-      "%a: rebooting after refreshing all boot options\n",
-      __func__
-      ));
-
-    gRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
+  if (!PcdGetBool (PcdEmuVariableNvModeEnable)) {
+    if (NewBootOptionCount != OldBootOptionCount) {
+      DEBUG ((
+        DEBUG_WARN,
+        "%a: rebooting after refreshing all boot options\n",
+        __func__
+        ));
+      gRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
+    }
   }
 
   Status = EfiBootManagerGetBootManagerMenu (&BootManagerMenu);

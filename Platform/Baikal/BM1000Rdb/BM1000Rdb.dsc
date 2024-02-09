@@ -377,6 +377,8 @@
   gArmTokenSpaceGuid.PcdGicRedistributorsBase|0x2D100000
   gArmTokenSpaceGuid.PcdSystemMemoryBase|0x80000000
   gArmTokenSpaceGuid.PcdSystemMemorySize|0x80000000
+  gArmTokenSpaceGuid.PcdUefiShellDefaultBootEnable|TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable|FALSE
   gArmTokenSpaceGuid.PcdVFPEnabled|1
   gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x80000000
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|{ 0x42, 0x4B, 0x4C, 0x45 }
