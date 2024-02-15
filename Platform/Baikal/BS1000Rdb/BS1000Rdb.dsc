@@ -437,4 +437,4 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|1080
 
 [PcdsDynamicHii.common]
-  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|10
