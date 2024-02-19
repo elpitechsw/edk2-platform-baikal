@@ -199,6 +199,7 @@ READ_LOCK_STATUS   = TRUE
   INF Platform/Baikal/BM1000Rdb/Drivers/RamMenu/RamMenu.inf
   INF Platform/Baikal/Logo/LogoDxe.inf
   INF MdeModulePkg/Application/UiApp/UiApp.inf
+  INF MdeModulePkg/Universal/BootManagerPolicyDxe/BootManagerPolicyDxe.inf
 
   # Disk driver
   INF Silicon/Baikal/BM1000/Drivers/NonDiscoverableAhciDxe/NonDiscoverableAhciDxe.inf
