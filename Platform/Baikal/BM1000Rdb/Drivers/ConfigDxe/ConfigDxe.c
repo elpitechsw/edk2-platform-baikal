@@ -51,7 +51,7 @@ STATIC HII_VENDOR_DEVICE_PATH  mVendorDevicePath = {
   }
 };
 
-STATIC EFI_EVENT  mReadyToBootEvent;
+STATIC EFI_EVENT  mAfterConsoleEvent;
 
 STATIC
 EFI_STATUS
@@ -287,7 +287,7 @@ FixupFdt (
 STATIC
 VOID
 EFIAPI
-OnReadyToBoot (
+UpdateConfigsHook (
   IN EFI_EVENT  Event,
   IN VOID       *Context
   )
@@ -368,13 +368,13 @@ ConfigDxeInitialize (
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_CALLBACK,
-                  OnReadyToBoot,
+                  UpdateConfigsHook,
                   NULL,
-                  &gEfiEventReadyToBootGuid,
-                  &mReadyToBootEvent
+                  &gBaikalAfterConsoleEventGroupGuid,
+                  &mAfterConsoleEvent
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: couldn't install OnReadyToBoot handler: %r\n", __func__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: couldn't install AfterConsoleEvent handler: %r\n", __func__, Status));
     return Status;
   }
   return EFI_SUCCESS;

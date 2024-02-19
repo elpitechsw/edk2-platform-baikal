@@ -47,6 +47,7 @@
 
 [Guids]
   gConfigDxeFormSetGuid
+  gBaikalAfterConsoleEventGroupGuid
 
 [Protocols]
   gConfigDxeProtocolGuid                        # PROTOCOL ALWAYS_PRODUCED
