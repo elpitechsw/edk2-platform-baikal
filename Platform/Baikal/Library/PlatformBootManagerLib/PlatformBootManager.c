@@ -995,6 +995,9 @@ PlatformBootManagerAfterConsole (
   CHAR16                         VersionStr[80];
   EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
 
+  // Signal AfterConsole event
+  EfiEventGroupSignal (&gBaikalAfterConsoleEventGroupGuid);
+
   VersionLen = UnicodeSPrint (
     VersionStr,
     sizeof (VersionStr),

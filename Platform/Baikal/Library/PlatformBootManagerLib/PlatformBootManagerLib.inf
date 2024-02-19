@@ -54,6 +54,7 @@
   gUefiShellFileGuid
   gEfiBootManagerPolicyNetworkGuid
   gEfiBootManagerPolicyConnectAllGuid
+  gBaikalAfterConsoleEventGroupGuid
 
 [Protocols]
   gEfiBootManagerPolicyProtocolGuid
