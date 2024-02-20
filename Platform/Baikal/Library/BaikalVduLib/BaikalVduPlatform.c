@@ -313,9 +313,6 @@ FdtGetPanelTimings (
   if (EFI_ERROR (Status)) {
     goto Out;
   }
-  if (EFI_ERROR (Status)) {
-    goto Out;
-  }
   if (PropSize == sizeof (UINT32)) {
     mFdtDisplayMode.LvdsPorts = SwapBytes32 (*(CONST UINT32 *) Prop);
   } else {
@@ -1025,19 +1022,11 @@ LcdPlatformGetLvdsInfo (
   OUT UINT32  *LvdsOutBpp
   )
 {
-  EFI_STATUS    Status;
-  DISPLAY_MODE  *DisplayMode;
-
   ASSERT (LvdsPorts != NULL);
   ASSERT (LvdsOutBpp != NULL);
 
-  Status = FindActiveDisplayMode (ModeNumber, &DisplayMode);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  *LvdsPorts = DisplayMode->LvdsPorts;
-  *LvdsOutBpp = DisplayMode->LvdsOutBpp;
+  *LvdsPorts = mLvdsDisplayMode.LvdsPorts;
+  *LvdsOutBpp = mLvdsDisplayMode.LvdsOutBpp;
 
   return EFI_SUCCESS;
 }
