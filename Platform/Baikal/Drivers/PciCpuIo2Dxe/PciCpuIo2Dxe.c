@@ -17,6 +17,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/IoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
+#define LEGACY_IO_PORT_LIMIT    0x10000
+
 //
 // Handle for the CPU I/O 2 Protocol
 //
@@ -97,6 +99,13 @@ CpuIoCheckParameter (
   //
   // Most of the relevant checks are performed by the caller (PciRootBridgeIo)
   //
+
+  //
+  // Access to X86 legacy I/O ports is not supported
+  //
+  if (!MmioOperation && (Address < LEGACY_IO_PORT_LIMIT)) {
+    return EFI_UNSUPPORTED;
+  }
 
   //
   // Check to see if Width is in the valid range for I/O Port operations
@@ -338,6 +347,8 @@ CpuIoServiceRead (
 
   Status = CpuIoCheckParameter (FALSE, Width, Address, Count, Buffer);
   if (EFI_ERROR (Status)) {
+    DEBUG((EFI_D_INFO, "%a: Address %llx, Width %u, Count %u - %r\n",
+           __func__, Address, mInStride[Width], Count, Status));
     return Status;
   }
 
@@ -422,6 +433,8 @@ CpuIoServiceWrite (
   //
   Status = CpuIoCheckParameter (FALSE, Width, Address, Count, Buffer);
   if (EFI_ERROR (Status)) {
+    DEBUG((EFI_D_INFO, "%a: Address %llx, Width %u, Count %u (data %02x) - %r\n",
+           __func__, Address, mInStride[Width], Count, *(UINT8 *)Buffer, Status));
     return Status;
   }
 
