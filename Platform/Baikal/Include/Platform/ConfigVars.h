@@ -37,6 +37,13 @@ typedef struct {
 } UART1_VARSTORE_DATA;
 
 typedef struct {
+#define USB_CLK_OFF       0
+#define USB_CLK_ON        1
+  UINT32  Mode;
+} USB_CLK_VARSTORE_DATA;
+
+
+typedef struct {
 #define PPOL_OFF          0
 #define PPOL_AUTO         1
   UINT32  Mode;

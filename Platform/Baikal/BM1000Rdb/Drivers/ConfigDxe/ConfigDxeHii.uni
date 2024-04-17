@@ -27,13 +27,18 @@
 
 #string STR_VDU_LVDS_PROMPT   #language en-US "VDU LVDS support"
 #string STR_VDU_LVDS_HELP     #language en-US "Enable/Disable VDU LVDS."
-#string STR_VDU_LVDS_OFF      #language en-US "Disabled"
-#string STR_VDU_LVDS_ON       #language en-US "Enabled"
+#string STR_VDU_LVDS_OFF      #language en-US "Disable"
+#string STR_VDU_LVDS_ON       #language en-US "Enable"
 
 #string STR_UART1_PROMPT      #language en-US "UART1 mode"
 #string STR_UART1_HELP        #language en-US "Set Serdev or Normal UART1 mode."
 #string STR_UART1_NORM        #language en-US "Normal"
 #string STR_UART1_SERDEV      #language en-US "Serdev"
+
+#string STR_USB_CLK_PROMPT    #language en-US "USB clock"
+#string STR_USB_CLK_HELP      #language en-US "Make USB use its own clock."
+#string STR_USB_CLK_OFF       #language en-US "Disable"
+#string STR_USB_CLK_ON        #language en-US "Enable"
 
 #string STR_PPOL_PROMPT       #language en-US "Power Policy"
 #string STR_PPOL_HELP         #language en-US "Wait for PowerButton or autoboot when power is connected"

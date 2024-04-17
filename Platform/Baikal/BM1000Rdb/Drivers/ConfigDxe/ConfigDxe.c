@@ -161,6 +161,19 @@ SetupVariables (
 
   Size = sizeof (UINT32);
   Status = gRT->GetVariable (
+                  L"UsbClk",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Status = PcdSet32S (PcdUsbClkMode, PcdGet32 (PcdUsbClkMode));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
                   L"MaliCoherent",
                   &gConfigDxeFormSetGuid,
                   NULL,
@@ -228,6 +241,8 @@ FixupFdt (
   INT32                 Node = 0, SubNode;
   UINT32                Var32;
   UINTN                 Size;
+  UINT8                 Idx;
+  CONST CHAR8          *Usb[] = { "usb2", "usb3" };
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
   if (EFI_ERROR (Status)) {
@@ -262,6 +277,22 @@ FixupFdt (
     }
     if (EFI_ERROR(Status)) {
       DEBUG((EFI_D_ERROR, "Can't delete ps2mult node - %r\n", Status));
+    }
+  }
+
+  if (PcdGet32(PcdUsbClkMode) == 0) {
+    for (Idx = 0; Idx < sizeof(Usb)/sizeof(Usb[0]); Idx++) {
+      Status = FdtClient->FindNodeByAlias (FdtClient, Usb[Idx], &Node);
+      if(Status == EFI_SUCCESS) {
+        Status = FdtClient->DeleteProperty(FdtClient, Node, "clocks");
+        if (EFI_ERROR(Status)) {
+          DEBUG((EFI_D_ERROR, "Can't delete %s clocks - %r\n", Usb[Idx], Status));
+        }
+        Status = FdtClient->DeleteProperty(FdtClient, Node, "clock-names");
+        if (EFI_ERROR(Status)) {
+          DEBUG((EFI_D_ERROR, "Can't delete %s clock-names - %r\n", Usb[Idx], Status));
+        }
+      }
     }
   }
 
