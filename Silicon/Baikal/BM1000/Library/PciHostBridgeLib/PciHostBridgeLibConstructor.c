@@ -159,7 +159,7 @@
 #define RANGES_FLAG_MEM  0x02000000
 
 BOOLEAN PciHostBridgeLibGetLink (UINTN  PcieIdx);
-extern EFI_STATUS PciConfigInstallHii(UINT32 SegmentMask);
+extern EFI_STATUS PciConfigInstallHii(UINT8 SegmentMask);
 
 EFI_GUID gPciConfigGuid = PCI_CONFIG_GUID;
 
@@ -768,7 +768,7 @@ PciHostBridgeLibConstructor (
   CONST VOID           *Prop;
   UINT32                PropSize;
   PCI_CONFIG_VARSTORE_DATA PciConfig;
-  UINT32                SegmentMask = 0;
+  UINT8                SegmentMask = 0;
   UINTN                 Size;
 
   Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);

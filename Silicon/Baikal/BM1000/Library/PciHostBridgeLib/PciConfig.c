@@ -47,17 +47,17 @@ STATIC HII_VENDOR_DEVICE_PATH  mVendorDevicePath = {
 
 EFI_STATUS
 PciConfigInstallHii(
-  UINT32 SegmentMask
+  UINT8 SegmentMask
   )
 {
   EFI_STATUS      Status;
   EFI_HII_HANDLE  HiiHandle;
   EFI_HANDLE      DriverHandle;
-  UINT32          SegmentMaskVar;
+  UINT8           SegmentMaskVar;
   PCI_CONFIG_VARSTORE_DATA PciConfig;
   UINTN           Size;
 
-  Size = sizeof (UINT32);
+  Size = sizeof (UINT8);
   Status = gRT->GetVariable (
                   L"SegmentMask",
                   &gPciConfigGuid,
@@ -68,7 +68,7 @@ PciConfigInstallHii(
   if (EFI_ERROR(Status) || SegmentMaskVar != SegmentMask) {
     /* First start: Create 'SegmentMask' and 'PciConfig' variables. */
     SegmentMaskVar = SegmentMask;
-    Size = sizeof (UINT32);
+    Size = sizeof (UINT8);
     Status = gRT->SetVariable (
                     L"SegmentMask",
                     &gPciConfigGuid,
