@@ -174,6 +174,19 @@ SetupVariables (
 
   Size = sizeof (UINT32);
   Status = gRT->GetVariable (
+                  L"HdaSound",
+                  &gConfigDxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Status = PcdSet32S (PcdHdaSoundMode, PcdGet32 (PcdHdaSoundMode));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  Size = sizeof (UINT32);
+  Status = gRT->GetVariable (
                   L"MaliCoherent",
                   &gConfigDxeFormSetGuid,
                   NULL,
@@ -295,6 +308,25 @@ FixupFdt (
       }
     }
   }
+
+  // ET161 has no HDA sound, the config is not relevant there.
+#if !defined(ELP_8)
+  if (PcdGet32(PcdHdaSoundMode) == 0) {
+    Status = FdtClient->FindNodeByAlias (FdtClient, "hda", &Node);
+    if(Status == EFI_SUCCESS) {
+      Status = FdtClient->SetNodeProperty (
+            FdtClient,
+            Node,
+            "status",
+            "disabled",
+            9
+	    );
+    }
+    if (EFI_ERROR(Status)) {
+      DEBUG((EFI_D_ERROR, "Can't update hda status - %r\n", Status));
+    }
+  }
+#endif
 
   Size = sizeof (UINT32);
   Status = gRT->GetVariable (

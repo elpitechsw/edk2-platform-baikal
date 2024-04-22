@@ -60,6 +60,7 @@
   gBaikalTokenSpaceGuid.PcdVduLvdsMode
   gBaikalTokenSpaceGuid.PcdUart1Mode
   gBaikalTokenSpaceGuid.PcdUsbClkMode
+  gBaikalTokenSpaceGuid.PcdHdaSoundMode
 
 [Depex]
   gPcdProtocolGuid

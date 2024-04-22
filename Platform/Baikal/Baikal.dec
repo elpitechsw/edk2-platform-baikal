@@ -64,3 +64,4 @@
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|0|UINT32|0x00000010
   gBaikalTokenSpaceGuid.PcdUart1Mode|1|UINT32|0x00000011
   gBaikalTokenSpaceGuid.PcdUsbClkMode|1|UINT32|0x00000012
+  gBaikalTokenSpaceGuid.PcdHdaSoundMode|1|UINT32|0x00000013
