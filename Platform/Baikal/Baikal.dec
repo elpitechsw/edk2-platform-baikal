@@ -57,4 +57,5 @@
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|0|UINT32|0x00000012
   gBaikalTokenSpaceGuid.PcdUart1Mode|1|UINT32|0x00000013
   gBaikalTokenSpaceGuid.PcdUsbClkMode|1|UINT32|0x00000014
+  gBaikalTokenSpaceGuid.PcdHdaSoundMode|1|UINT32|0x00000015
   gBaikalTokenSpaceGuid.PcdPcieCfg0Quirk|0|UINT32|0x0000000F

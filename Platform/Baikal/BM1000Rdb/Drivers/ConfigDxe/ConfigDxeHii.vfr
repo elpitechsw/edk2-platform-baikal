@@ -57,6 +57,11 @@ formset
     name      = UsbClk,
     guid      = CONFIG_DXE_FORM_SET_GUID;
 
+  efivarstore HDA_SOUND_VARSTORE_DATA,
+    attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+    name      = HdaSound,
+    guid      = CONFIG_DXE_FORM_SET_GUID;
+
   form formid = 1,
     title         = STRING_TOKEN(STR_ACPI_FORM_TITLE);
     subtitle text = STRING_TOKEN(STR_NULL_STRING);
@@ -117,6 +122,14 @@ formset
       flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
       option text = STRING_TOKEN(STR_USB_CLK_ON), value = USB_CLK_ON, flags = 0;
       option text = STRING_TOKEN(STR_USB_CLK_OFF),  value = USB_CLK_OFF,  flags = DEFAULT;
+    endoneof;
+
+    oneof varid = HdaSound.Mode,
+      prompt      = STRING_TOKEN(STR_HDA_SOUND_PROMPT),
+      help        = STRING_TOKEN(STR_HDA_SOUND_HELP),
+      flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_HDA_SOUND_ON), value = HDA_SOUND_ON, flags = 0;
+      option text = STRING_TOKEN(STR_HDA_SOUND_OFF),  value = HDA_SOUND_OFF,  flags = DEFAULT;
     endoneof;
 
   endform;

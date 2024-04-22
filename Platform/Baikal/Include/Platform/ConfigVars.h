@@ -42,6 +42,11 @@ typedef struct {
   UINT32  Mode;
 } USB_CLK_VARSTORE_DATA;
 
+typedef struct {
+#define HDA_SOUND_OFF       0
+#define HDA_SOUND_ON        1
+  UINT32  Mode;
+} HDA_SOUND_VARSTORE_DATA;
 
 typedef struct {
 #define PPOL_OFF          0

@@ -459,5 +459,6 @@
   gBaikalTokenSpaceGuid.PcdVduLvdsMode|L"VduLvds"|gConfigDxeFormSetGuid|0x0|0
   gBaikalTokenSpaceGuid.PcdUart1Mode|L"Uart1"|gConfigDxeFormSetGuid|0x0|1
   gBaikalTokenSpaceGuid.PcdUsbClkMode|L"UsbClk"|gConfigDxeFormSetGuid|0x0|1
+  gBaikalTokenSpaceGuid.PcdHdaSoundMode|L"HdaSound"|gConfigDxeFormSetGuid|0x0|1
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootDiscoveryPolicy|L"BootDiscoveryPolicy"|gBootDiscoveryPolicyMgrFormsetGuid|0
