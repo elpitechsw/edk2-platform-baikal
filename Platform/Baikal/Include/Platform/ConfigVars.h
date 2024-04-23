@@ -43,6 +43,10 @@ typedef struct {
 } USB_CLK_VARSTORE_DATA;
 
 typedef struct {
+  UINT32  Present;
+} SIMPLE_AUDIO_CARD_VARSTORE_DATA;
+
+typedef struct {
 #define HDA_SOUND_OFF       0
 #define HDA_SOUND_ON        1
   UINT32  Mode;
