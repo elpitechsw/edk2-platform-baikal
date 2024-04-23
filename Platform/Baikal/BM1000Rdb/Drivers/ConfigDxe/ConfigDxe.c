@@ -105,7 +105,10 @@ SetupVariables (
   UINTN                 Size;
   UINT32                Var32;
   FRU_CLIENT_PROTOCOL  *FruClient;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
   EFI_STATUS            Status;
+  INT32                 Node = 0;
+  UINT32                SimpleAudioCard = 0;
 
   Size = sizeof (UINT32);
   Status = gRT->GetVariable (
@@ -237,6 +240,35 @@ SetupVariables (
                   &Var32
                   );
     ASSERT_EFI_ERROR (Status);
+  }
+
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+  } else {
+    Status = FdtClient->FindCompatibleNode (FdtClient, "simple-audio-card", &Node);
+    if (Status == EFI_SUCCESS) {
+      SimpleAudioCard = 1;
+    }
+    Size = sizeof (UINT32);
+    Status = gRT->GetVariable (
+        L"SimpleAudioCard",
+        &gConfigDxeFormSetGuid,
+        NULL,
+        &Size,
+        &Var32
+        );
+    if (EFI_ERROR (Status) || Var32 != SimpleAudioCard) {
+      Var32 = SimpleAudioCard;
+      Status = gRT->SetVariable (
+          L"SimpleAudioCard",
+          &gConfigDxeFormSetGuid,
+          EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+          sizeof(Var32),
+          &Var32
+          );
+      ASSERT_EFI_ERROR (Status);
+    }
   }
 
   return EFI_SUCCESS;
