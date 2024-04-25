@@ -30,6 +30,8 @@ STATIC CHAR8  BaikalModel[] = "MBS-2S";
 STATIC CHAR8  BaikalModel[] = "ET-113";
 #elif defined(ELP_9)
 STATIC CHAR8  BaikalModel[] = "ET-143";
+#elif defined(ELP_10)
+STATIC CHAR8  BaikalModel[] = "ET-163";
 #else
 STATIC CHAR8  BaikalModel[] = "DBS";
 #endif
