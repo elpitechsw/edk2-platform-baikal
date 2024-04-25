@@ -751,7 +751,7 @@ PciHostBridgeLibConstructor (
           ASSERT (PLATFORM_ADDR_IN_CHIP(ApbBase) == mPcieApbBaseList[ListIdx]);
 #if !defined(MDEPKG_NDEBUG)
           ASSERT (ApbSize == 0x100);
-          ASSERT (DbiSize == mPcieDbiSizeList[ListIdx]);
+          ASSERT (DbiSize >= mPcieDbiSizeList[ListIdx]);
 #endif
           ASSERT (PLATFORM_ADDR_IN_CHIP(CfgBase) >= mPcieMmioBaseList[ListIdx]);
           ASSERT (PLATFORM_ADDR_IN_CHIP(CfgBase) <  mPcieMmioBaseList[ListIdx] + mPcieMmioSizeList[ListIdx]);
