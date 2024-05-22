@@ -993,7 +993,7 @@ PlatformBootManagerAfterConsole (
   EFI_STATUS                     Status;
   UINTN                          VersionLen;
   CHAR16                         VersionStr[80];
-  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput = NULL;
 
   // Signal AfterConsole event
   EfiEventGroupSignal (&gBaikalAfterConsoleEventGroupGuid);

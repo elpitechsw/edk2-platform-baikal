@@ -71,7 +71,7 @@
 #define BAIKAL_VDU_CR1_BPP24            (6 << 2)
 #define BAIKAL_VDU_CR1_LCE              (1 << 0)
 
-#define BAIKAL_VDU_HPPLOR_HPOE          (1 << 31)
+#define BAIKAL_VDU_HPPLOR_HPOE          (1U << 31)
 
 #define BAIKAL_VDU_PCTR_PCR             (1 << 10)
 #define BAIKAL_VDU_PCTR_PCI             (1 << 9)

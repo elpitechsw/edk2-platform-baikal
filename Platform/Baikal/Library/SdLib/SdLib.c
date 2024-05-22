@@ -1749,7 +1749,7 @@ SdRead (
   IN UINT64   size
   )
 {
-  EFI_STATUS   Status;
+  EFI_STATUS   Status = EFI_INVALID_PARAMETER;
   UINT64       lba;
   UINT64       part;
   UINT64       offset;
@@ -1784,7 +1784,7 @@ SdWrite (
   IN UINT64   size
   )
 {
-  EFI_STATUS   Status;
+  EFI_STATUS   Status = EFI_INVALID_PARAMETER;
   UINT64       lba;
   UINT64       part;
   UINT64       offset;
