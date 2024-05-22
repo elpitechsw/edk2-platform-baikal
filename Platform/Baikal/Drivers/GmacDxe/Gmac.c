@@ -149,6 +149,7 @@ GmacDxeDriverEntry (
         }
       }
 
+      SetMem (&MacAddr, sizeof (MacAddr), 0);
       FdtStatus = FdtClient->GetNodeProperty (FdtClient, GmacNode, "mac-address", &Prop, &PropSize);
       if (FdtStatus == EFI_SUCCESS) {
         if (PropSize == 6) {
