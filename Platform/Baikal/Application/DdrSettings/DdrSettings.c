@@ -22,6 +22,9 @@ DdrProcessRttValue (
   if (DisplayHelpAndExit) {
     goto PrintHelp;
   }
+  if (NULL == NewFlashBuf) {
+    return EFI_INVALID_PARAMETER;
+  }
   switch (NewFlashBuf->Dic) {
     case 0:
       NewFlashBuf->Dic = BAIKAL_DIC_RZQ_DIV_7;

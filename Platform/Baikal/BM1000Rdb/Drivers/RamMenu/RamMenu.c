@@ -68,7 +68,7 @@ RamMenuEntryPoint (
   // HII Locals
   EFI_HII_PACKAGE_LIST_HEADER     *PackageListHeader;
   EFI_HII_DATABASE_PROTOCOL       *HiiDatabase;
-  EFI_HII_HANDLE                   HiiHandle[2];
+  EFI_HII_HANDLE                   HiiHandle[2] = {0};
   EFI_HII_CONFIG_ROUTING_PROTOCOL *HiiConfigRouting;
   EFI_STRING                       ConfigRequestHdr;
   UINTN                            BufferSize;

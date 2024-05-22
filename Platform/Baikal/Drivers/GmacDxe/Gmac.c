@@ -71,8 +71,8 @@ GmacDxeDriverEntry (
       EFI_PHYSICAL_ADDRESS         Tx2ClkChCtlAddr = 0;
       INT32                        PhyAddr = -1;
       INT32                        ClkCsr = 4;
-      BOOLEAN                      RgmiiRxId;
-      BOOLEAN                      RgmiiTxId;
+      BOOLEAN                      RgmiiRxId = FALSE;
+      BOOLEAN                      RgmiiTxId = FALSE;
 
       Status = gBS->AllocatePool (EfiBootServicesData, sizeof (GMAC_ETH_DEVPATH), (VOID **) &EthDevPath);
       if (EFI_ERROR (Status)) {

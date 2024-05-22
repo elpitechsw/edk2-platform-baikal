@@ -560,7 +560,7 @@ KeyGetchar (
   )
 {
   EFI_STATUS                     Status;
-  UINT16                         ScanCode;
+  UINT16                         ScanCode = 0;
   BOOLEAN                        Extend0;
   BOOLEAN                        Extend1;
   BOOLEAN                        Break;
