@@ -972,6 +972,45 @@ BootDiscoveryPolicyHandler (
   return EFI_SUCCESS;
 }
 
+UINTN
+BootOptionPriority (
+  CONST EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption
+  )
+{
+  DEBUG((DEBUG_INFO, "Device type  %08x, subtype %08x\n", DevicePathType(BootOption->FilePath),
+        DevicePathSubType(BootOption->FilePath)));
+  DEBUG((DEBUG_INFO, "Device path %s\n", ConvertDeviceNodeToText (BootOption->FilePath, 0, 0)));
+  //
+  // Make sure Shell is highest priority
+  if (StrCmp (BootOption->Description, L"UEFI Shell") == 0) {
+    return 0;
+  }
+
+  // Make network boot options lower prio than any local devices
+  if (StrnCmp (BootOption->Description, L"UEFI PXE", 8) == 0 ||
+      StrnCmp (BootOption->Description, L"UEFI HTTP", 9) == 0) {
+    return 99;
+  }
+
+  // Push Misc Device to the bottom. Not even sure what this is.
+  if (StrCmp (BootOption->Description, L"UEFI Misc Device") == 0) {
+    return 100;
+  }
+
+  // Everything else is in the middle.
+  return 50;
+}
+
+INTN
+EFIAPI
+CompareBootOption (
+  CONST EFI_BOOT_MANAGER_LOAD_OPTION  *Left,
+  CONST EFI_BOOT_MANAGER_LOAD_OPTION  *Right
+  )
+{
+  return BootOptionPriority (Left) - BootOptionPriority (Right);
+}
+
 /**
   Do the platform specific action after the console is ready
   Possible things that can be done in PlatformBootManagerAfterConsole:
@@ -1082,6 +1121,7 @@ PlatformBootManagerAfterConsole (
   Key.ScanCode    = SCAN_NULL;
   Key.UnicodeChar = L's';
   PlatformRegisterFvBootOption (&gUefiShellFileGuid, L"UEFI Shell", 0, &Key);
+  EfiBootManagerSortLoadOptionVariable (LoadOptionTypeBoot, (SORT_COMPARE)CompareBootOption);
 }
 
 /**
@@ -1260,10 +1300,11 @@ PlatformBootManagerUnableToBoot (
   //
   EfiBootManagerConnectAll ();
   EfiBootManagerRefreshAllBootOption ();
+  EfiBootManagerSortLoadOptionVariable (LoadOptionTypeBoot, (SORT_COMPARE)CompareBootOption);
 
   // Boot the 'UEFI Shell'. If the Pcd is not set, the UEFI Shell is not
   // an active boot option and must be manually selected through UiApp
-  // (at least during the fist boot).
+  // (at least during the first boot).
   //
   if (FixedPcdGetBool (PcdUefiShellDefaultBootEnable)) {
     PlatformBootFvBootOption (
