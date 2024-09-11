@@ -237,7 +237,7 @@
 
 // Multichip configs support
 
-#if defined(BAIKAL_MBS_2S)
+#if defined(BAIKAL_MBS_2S) || defined(ELP_12)
 #define PLATFORM_CHIP_COUNT             2
 #define PLATFORM_ADDR_BITS_PER_CHIP     43
 #else
