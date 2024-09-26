@@ -17,6 +17,37 @@ typedef struct {
   EFI_DEVICE_PATH_PROTOCOL  End;
 } GMAC_ETH_DEVPATH;
 
+#if defined(ELPITECH) && defined(ELP_12)
+STATIC
+EFI_PHYSICAL_ADDRESS
+FdtGetTranslation (
+  IN  FDT_CLIENT_PROTOCOL  *FdtClient,
+  IN  INT32                 Node
+  )
+{
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  EFI_PHYSICAL_ADDRESS  Translation;
+  INT32                 ParentNode;
+
+  Translation = 0;
+  if (FdtClient->FindParentNode(FdtClient, Node, &ParentNode) == EFI_SUCCESS &&
+      FdtClient->GetNodeProperty (FdtClient, ParentNode, "ranges", &Prop, &PropSize) == EFI_SUCCESS) {
+    if (PropSize == 3 * sizeof (UINT64)) {
+      Translation = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 1)) -
+                    SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop));
+      DEBUG((EFI_D_INFO, "Got Gmac translation offset %p\n", Translation));
+    }
+  } else {
+    DEBUG((EFI_D_INFO, "No Gmac ParentNode ranges property.\n"));
+  }
+
+  return Translation;
+}
+#else
+#define FdtGetTranslation(F, N) 0ULL
+#endif
+
 EFI_STATUS
 EFIAPI
 GmacDxeDriverEntry (
@@ -33,6 +64,7 @@ GmacDxeDriverEntry (
   EFI_STATUS            Status;
   CONST VOID           *Prop;
   UINT32                PropSize;
+  EFI_PHYSICAL_ADDRESS  Translation;
 
   Status = gBS->LocateProtocol (&gEuiClientProtocolGuid, NULL, (VOID **) &EuiClient);
   if (EFI_ERROR (Status)) {
@@ -56,11 +88,12 @@ GmacDxeDriverEntry (
       continue;
     }
 
+    Translation = FdtGetTranslation(FdtClient, GmacNode);
     FdtStatus = FdtClient->GetNodeProperty (FdtClient, GmacNode, "reg", &Prop, &PropSize);
     if (FdtStatus == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
       BOOLEAN                      DmaCoherent = FALSE;
       GMAC_ETH_DEVPATH            *EthDevPath;
-      volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (ReadUnaligned64 (Prop));
+      volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (ReadUnaligned64 (Prop)) + Translation;
       EFI_HANDLE                  *Handle;
       EFI_MAC_ADDRESS              MacAddr;
       INT32                        Node;
@@ -223,7 +256,8 @@ GmacDxeDriverEntry (
           if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (((CONST UINT32 *) Prop)[0]), &ResetGpioNode) == EFI_SUCCESS &&
               FdtClient->FindParentNode    (FdtClient, ResetGpioNode, &ResetGpioNode) == EFI_SUCCESS &&
               FdtClient->GetNodeProperty   (FdtClient, ResetGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
-            ResetGpioBase = SwapBytes64 (ReadUnaligned64 (Prop));
+            ResetGpioBase = SwapBytes64 (ReadUnaligned64 (Prop)) + FdtGetTranslation(FdtClient, ResetGpioNode);
+
             if (ResetGpioBase == 0 || ResetGpioPin > 31 || ResetPolarity > 1) {
               ResetGpioBase = 0;
               ResetGpioPin  = -1;

@@ -704,6 +704,37 @@ PciHostBridgeLibRootBrigeInit (
   }
 }
 
+#if defined(ELPITECH) && defined(ELP_12)
+STATIC
+EFI_PHYSICAL_ADDRESS
+FdtGetTranslation (
+  IN  FDT_CLIENT_PROTOCOL  *FdtClient,
+  IN  INT32                 Node
+  )
+{
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  EFI_PHYSICAL_ADDRESS  Translation;
+  INT32                 ParentNode;
+
+  Translation = 0;
+  if (FdtClient->FindParentNode(FdtClient, Node, &ParentNode) == EFI_SUCCESS &&
+      FdtClient->GetNodeProperty (FdtClient, ParentNode, "ranges", &Prop, &PropSize) == EFI_SUCCESS) {
+    if (PropSize == 3 * sizeof (UINT64)) {
+      Translation = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 1)) -
+                    SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop));
+      DEBUG((EFI_D_INFO, "Got translation offset %p\n", Translation));
+    }
+  } else {
+    DEBUG((EFI_D_INFO, "No ParentNode ranges property.\n"));
+  }
+
+  return Translation;
+}
+#else
+#define FdtGetTranslation(F, N) 0ULL
+#endif
+
 EFI_STATUS
 EFIAPI
 PciHostBridgeLibConstructor (
@@ -743,6 +774,7 @@ PciHostBridgeLibConstructor (
     UINTN                             PerstGpioPolarity;
     EFI_PHYSICAL_ADDRESS              PerstGpioBase;
     UINTN                             SegId;
+    EFI_PHYSICAL_ADDRESS              Translation = 0;
 
     Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bs1000-pcie", Node, &Node);
     if (EFI_ERROR (Status)) {
@@ -752,6 +784,9 @@ PciHostBridgeLibConstructor (
     if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
       continue;
     }
+
+    /* Get chip translation */
+    Translation = FdtGetTranslation(FdtClient, Node);
 
     if (FdtClient->GetNodeProperty (FdtClient, Node, "reg-names", &Prop, &PropSize) == EFI_SUCCESS &&
         PropSize > 0) {
@@ -790,9 +825,9 @@ PciHostBridgeLibConstructor (
 #endif
       UINTN        ListIdx;
 
-      ApbBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + ApbRegIdx * 2));
-      DbiBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + DbiRegIdx * 2));
-      CfgBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + CfgRegIdx * 2));
+      ApbBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + ApbRegIdx * 2)) + Translation;
+      DbiBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + DbiRegIdx * 2)) + Translation;
+      CfgBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + CfgRegIdx * 2)) + Translation;
       CfgSize = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + CfgRegIdx * 2 + 1));
 
       for (ListIdx = 0; ListIdx < ARRAY_SIZE (mPcieDbiBaseList); ++ListIdx) {
@@ -831,7 +866,7 @@ PciHostBridgeLibConstructor (
 
         Flags   = SwapBytes32 (((CONST UINT32 *) Prop)[0]);
         PciBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) ((EFI_PHYSICAL_ADDRESS) Prop + sizeof (UINT32))));
-        CpuBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) ((EFI_PHYSICAL_ADDRESS) Prop + sizeof (UINT32) + 1 * sizeof (UINT64))));
+        CpuBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) ((EFI_PHYSICAL_ADDRESS) Prop + sizeof (UINT32) + 1 * sizeof (UINT64)))) + Translation;
         Size    = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) ((EFI_PHYSICAL_ADDRESS) Prop + sizeof (UINT32) + 2 * sizeof (UINT64))));
 
         if (Flags & RANGES_FLAG_IO) {
@@ -887,7 +922,7 @@ PciHostBridgeLibConstructor (
         (FdtClient->FindParentNode (FdtClient, PerstGpioNode, &PerstGpioNode) == EFI_SUCCESS)) {
         if (FdtClient->GetNodeProperty (FdtClient, PerstGpioNode, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
             PropSize == 2 * sizeof (UINT64)) {
-          PerstGpioBase = SwapBytes64 (*(CONST UINT64 *) Prop);
+          PerstGpioBase = SwapBytes64 (*(CONST UINT64 *) Prop) + FdtGetTranslation(FdtClient, PerstGpioNode);
         } else {
           PerstGpioBase = 0;
         }
