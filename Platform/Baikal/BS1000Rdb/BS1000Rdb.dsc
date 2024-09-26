@@ -419,7 +419,7 @@
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiReservedMemoryType|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode|150
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData|300
-!if $(BAIKAL_MBS_2S)
+!if $(BAIKAL_MBS_2S) || ($(BAIKAL_ELP) && $(BOARD_VER) == 12)
   gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|44
   gBaikalTokenSpaceGuid.PcdDdrChannelsNumber|12
 !else
