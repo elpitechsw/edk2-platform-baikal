@@ -46,6 +46,10 @@ SpdClientDxeInitialize (
   UINTN                 DimmIdx;
   FDT_CLIENT_PROTOCOL  *FdtClient;
   EFI_STATUS            Status;
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  UINTN                 I2cIclk;
+  INT32                 Node = 0;
 
   STATIC SPD_CLIENT_PROTOCOL  mSpdClientProtocol = {
     SpdClientGetData,
@@ -61,6 +65,24 @@ SpdClientDxeInitialize (
       Status
       ));
     return Status;
+  }
+
+  /* We presume that I2C base clocks are "fixed-clock".
+   * So, there is no reason to admit that the frequencies may
+   * be different.
+   * Get the first compatiblee node and find the base clock
+   * frequency.
+   */
+  if (FdtClient->FindNextCompatibleNode (FdtClient, "snps,designware-i2c", Node, &Node) != EFI_SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
+      FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
+      FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+    I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
+  } else {
+    return EFI_DEVICE_ERROR;
   }
 
   Status = gBS->InstallProtocolInterface (
@@ -86,29 +108,9 @@ SpdClientDxeInitialize (
       CONST  EFI_PHYSICAL_ADDRESS   I2cBase = DimmIdx < (BS1000_DIMM_COUNT / 2) ?
                                       PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C2_BASE) :
                                       PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_I2C3_BASE);
-      UINTN                         I2cIclk;
-      INT32                         Node = 0;
       INTN                          RxSize;
       CONST  UINTN                  SpdAddr = 0x50 + DimmIdx % 6;
       UINT8                         StartAddr = 0;
-
-      for (;;) {
-        CONST VOID  *Prop;
-        UINT32       PropSize;
-
-        if (FdtClient->FindNextCompatibleNode (FdtClient, "snps,designware-i2c", Node, &Node) != EFI_SUCCESS) {
-          return EFI_DEVICE_ERROR;
-        }
-
-        if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64) &&
-            SwapBytes64 (ReadUnaligned64 (Prop)) == I2cBase &&
-            FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32) &&
-            FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &Node) == EFI_SUCCESS &&
-            FdtClient->GetNodeProperty (FdtClient, Node, "clock-frequency", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
-          I2cIclk = SwapBytes32 (*(CONST UINT32 *) Prop);
-          break;
-        }
-      }
 
       gBS->SetMem (Buf, SPD_MAXSIZE, 0xFF);
 
