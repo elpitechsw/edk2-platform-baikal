@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -869,8 +869,8 @@ PciHostBridgeLibConstructor (
           }
 
           break;
-        } else if (GetTimeInNanoSecond (PerformanceCounter) - TimeStart > 100000000) {
-          // Wait up to 100 ms for link up
+        } else if (GetTimeInNanoSecond (PerformanceCounter) - TimeStart >= 200000000) {
+          // Wait up to 200 ms for link up
           DEBUG ((
             EFI_D_INFO,
             "PcieRoot(0x%x)[%03ums: LTSSM:0x%02x SMLH%c RDLH%c]: link is inactive\n",

@@ -1,12 +1,15 @@
 /** @file
-  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/NonDiscoverableDeviceRegistrationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/FdtClient.h>
 
 #include <BM1000.h>
 
@@ -85,33 +88,49 @@ NonDiscoverableXhciEntryPoint (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  UINTN  Idx;
-  CONST  EFI_PHYSICAL_ADDRESS  XhciBases[] = {BM1000_USB2_BASE, BM1000_USB3_BASE};
-  CONST  UINTN                 XhciSizes[] = {BM1000_USB2_SIZE, BM1000_USB3_SIZE};
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  INT32                 Node = 0;
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  EFI_STATUS            Status;
 
-  STATIC_ASSERT (ARRAY_SIZE (XhciBases) == ARRAY_SIZE (XhciSizes));
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  ASSERT_EFI_ERROR (Status);
 
-  for (Idx = 0; Idx < ARRAY_SIZE (XhciBases); ++Idx) {
-    EFI_STATUS  Status;
-    Status = RegisterNonDiscoverableMmioDevice (
-               NonDiscoverableDeviceTypeXhci,
-               NonDiscoverableDeviceDmaTypeCoherent,
-               NonDiscoverableDeviceXhciInitializer,
-               NULL,
-               1,
-               XhciBases[Idx],
-               XhciSizes[Idx]
-               );
-
+  while (TRUE) {
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "snps,dwc3", Node, &Node);
     if (EFI_ERROR (Status)) {
-      DEBUG ((
-        EFI_D_ERROR,
-        "%a: unable to register @ 0x%lx, Status: %r\n",
-        __func__,
-        XhciBases[Idx],
-        Status
-        ));
-      return Status;
+      break;
+    }
+
+    if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
+      continue;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 16) {
+      CONST EFI_PHYSICAL_ADDRESS  XhciBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 0));
+      CONST UINTN                 XhciSize = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 1));
+
+      Status = RegisterNonDiscoverableMmioDevice (
+                 NonDiscoverableDeviceTypeXhci,
+                 NonDiscoverableDeviceDmaTypeCoherent,
+                 NonDiscoverableDeviceXhciInitializer,
+                 NULL,
+                 1,
+                 XhciBase,
+                 XhciSize
+                 );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          EFI_D_ERROR,
+          "%a: unable to register @ 0x%lx, Status: %r\n",
+          __func__,
+          XhciBase,
+          Status
+          ));
+      }
     }
   }
 

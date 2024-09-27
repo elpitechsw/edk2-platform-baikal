@@ -1,13 +1,19 @@
+## @file
+#
+#  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
 
 [Defines]
-  INF_VERSION               = 0x00010005
-  BASE_NAME                 = RamMenu
-  FILE_GUID                 = e9535dd4-5d99-84a6-c830-0bcb75e62e5d
-  MODULE_TYPE               = UEFI_DRIVER
-  VERSION_STRING            = 0.19
-  ENTRY_POINT               = RamMenuEntryPoint
-  UNLOAD_IMAGE              = RamMenuUnload
-  UEFI_HII_RESOURCE_SECTION = TRUE
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = RamMenu
+  FILE_GUID                      = E9535DD4-5D99-84A6-C830-0BCB75E62E5D
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 0.19
+  ENTRY_POINT                    = RamMenuEntryPoint
+  UNLOAD_IMAGE                   = RamMenuUnload
+  UEFI_HII_RESOURCE_SECTION      = TRUE
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -17,40 +23,42 @@
 [Sources]
   RamMenu.c
   RamMenu.h
-  RamMenuHii.c
-  RamMenuHii.h
-  RamMenuComponent.c
-  RamMenuComponent.h
-  RamStruc.c
-  RamStruc.h
-  RamMenuDataStruct.h
   RamMenu.uni
   RamMenu.vfr
+  RamMenuComponent.c
+  RamMenuComponent.h
+  RamMenuDataStruct.h
+  RamMenuHii.c
+  RamMenuHii.h
+  RamStruc.c
+  RamStruc.h
 
 [LibraryClasses]
-  UefiDriverEntryPoint
-  UefiBootServicesTableLib
-  MemoryAllocationLib
-  BaseMemoryLib
   BaseLib
-  UefiLib
-  DevicePathLib
+  BaseMemoryLib
   DebugLib
+  DevicePathLib
   HiiLib
+  MemoryAllocationLib
   SmcFlashLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[FixedPcd]
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase
 
 [Protocols]
-  gEfiDriverBindingProtocolGuid
-  gEfiDriverSupportedEfiVersionProtocolGuid
-  gEfiHiiPackageListProtocolGuid
-  gEfiHiiDatabaseProtocolGuid
   gEfiComponentName2ProtocolGuid
   gEfiComponentNameProtocolGuid
-  gEfiHiiConfigAccessProtocolGuid
-  gEfiHiiStringProtocolGuid
-  gEfiHiiConfigRoutingProtocolGuid
+  gEfiDriverBindingProtocolGuid
+  gEfiDriverSupportedEfiVersionProtocolGuid
   gEfiFormBrowser2ProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
   gEfiHiiDatabaseProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
+  gEfiHiiPackageListProtocolGuid
+  gEfiHiiStringProtocolGuid
 
 [Guids]
-

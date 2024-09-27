@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -43,7 +43,7 @@ typedef struct {
   UINT32                           Signature;
 
   EFI_HANDLE                       Handle;
-  RAM_MENU_STRUC              	   Configuration;
+  RAM_MENU_STRUC                   Configuration;
 
   EFI_HANDLE                       DriverHandle[2];
   EFI_HII_HANDLE                   HiiHandle[2];
@@ -56,7 +56,6 @@ typedef struct {
   // Produced protocol
   //
   EFI_HII_CONFIG_ACCESS_PROTOCOL   ConfigAccess;
-
 } RAM_MENU_DEV;
 
 #endif // _RAM_MENU_H_

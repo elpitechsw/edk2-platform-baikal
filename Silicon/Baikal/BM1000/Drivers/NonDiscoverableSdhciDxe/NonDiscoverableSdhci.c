@@ -1,13 +1,14 @@
 /** @file
-  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/NonDiscoverableDeviceRegistrationLib.h>
-
-#include <BM1000.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/FdtClient.h>
 
 EFI_STATUS
 EFIAPI
@@ -16,27 +17,50 @@ NonDiscoverableSdhciEntryPoint (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS  Status;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  INT32                 Node = 0;
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  EFI_STATUS            Status;
 
-  Status = RegisterNonDiscoverableMmioDevice (
-             NonDiscoverableDeviceTypeSdhci,
-             NonDiscoverableDeviceDmaTypeCoherent,
-             NULL,
-             NULL,
-             1,
-             BM1000_MMC_BASE,
-             BM1000_MMC_SIZE
-             );
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  ASSERT_EFI_ERROR (Status);
 
-  if (EFI_ERROR (Status)) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: unable to register, Status: %r\n",
-      __func__,
-      Status
-      ));
+  while (TRUE) {
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dwcmshc-sdhci", Node, &Node);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
 
-    return Status;
+    if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
+      continue;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 16) {
+      CONST EFI_PHYSICAL_ADDRESS  SdhciBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 0));
+      CONST UINTN                 SdhciSize = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 1));
+
+      Status = RegisterNonDiscoverableMmioDevice (
+                 NonDiscoverableDeviceTypeSdhci,
+                 NonDiscoverableDeviceDmaTypeCoherent,
+                 NULL,
+                 NULL,
+                 1,
+                 SdhciBase,
+                 SdhciSize
+                 );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          EFI_D_ERROR,
+          "%a: unable to register @ 0x%lx, Status: %r\n",
+          __func__,
+          SdhciBase,
+          Status
+          ));
+      }
+    }
   }
 
   return EFI_SUCCESS;

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -20,7 +20,21 @@
 #include <Protocol/FruClient.h>
 #include <Protocol/Smbios.h>
 
-STATIC CHAR8  BaikalModel[4];
+#include <BM1000.h>
+
+#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
+STATIC UINT8  PcieSlots[] = {
+  SlotTypeM2Socket3,
+  0,
+  SlotTypePciExpressGen3
+};
+#else
+STATIC UINT8  PcieSlots[1] = {
+  SlotTypePciExpressGen3
+};
+#endif
+
+STATIC CHAR8  BaikalModel[] = BAIKAL_BOARD_NAME;
 
 STATIC
 INTN
@@ -45,7 +59,7 @@ STATIC
 EFI_STATUS
 CreateSmbiosTable (
   IN  EFI_SMBIOS_TABLE_HEADER   *Template,
-  IN  CHAR8                    **StringPack,
+  IN  CONST CHAR8 * CONST       *StringPack,
   IN  CONST UINTN                StringPackSize
   )
 {
@@ -166,10 +180,11 @@ STATIC SMBIOS_TABLE_TYPE0 SmbiosTable0 = {
   {}
 };
 
-STATIC CHAR8 *SmbiosTable0Strings[] = {
-  FixedPcdGetPtr (PcdFirmwareVendor),
-  FixedPcdGetPtr (PcdFirmwareVersionString),
-  (CHAR8[sizeof (BAIKAL_BIOS_DATE)]){}
+STATIC CHAR8         BiosDate[sizeof (BAIKAL_BIOS_DATE)];
+STATIC CONST CHAR8  *SmbiosTable0Strings[] = {
+  NULL,
+  NULL,
+  BiosDate
 };
 #pragma pack()
 
@@ -179,17 +194,16 @@ SmbiosTable0Init (
   VOID
   )
 {
+  CONST UINTN  Size1 = StrSize (FixedPcdGetPtr (PcdFirmwareVendor));
+  CONST UINTN  Size2 = StrSize (FixedPcdGetPtr (PcdFirmwareVersionString));
   EFI_STATUS   Status;
-  CONST UINTN  Year   = TIME_BUILD_YEAR;
-  CONST UINTN  Month  = TIME_BUILD_MONTH;
-  CONST UINTN  Day    = TIME_BUILD_DAY;
-  CONST UINTN  Size1  = StrSize ((CHAR16 *) SmbiosTable0Strings[0]);
-  CONST UINTN  Size2  = StrSize ((CHAR16 *) SmbiosTable0Strings[1]);
+  CHAR8       *Str1;
+  CHAR8       *Str2;
 
   *(UINT32 *) &SmbiosTable0.BiosCharacteristics = BIT15 | BIT11 | BIT7;
 
-  CHAR8  *Str = (CHAR8 *) AllocateZeroPool (Size1 + Size2);
-  if (Str == NULL) {
+  Str1 = AllocateZeroPool (Size1);
+  if (Str1 == NULL) {
     DEBUG ((
       EFI_D_ERROR,
       "%a: failed to allocate memory for SMBIOS table strings, Status = %r\n",
@@ -199,21 +213,34 @@ SmbiosTable0Init (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  UnicodeStrToAsciiStrS ((CHAR16 *) SmbiosTable0Strings[0], Str, Size1);
-  UnicodeStrToAsciiStrS ((CHAR16 *) SmbiosTable0Strings[1], Str + Size1, Size2);
+  Str2 = AllocateZeroPool (Size2);
+  if (Str2 == NULL) {
+    FreePool (Str1);
+    DEBUG ((
+      EFI_D_ERROR,
+      "%a: failed to allocate memory for SMBIOS table strings, Status = %r\n",
+      __func__,
+      EFI_OUT_OF_RESOURCES
+      ));
+    return EFI_OUT_OF_RESOURCES;
+  }
 
-  SmbiosTable0Strings[0] = Str;
-  SmbiosTable0Strings[1] = Str + Size1;
+  UnicodeStrToAsciiStrS (FixedPcdGetPtr (PcdFirmwareVendor), Str1, Size1);
+  UnicodeStrToAsciiStrS (FixedPcdGetPtr (PcdFirmwareVersionString), Str2, Size2);
+
+  SmbiosTable0Strings[0] = Str1;
+  SmbiosTable0Strings[1] = Str2;
 
   AsciiSPrint (
-    SmbiosTable0Strings[2],
+    BiosDate,
     sizeof (BAIKAL_BIOS_DATE),
     "%02u/%02u/%04u",
-    Month, Day, Year
+    TIME_BUILD_MONTH, TIME_BUILD_DAY, TIME_BUILD_YEAR
     );
 
   Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable0, SmbiosTable0Strings, ARRAY_SIZE (SmbiosTable0Strings));
-  FreePool (Str);
+  FreePool (Str1);
+  FreePool (Str2);
 
   return Status;
 }
@@ -237,48 +264,15 @@ STATIC SMBIOS_TABLE_TYPE1 SmbiosTable1 = {
   0
 };
 
-STATIC CHAR8 *SmbiosTable1Strings[] = {
+STATIC CHAR8  *SmbiosTable1FruStrings[] = {
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){},
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){},
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){},
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){}
 };
+
+STATIC CONST CHAR8  *SmbiosTable1Strings[ARRAY_SIZE (SmbiosTable1FruStrings)];
 #pragma pack()
-
-STATIC
-EFI_STATUS
-SmbiosReadFdtModel (
-  IN  CHAR8 * CONST  DstBuf,
-  IN  CONST UINTN    DstSize
-  )
-{
-  FDT_CLIENT_PROTOCOL  *FdtClient;
-  INT32                 Node;
-  EFI_STATUS            Status;
-
-  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((
-      EFI_D_ERROR,
-      "%a: failed to locate FdtClientProtocol, Status = %r\n",
-      __func__,
-      Status
-      ));
-    return Status;
-  }
-
-  if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm10", -1, &Node) == EFI_SUCCESS ||
-      FdtClient->FindNextCompatibleNode (FdtClient, "baikal,dbm20", -1, &Node) == EFI_SUCCESS) {
-    AsciiSPrint (DstBuf, DstSize, "%a", "DBM");
-    return EFI_SUCCESS;
-  } else if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,mbm10", -1, &Node) == EFI_SUCCESS ||
-             FdtClient->FindNextCompatibleNode (FdtClient, "baikal,mbm20", -1, &Node) == EFI_SUCCESS) {
-    AsciiSPrint (DstBuf, DstSize, "%a", "MBM");
-    return EFI_SUCCESS;
-  }
-
-  return EFI_NOT_FOUND;
-}
 
 STATIC
 EFI_STATUS
@@ -300,34 +294,32 @@ SmbiosTable1Init (
     return Status;
   }
 
-  if (FruClient->ReadProductManufacturer (SmbiosTable1Strings[0], FRU_TYPLENSTR_MAX_SIZE) == 0) {
+  if (FruClient->ReadProductManufacturer (SmbiosTable1FruStrings[0], FRU_TYPLENSTR_MAX_SIZE) == 0) {
     UnicodeStrToAsciiStrS (
-      (CHAR16 *) FixedPcdGetPtr (PcdFirmwareVendor),
-      SmbiosTable1Strings[0],
+      FixedPcdGetPtr (PcdFirmwareVendor),
+      SmbiosTable1FruStrings[0],
       FRU_TYPLENSTR_MAX_SIZE
       );
   }
+  SmbiosTable1Strings[0] = SmbiosTable1FruStrings[0];
 
-  if (FruClient->ReadProductName (SmbiosTable1Strings[1], FRU_TYPLENSTR_MAX_SIZE) == 0) {
-    if (BaikalModel[0] == '\0') {
-      SmbiosTable1Strings[1] = NULL;
-      SmbiosTable1.ProductName = 0;
-      SmbiosTable1.Version--;
-      SmbiosTable1.SerialNumber--;
-    } else {
-      SmbiosTable1Strings[1] = BaikalModel;
-    }
+  if (FruClient->ReadProductName (SmbiosTable1FruStrings[1], FRU_TYPLENSTR_MAX_SIZE) == 0) {
+    SmbiosTable1Strings[1] = BaikalModel;
+  } else {
+    SmbiosTable1Strings[1] = SmbiosTable1FruStrings[1];
   }
 
-  if (FruClient->ReadProductVersion (SmbiosTable1Strings[2], FRU_TYPLENSTR_MAX_SIZE) == 0) {
-    SmbiosTable1Strings[2] = NULL;
+  if (FruClient->ReadProductVersion (SmbiosTable1FruStrings[2], FRU_TYPLENSTR_MAX_SIZE) == 0) {
     SmbiosTable1.Version = 0;
     SmbiosTable1.SerialNumber--;
+  } else {
+    SmbiosTable1Strings[2] = SmbiosTable1FruStrings[2];
   }
 
-  if (FruClient->ReadProductSerialNumber (SmbiosTable1Strings[3], FRU_TYPLENSTR_MAX_SIZE) == 0) {
-    SmbiosTable1Strings[3] = NULL;
+  if (FruClient->ReadProductSerialNumber (SmbiosTable1FruStrings[3], FRU_TYPLENSTR_MAX_SIZE) == 0) {
     SmbiosTable1.SerialNumber = 0;
+  } else {
+    SmbiosTable1Strings[3] = SmbiosTable1FruStrings[3];
   }
 
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable1, SmbiosTable1Strings, ARRAY_SIZE (SmbiosTable1Strings));
@@ -339,7 +331,7 @@ SmbiosTable1Init (
 STATIC SMBIOS_TABLE_TYPE2 SmbiosTable2 = {
   {
     SMBIOS_TYPE_BASEBOARD_INFORMATION,
-    sizeof (SMBIOS_TABLE_TYPE2),
+    0xF,
     BAIKAL_SMBIOS_TABLE_HANDLE (2, 0)
   },
   1,
@@ -351,15 +343,17 @@ STATIC SMBIOS_TABLE_TYPE2 SmbiosTable2 = {
   0,
   BAIKAL_SMBIOS_TABLE_HANDLE (3, 0),
   BaseBoardTypeMotherBoard,
-  1,
-  { BAIKAL_SMBIOS_TABLE_HANDLE (4, 0) }
+  0,
+  {}
 };
 
-STATIC CHAR8 *SmbiosTable2Strings[] = {
+STATIC CHAR8  *SmbiosTable2FruStrings[] = {
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){},
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){},
   (CHAR8[FRU_TYPLENSTR_MAX_SIZE]){}
 };
+
+STATIC CONST CHAR8  *SmbiosTable2Strings[ARRAY_SIZE (SmbiosTable2FruStrings)];
 #pragma pack()
 
 STATIC
@@ -384,26 +378,24 @@ SmbiosTable2Init (
     return Status;
   }
 
-  if (FruClient->ReadBoardManufacturer (SmbiosTable2Strings[0], FRU_TYPLENSTR_MAX_SIZE) == 0) {
-    SmbiosTable2Strings[0] = NULL;
+  if (FruClient->ReadBoardManufacturer (SmbiosTable2FruStrings[0], FRU_TYPLENSTR_MAX_SIZE) == 0) {
     SmbiosTable2.Manufacturer = 0;
     SmbiosTable2.ProductName--;
     SmbiosTable2.SerialNumber--;
+  } else {
+    SmbiosTable2Strings[0] = SmbiosTable2FruStrings[0];
   }
 
-  if (FruClient->ReadBoardName (SmbiosTable2Strings[1], FRU_TYPLENSTR_MAX_SIZE) == 0) {
-    if (BaikalModel[0] == '\0') {
-      SmbiosTable2Strings[1] = NULL;
-      SmbiosTable2.ProductName = 0;
-      SmbiosTable2.SerialNumber--;
-    } else {
-      SmbiosTable2Strings[1] = BaikalModel;
-    }
+  if (FruClient->ReadBoardName (SmbiosTable2FruStrings[1], FRU_TYPLENSTR_MAX_SIZE) == 0) {
+    SmbiosTable2Strings[1] = BaikalModel;
+  } else {
+    SmbiosTable2Strings[1] = SmbiosTable2FruStrings[1];
   }
 
-  if (FruClient->ReadBoardSerialNumber (SmbiosTable2Strings[2], FRU_TYPLENSTR_MAX_SIZE) == 0) {
-    SmbiosTable2Strings[2] = NULL;
+  if (FruClient->ReadBoardSerialNumber (SmbiosTable2FruStrings[2], FRU_TYPLENSTR_MAX_SIZE) == 0) {
     SmbiosTable2.SerialNumber = 0;
+  } else {
+    SmbiosTable2Strings[2] = SmbiosTable2FruStrings[2];
   }
 
   return CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable2, SmbiosTable2Strings, ARRAY_SIZE (SmbiosTable2Strings));
@@ -513,12 +505,14 @@ STATIC SMBIOS_TABLE_TYPE4 SmbiosTable4 = {
   BAIKAL_PROCESSOR_CORE_COUNT
 };
 
-STATIC CHAR8 *SmbiosTable4Strings[] = {
+STATIC CHAR8         SmbiosTable4Serial[BAIKAL_PROCESSOR_SERIAL_STR_SIZE];
+STATIC CHAR8         SmbiosTable4Part[BAIKAL_PROCESSOR_PART_STR_SIZE];
+STATIC CONST CHAR8  *SmbiosTable4Strings[] = {
   BAIKAL_PROCESSOR_SOCKET_DESIGNATION,
   BAIKAL_PROCESSOR_MANUFACTURER,
   BAIKAL_PROCESSOR_VERSION,
-  (CHAR8[BAIKAL_PROCESSOR_SERIAL_STR_SIZE]){},
-  (CHAR8[BAIKAL_PROCESSOR_PART_STR_SIZE]){}
+  SmbiosTable4Serial,
+  SmbiosTable4Part
 };
 #pragma pack()
 
@@ -561,36 +555,38 @@ SmbiosTable4Init (
     *(UINT64 *) &SmbiosTable4.ProcessorId = ArmReadMidr ();
   }
 
-  SerialNumber = SmcEfuseGetSerial ();
-  if (SerialNumber > 0) {
-    AsciiSPrint (
-      SmbiosTable4Strings[3],
-      BAIKAL_PROCESSOR_SERIAL_STR_SIZE,
-      "%d",
-      SerialNumber & 0xFFFFFF
-      );
+  if (AsciiStrCmp (BaikalModel, "QEMU-M")) {
+    SerialNumber = SmcEfuseGetSerial ();
+    if (SerialNumber > 0) {
+      AsciiSPrint (
+        SmbiosTable4Serial,
+        BAIKAL_PROCESSOR_SERIAL_STR_SIZE,
+        "%d",
+        SerialNumber & 0xFFFFFF
+        );
 
-    SmbiosTable4.SerialNumber = 4;
-  }
+      SmbiosTable4.SerialNumber = 4;
+    }
 
-  PartNumber = SmcEfuseGetLot ();
-  if (PartNumber > 0) {
-    AsciiSPrint (
-      SmbiosTable4Strings[4],
-      BAIKAL_PROCESSOR_PART_STR_SIZE,
-      "%c%c%c%c%c%c",
-      (PartNumber >>  0) & 0xFF,
-      (PartNumber >>  8) & 0xFF,
-      (PartNumber >> 16) & 0xFF,
-      (PartNumber >> 24) & 0xFF,
-      (PartNumber >> 32) & 0xFF,
-      (PartNumber >> 40) & 0xFF
-      );
+    PartNumber = SmcEfuseGetLot ();
+    if (PartNumber > 0) {
+      AsciiSPrint (
+        SmbiosTable4Part,
+        BAIKAL_PROCESSOR_PART_STR_SIZE,
+        "%c%c%c%c%c%c",
+        (PartNumber >>  0) & 0xFF,
+        (PartNumber >>  8) & 0xFF,
+        (PartNumber >> 16) & 0xFF,
+        (PartNumber >> 24) & 0xFF,
+        (PartNumber >> 32) & 0xFF,
+        (PartNumber >> 40) & 0xFF
+        );
 
-    if (SmbiosTable4.SerialNumber == 0) {
-      SmbiosTable4.PartNumber = 4;
-    } else {
-      SmbiosTable4.PartNumber = 5;
+      if (SmbiosTable4.SerialNumber == 0) {
+        SmbiosTable4.PartNumber = 4;
+      } else {
+        SmbiosTable4.PartNumber = 5;
+      }
     }
   }
 
@@ -720,441 +716,131 @@ SmbiosTable7Init (
 // Port Connector Information tables, type 8
 
 #pragma pack(1)
-STATIC VOID  *SmbiosTable8[] = {
-  BAIKAL_SMBIOS_TABLE (
+STATIC UINT8  SmbiosTable8Idx;
+STATIC SMBIOS_TABLE_TYPE8  SmbiosTable8 = {
+  {
     8,
-    BAIKAL_SMBIOS_STRING ("USB3_0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        2
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeUsb,
-      PortTypeUsb
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("USB3_1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        2
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeUsb,
-      PortTypeUsb
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("USB2_0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeUsb,
-      PortTypeUsb
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("USB2_1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeUsb,
-      PortTypeUsb
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("USB2_2"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeUsb,
-      PortTypeUsb
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("USB2_3"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeUsb,
-      PortTypeUsb
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("SATA0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeSasSata,
-      PortTypeSata
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("SATA1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeSasSata,
-      PortTypeSata
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("GMAC0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        1
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeRJ45,
-      PortTypeNetworkPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("GMAC1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        1
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeRJ45,
-      PortTypeNetworkPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("XGMAC0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        2
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeNetworkPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("XGMAC1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        2
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeNetworkPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("eMMC/SD"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("GPIO"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("UART1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeSerial16550Compatible
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("UART2"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeSerial16550Compatible
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("SPI"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("eSPI"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        2
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("I2C0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("I2C1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("SMBUS0"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("SMBUS1"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("LVDS"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        2
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeVideoPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("HDMI"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeVideoPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("I2S"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeAudioPort
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("SW/JTAG"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    8,
-    BAIKAL_SMBIOS_STRING ("MIPI PTI"),
-    {
-      {
-        SMBIOS_TYPE_PORT_CONNECTOR_INFORMATION,
-        sizeof (SMBIOS_TABLE_TYPE8),
-        0
-      },
-      0,
-      0,
-      1,
-      PortConnectorTypeOther,
-      PortTypeOther
-    }
-  )
+    9,
+    0
+  },
+  0,
+  0,
+  1,
+  0,
+  0
 };
 #pragma pack()
+
+STATIC
+VOID
+SmbiosTable8Add (
+  IN  FDT_CLIENT_PROTOCOL  *FdtClient,
+  IN  CONST CHAR8          *Compatible,
+  IN  CONST CHAR8          *PropString,
+  IN  UINT64                Value,
+  IN  CONST CHAR8          *Name,
+  IN  UINT8                 ConnectorType,
+  IN  UINT8                 PortType
+  )
+{
+  UINT32       Addr;
+  BOOLEAN      IsAdd;
+  INT32        Node;
+  CONST VOID  *Prop;
+  INT32        PrevNode;
+  UINT32       PropSize;
+  EFI_STATUS   Status;
+
+  if (!FdtClient) {
+    IsAdd = TRUE;
+  } else {
+    IsAdd = FALSE;
+    PrevNode = -1;
+    while (FdtClient) {
+      Status = FdtClient->FindNextCompatibleNode (FdtClient, Compatible, PrevNode, &Node);
+      if (EFI_ERROR (Status)) {
+        break;
+      }
+      PrevNode = Node;
+
+      Status = FdtClient->GetNodeProperty (FdtClient, Node, "status", &Prop, &PropSize);
+      if (EFI_ERROR (Status)) {
+        continue;
+      }
+
+      if (PropSize < 5 || AsciiStrCmp (Prop, "okay")) {
+        continue;
+      }
+
+      Status = FdtClient->GetNodeProperty (FdtClient, Node, PropString, &Prop, &PropSize);
+      if (EFI_ERROR (Status)) {
+        continue;
+      }
+
+      if (!AsciiStrCmp (PropString, "reg")) {
+        /* LVDS */
+        IsAdd = TRUE;
+        break;
+      } else if (PropSize >= sizeof (UINT64)) {
+        Addr = SwapBytes64 (ReadUnaligned64 (Prop));
+      } else {
+        continue;
+      }
+
+      if (Addr == Value) {
+        IsAdd = TRUE;
+        break;
+      }
+    }
+  }
+
+  if (IsAdd) {
+    if (Name) {
+      SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+      SmbiosTable8.ExternalConnectorType = ConnectorType;
+      SmbiosTable8.PortType = PortType;
+      CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &Name, 1);
+    } else {
+      /* USB */
+      CHAR8         UsbName[] = "USB2_0";
+      CONST CHAR8  *StrPtr;
+
+      SmbiosTable8.ExternalConnectorType = ConnectorType;
+      SmbiosTable8.PortType = PortType;
+      StrPtr = UsbName;
+
+      if (Value == BM1000_USB2_BASE) {
+        SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+        CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &StrPtr, 1);
+
+        ++UsbName[5];
+        SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+        CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &StrPtr, 1);
+      }
+
+      if (Value == BM1000_USB3_BASE) {
+        UsbName[5] = '2';
+        SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+        CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &StrPtr, 1);
+
+        ++UsbName[5];
+        SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+        CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &StrPtr, 1);
+
+        ++UsbName[3];
+        UsbName[5] = '0';
+        SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+        CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &StrPtr, 1);
+
+        ++UsbName[5];
+        SmbiosTable8.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, SmbiosTable8Idx++);
+        CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable8, &StrPtr, 1);
+      }
+    }
+  }
+
+  return;
+}
 
 STATIC
 EFI_STATUS
@@ -1162,122 +848,86 @@ SmbiosTable8Init (
   VOID
   )
 {
-  UINT16      Handle;
-  UINTN       Idx;
-  UINT16      Num = 0;
-  EFI_STATUS  Status;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  EFI_STATUS            Status;
 
-  for (Idx = 0; Idx < ARRAY_SIZE (SmbiosTable8); ++Idx) {
-    Handle = ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable8[Idx])->Handle;
-
-    // Check handle id and determine if slot is used in DBM/MBM or both (0 - both, 1 - MBM only, 2 - DBM only)
-    if ((IsMbm () && Handle == 2) || (!IsMbm () && Handle == 1)) {
-      continue;
-    }
-
-    ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable8[Idx])->Handle = BAIKAL_SMBIOS_TABLE_HANDLE (8, Num++);
-    Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable8[Idx], NULL, 0);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a: unable to locate FdtClientProtocol, Status: %r\n", __func__, Status));
+    return Status;
   }
 
-  return Status;
+  SmbiosTable8Add (FdtClient, "snps,dwc3", "reg", BM1000_USB2_BASE, NULL, PortConnectorTypeUsb, PortTypeUsb);
+  SmbiosTable8Add (FdtClient, "snps,dwc3", "reg", BM1000_USB3_BASE, NULL, PortConnectorTypeUsb, PortTypeUsb);
+
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-gmac", "reg", BM1000_GMAC0_BASE, "GMAC0", PortConnectorTypeRJ45, PortTypeNetworkPort);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-gmac", "reg", BM1000_GMAC1_BASE, "GMAC1", PortConnectorTypeRJ45, PortTypeNetworkPort);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-xgmac", "reg", BM1000_XGMAC0_BASE, "XGMAC0", PortConnectorTypeRJ45, PortTypeNetworkPort);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-xgmac", "reg", BM1000_XGMAC1_BASE, "XGMAC1", PortConnectorTypeRJ45, PortTypeNetworkPort);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-ahci", "reg", BM1000_SATA0_BASE, "SATA0", PortConnectorTypeSasSata, PortTypeSata);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-ahci", "reg", BM1000_SATA1_BASE, "SATA1", PortConnectorTypeSasSata, PortTypeSata);
+  SmbiosTable8Add (FdtClient, "baikal,dwcmshc-sdhci", "reg", BM1000_MMC_BASE, "eMMC/SD", PortConnectorTypeOther, PortTypeOther);
+
+  SmbiosTable8Add (FdtClient, "snps,dw-apb-gpio", "reg", BM1000_GPIO32_BASE, "GPIO", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-uart", "reg", BM1000_UART1_BASE, "UART1", PortConnectorTypeOther, PortTypeSerial16550Compatible);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-uart", "reg", BM1000_UART2_BASE, "UART2", PortConnectorTypeOther, PortTypeSerial16550Compatible);
+  SmbiosTable8Add (FdtClient, "snps,dw-apb-ssi", "reg", BM1000_SPI_BASE, "SPI", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-espi", "reg", BM1000_ESPI_BASE, "eSPI", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (FdtClient, "snps,designware-i2c", "reg", BM1000_I2C1_BASE, "I2C1", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (FdtClient, "snps,designware-i2c", "reg", BM1000_I2C2_BASE, "I2C2", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-smbus", "reg", BM1000_SMBUS1_BASE, "SMBUS1", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-smbus", "reg", BM1000_SMBUS2_BASE, "SMBUS2", PortConnectorTypeOther, PortTypeOther);
+
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-i2s", "reg", BM1000_I2S_BASE, "I2S", PortConnectorTypeOther, PortTypeAudioPort);
+  SmbiosTable8Add (FdtClient, "baikal,bm1000-hda", "reg", BM1000_HDA_BASE, "HDA", PortConnectorTypeOther, PortTypeAudioPort);
+  SmbiosTable8Add (FdtClient, "baikal,hdmi", "reg", BM1000_HDMI_CTRLR_BASE, "HDMI", PortConnectorTypeOther, PortTypeVideoPort);
+  SmbiosTable8Add (FdtClient, "baikal,vdu", "lvds-lanes", 0, "LVDS", PortConnectorTypeOther, PortTypeVideoPort);
+
+  SmbiosTable8Add (NULL, NULL, NULL, 0, "SW/JTAG", PortConnectorTypeOther, PortTypeOther);
+  SmbiosTable8Add (NULL, NULL, NULL, 0, "MIPI PTI", PortConnectorTypeOther, PortTypeOther);
+
+  return EFI_SUCCESS;
 }
 
 // System Slots tables, type 9
 
 #pragma pack(1)
 typedef struct {
-  SMBIOS_STRUCTURE            Hdr;
-  SMBIOS_TABLE_STRING         SlotDesignation;
-  UINT8                       SlotType;
-  UINT8                       SlotDataBusWidth;
-  UINT8                       CurrentUsage;
-  UINT8                       SlotLength;
-  UINT16                      SlotID;
-  MISC_SLOT_CHARACTERISTICS1  SlotCharacteristics1;
-  MISC_SLOT_CHARACTERISTICS2  SlotCharacteristics2;
-  UINT16                      SegmentGroupNum;
-  UINT8                       BusNum;
-  UINT8                       DevFuncNum;
-  UINT8                       DataBusWidth;
-  UINT8                       PeerGroupingCount;
+  SMBIOS_STRUCTURE     Hdr;
+  SMBIOS_TABLE_STRING  SlotDesignation;
+  UINT8                SlotType;
+  UINT8                SlotDataBusWidth;
+  UINT8                CurrentUsage;
+  UINT8                SlotLength;
+  UINT16               SlotID;
+  UINT8                SlotCharacteristics1;
+  UINT8                SlotCharacteristics2;
+  UINT16               SegmentGroupNum;
+  UINT8                BusNum;
+  UINT8                DevFuncNum;
+  UINT8                DataBusWidth;
+  UINT8                PeerGroupingCount;
 } SMBIOS_TABLE_TYPE9_BAIKAL;
 
-STATIC VOID  *SmbiosTable9[] = {
-  BAIKAL_SMBIOS_TABLE (
-    9_BAIKAL,
-    BAIKAL_SMBIOS_STRING ("PCIe x4_0"),
-    {
-      {
-        SMBIOS_TYPE_SYSTEM_SLOTS,
-        sizeof (SMBIOS_TABLE_TYPE9_BAIKAL),
-        0
-      },
-      1,
-      SlotTypePciExpressGen3,
-      SlotDataBusWidth4X,
-      SlotUsageInUse,
-      SlotLengthUnknown,
-      0,
-      {},
-      {},
-      0,
-      0,
-      0,
-      SlotDataBusWidth4X,
-      0
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    9_BAIKAL,
-    BAIKAL_SMBIOS_STRING ("PCIe x4_1"),
-    {
-      {
-        SMBIOS_TYPE_SYSTEM_SLOTS,
-        sizeof (SMBIOS_TABLE_TYPE9_BAIKAL),
-        0
-      },
-      1,
-      SlotTypePciExpressGen3,
-      SlotDataBusWidth4X,
-      SlotUsageInUse,
-      SlotLengthLong,
-      0,
-      {},
-      {},
-      0,
-      0,
-      0,
-      SlotDataBusWidth4X,
-      0
-    }
-  ),
-  BAIKAL_SMBIOS_TABLE (
-    9_BAIKAL,
-    BAIKAL_SMBIOS_STRING ("PCIe x8"),
-    {
-      {
-        SMBIOS_TYPE_SYSTEM_SLOTS,
-        sizeof (SMBIOS_TABLE_TYPE9_BAIKAL),
-        0
-      },
-      1,
-      SlotTypePciExpressGen3,
-      SlotDataBusWidth8X,
-      SlotUsageInUse,
-      SlotLengthUnknown,
-      0,
-      {},
-      {},
-      0,
-      0,
-      0,
-      SlotDataBusWidth8X,
-      0
-    }
-  )
+STATIC SMBIOS_TABLE_TYPE9_BAIKAL  SmbiosTable9 = {
+  {
+    9,
+    sizeof (SMBIOS_TABLE_TYPE9_BAIKAL),
+    0
+  },
+  1,
+  0,
+  0,
+  SlotUsageInUse,
+  SlotLengthUnknown,
+  0,
+  BIT2,
+  BIT1,
+  0,
+  0,
+  0,
+  0,
+  0
 };
 #pragma pack()
 
@@ -1287,31 +937,81 @@ SmbiosTable9Init (
   VOID
   )
 {
-  UINTN       Idx;
-  UINT16      Num = 0;
-  EFI_STATUS  Status;
+  UINT64                Addr;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  UINT8                 Id;
+  CHAR8                 Name[] = "PCIe xXXX";
+  INT32                 Node;
+  CONST VOID           *Prop;
+  INT32                 PrevNode;
+  UINT32                PropSize;
+  EFI_STATUS            Status;
+  CONST CHAR8          *StrPtr = Name;
 
-  for (Idx = 0; Idx < ARRAY_SIZE (SmbiosTable9); ++Idx) {
-    if (IsMbm ()) {
-      if (Idx == 0) {
-        ((SMBIOS_TABLE_TYPE9_BAIKAL *) SmbiosTable9[Idx])->SlotType = SlotTypeM2Socket3;
-      } else if (Idx == 1) {
-        continue;
-      }
-    }
-
-    *(UINT8 *) &((SMBIOS_TABLE_TYPE9_BAIKAL *) SmbiosTable9[Idx])->SlotID = Num;
-    *(UINT8 *) &((SMBIOS_TABLE_TYPE9_BAIKAL *) SmbiosTable9[Idx])->SegmentGroupNum = Num;
-    ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable9[Idx])->Handle = BAIKAL_SMBIOS_TABLE_HANDLE (9, Num++);
-    *(UINT8 *) &((SMBIOS_TABLE_TYPE9_BAIKAL *) SmbiosTable9[Idx])->SlotCharacteristics1 = BIT2;
-    *(UINT8 *) &((SMBIOS_TABLE_TYPE9_BAIKAL *) SmbiosTable9[Idx])->SlotCharacteristics2 = BIT1;
-    Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) SmbiosTable9[Idx], NULL, 0);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "%a: unable to locate FdtClientProtocol, Status: %r\n", __func__, Status));
+    return Status;
   }
 
-  return Status;
+  PrevNode = -1;
+  while (1) {
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-pcie", PrevNode, &Node);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+    PrevNode = Node;
+
+    Status = FdtClient->GetNodeProperty (FdtClient, Node, "status", &Prop, &PropSize);
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+
+    if (PropSize < 5 || AsciiStrCmp (Prop, "okay")) {
+      continue;
+    }
+
+    Status = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+
+    if (PropSize >= sizeof (UINT64)) {
+      Addr = SwapBytes64 (ReadUnaligned64 (Prop));
+    } else {
+      continue;
+    }
+
+    if (Addr == BM1000_PCIE0_DBI_BASE) {
+      Name[6] = '4';
+      Name[7] = '_';
+      Name[8] = '0';
+      SmbiosTable9.SlotDataBusWidth = SlotDataBusWidth4X;
+      Id = 0;
+    } else if (Addr == BM1000_PCIE1_DBI_BASE) {
+      Name[6] = '4';
+      Name[7] = '_';
+      Name[8] = '1';
+      SmbiosTable9.SlotDataBusWidth = SlotDataBusWidth4X;
+      Id = 1;
+    } else if (Addr == BM1000_PCIE2_DBI_BASE) {
+      Name[6] = '8';
+      Name[7] = 0;
+      SmbiosTable9.SlotDataBusWidth = SlotDataBusWidth8X;
+      Id = 2;
+    } else {
+      continue;
+    }
+
+    SmbiosTable9.DataBusWidth = SmbiosTable9.SlotDataBusWidth;
+    SmbiosTable9.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (9, Id);
+    SmbiosTable9.SlotType = Id < ARRAY_SIZE (PcieSlots) ? PcieSlots[Id] : SlotTypePciExpressGen3;
+    SmbiosTable9.SlotID = SmbiosTable9.SegmentGroupNum = Id;
+
+    CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable9, &StrPtr, 1);
+  }
+
+  return EFI_SUCCESS;
 }
 
 // Physical Memory Array table, type 16
@@ -1338,6 +1038,28 @@ STATIC VOID  *SmbiosTable16 = BAIKAL_SMBIOS_TABLE (
     0
   }
 );
+
+STATIC SMBIOS_TABLE_TYPE17  SmbiosTable17 = {
+  .Hdr = {
+    SMBIOS_TYPE_MEMORY_DEVICE,
+    sizeof (SMBIOS_TABLE_TYPE17)
+  },
+  .MemoryArrayHandle = BAIKAL_SMBIOS_TABLE_HANDLE (16, 0),
+  .MemoryErrorInformationHandle = SMBIOS_HANDLE_PI_RESERVED,
+  .FormFactor = MemoryFormFactorDimm,
+  .DeviceLocator = 1,
+  .BankLocator = 2,
+  .MemoryType = MemoryTypeDdr4,
+  .TypeDetail = {
+    .Synchronous = 1
+  },
+  .MemoryTechnology = MemoryTechnologyDram,
+  .MemoryOperatingModeCapability = {
+    .Bits = {
+      .VolatileMemory = 1
+    }
+  }
+};
 
 STATIC VOID  *SmbiosTable19 = BAIKAL_SMBIOS_TABLE (
   19,
@@ -1470,13 +1192,17 @@ SmbiosTable16_17_19_20Init (
   )
 {
   UINTN                    AddressCells;
+  CHAR8                    BankLocator[] = "Bank A";
   UINT16                   DdrAmount;
   BAIKAL_SMBIOS_DDR_INFO  *DdrInfo;
   UINT8                    DdrPresence = 0;
+  CHAR8                    DeviceLocator[] = "DDR4_CH0";
   UINT8                    Idx;
+  CONST CHAR8             *PtrBuf[5];
   CONST UINT32            *Reg;
   UINT64                  *RegAddr;
   UINTN                    RegAmount;
+  UINT64                  *RegArray;
   UINT64                  *RegSize;
   UINTN                    SizeCells;
   CONST UINT8             *SpdBuf;
@@ -1520,11 +1246,11 @@ SmbiosTable16_17_19_20Init (
       return EFI_INVALID_PARAMETER;
     } else {
       if (SpdIsDualChannel (Idx)) {
-        BAIKAL_SPD_INFO  *Spd = (BAIKAL_SPD_INFO *) BAIKAL_SPD_DATA_BASE;
+        UINT32  Serial = SpdGetSerial (Idx);
 
         SmbiosSetDdrInfo (SpdBuf, SpdSize, DdrInfo + DdrAmount / 2 * Idx + 1,
-                          &Spd->Extra[Idx].Serial,
-                          Spd->Extra[Idx].Part);
+                          &Serial,
+                          SpdGetPart (Idx));
         DdrPresence |= 1 << (DdrAmount / 2 * Idx + 1);
         ((SMBIOS_TABLE_TYPE19 *) SmbiosTable19)->PartitionWidth++;
       }
@@ -1544,7 +1270,7 @@ SmbiosTable16_17_19_20Init (
     return Status;
   }
 
-  UINT64 * CONST  RegArray = (UINT64 *) AllocateZeroPool (2 * RegAmount * sizeof (UINT64));
+  RegArray = (UINT64 *) AllocateZeroPool (2 * RegAmount * sizeof (UINT64));
   if (RegArray == NULL) {
     DEBUG ((
       EFI_D_ERROR,
@@ -1585,58 +1311,31 @@ SmbiosTable16_17_19_20Init (
     return Status;
   }
 
-  // Init and load tables of type 17
-  SMBIOS_TABLE_TYPE17 Table17 = {
-    .Hdr = {
-      SMBIOS_TYPE_MEMORY_DEVICE,
-      sizeof (SMBIOS_TABLE_TYPE17)
-    },
-    .MemoryArrayHandle = BAIKAL_SMBIOS_TABLE_HANDLE (16, 0),
-    .MemoryErrorInformationHandle = SMBIOS_HANDLE_PI_RESERVED,
-    .FormFactor = MemoryFormFactorDimm,
-    .DeviceLocator = 1,
-    .BankLocator = 2,
-    .MemoryType = MemoryTypeDdr4,
-    .TypeDetail = {
-      .Synchronous = 1
-    },
-    .MemoryTechnology = MemoryTechnologyDram,
-    .MemoryOperatingModeCapability = {
-      .Bits = {
-        .VolatileMemory = 1
-      }
-    },
-  };
-
-  CHAR8  BankLocator[]   = "Bank A";
-  CHAR8  DeviceLocator[] = "DDR4_CH0";
+  PtrBuf[0] = DeviceLocator;
+  PtrBuf[1] = BankLocator;
 
   for (Idx = 0; Idx < DdrAmount; ++Idx) {
-    Table17.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (17, Idx);
+    PtrBuf[2] = PtrBuf[3] = PtrBuf[4] = NULL;
+    SmbiosTable17.Hdr.Handle = BAIKAL_SMBIOS_TABLE_HANDLE (17, Idx);
 
     if ((DdrPresence >> Idx) & 1) {
-      CHAR8         Buf[100] = {};
+      CHAR8        *Buf;
       UINT8         IsExtendedSize;
-      UINT8         Offset;
-      CHAR8        *PtrBuf[5] = {
-        DeviceLocator,
-        BankLocator
-      };
-      CONST CHAR8  *PtrString = NULL;
       CHAR8         Manufacturer[] = "Bank: 0x00, Id: 0x00";
+      CONST CHAR8  *PtrString = NULL;
 
       IsExtendedSize = DdrInfo[Idx].Size >= (SIZE_32GB - 1) ? 1 : 0;
 
-      Table17.TotalWidth = DdrInfo[Idx].DataWidth + DdrInfo[Idx].ExtensionWidth;
-      Table17.DataWidth = DdrInfo[Idx].DataWidth;
+      SmbiosTable17.TotalWidth = DdrInfo[Idx].DataWidth + DdrInfo[Idx].ExtensionWidth;
+      SmbiosTable17.DataWidth = DdrInfo[Idx].DataWidth;
       if (IsExtendedSize) {
-        Table17.ExtendedSize = DdrInfo[Idx].Size / SIZE_1MB;
-        Table17.Size = 0x7FFF;
+        SmbiosTable17.ExtendedSize = DdrInfo[Idx].Size / SIZE_1MB;
+        SmbiosTable17.Size = 0x7FFF;
       } else {
-        Table17.Size = DdrInfo[Idx].Size / SIZE_1MB;
-        Table17.ExtendedSize = 0;
+        SmbiosTable17.Size = DdrInfo[Idx].Size / SIZE_1MB;
+        SmbiosTable17.ExtendedSize = 0;
       }
-      Table17.Speed = DdrInfo[Idx].Speed;
+      SmbiosTable17.Speed = DdrInfo[Idx].Speed;
 
       UINT8 Cc = DdrInfo[Idx].ManufacturerId & 0x7F;
       UINT8 Id = (DdrInfo[Idx].ManufacturerId >> 8) & 0x7F;
@@ -1654,72 +1353,125 @@ SmbiosTable16_17_19_20Init (
       }
 
       if (PtrString) {
-        CopyMem (Buf, PtrString, AsciiStrLen (PtrString));
+        Buf = AllocatePool (AsciiStrSize (PtrString));
+        if (Buf == NULL) {
+          FreePool (DdrInfo);
+          FreePool (RegArray);
+          DEBUG ((
+            EFI_D_ERROR,
+            "%a: failed to allocate memory, Status = %r\n",
+            __func__,
+            EFI_OUT_OF_RESOURCES
+            ));
+          return EFI_OUT_OF_RESOURCES;
+        }
+
+        CopyMem (Buf, PtrString, AsciiStrSize (PtrString));
         PtrBuf[2] = Buf;
-        Table17.Manufacturer = 3;
-        Offset = AsciiStrSize (Buf);
+        SmbiosTable17.Manufacturer = 3;
       } else {
-        Table17.Manufacturer = 0;
-        Offset = 0;
+        SmbiosTable17.Manufacturer = 0;
       }
 
       if (DdrInfo[Idx].SerialNumber == 0) {
-        Table17.SerialNumber = 0;
-        Table17.PartNumber = Table17.Manufacturer == 0 ? 3 : 4;
+        SmbiosTable17.SerialNumber = 0;
+        SmbiosTable17.PartNumber = SmbiosTable17.Manufacturer == 0 ? 3 : 4;
       } else {
-        AsciiValueToStringS (Buf + Offset, 11, 0, DdrInfo[Idx].SerialNumber, 10);
-        PtrBuf[3] = Buf + Offset;
-        Table17.SerialNumber = Table17.Manufacturer == 0 ? 3 : 4;
-        Table17.PartNumber = Table17.Manufacturer == 0 ? 4 : 5;
-        Offset += AsciiStrSize (Buf + Offset);
+        Buf = AllocatePool (11);
+        if (Buf == NULL) {
+          FreePool (DdrInfo);
+          FreePool (RegArray);
+          if (PtrBuf[2]) {
+            FreePool ((VOID *) PtrBuf[2]);
+          }
+          DEBUG ((
+            EFI_D_ERROR,
+            "%a: failed to allocate memory, Status = %r\n",
+            __func__,
+            EFI_OUT_OF_RESOURCES
+            ));
+          return EFI_OUT_OF_RESOURCES;
+        }
+
+        AsciiValueToStringS (Buf, 11, 0, DdrInfo[Idx].SerialNumber, 10);
+        PtrBuf[3] = Buf;
+        SmbiosTable17.SerialNumber = SmbiosTable17.Manufacturer == 0 ? 3 : 4;
+        SmbiosTable17.PartNumber = SmbiosTable17.Manufacturer == 0 ? 4 : 5;
       }
 
       if (DdrInfo[Idx].PartNumber[0] != '\0') {
-        CopyMem (Buf + Offset, DdrInfo[Idx].PartNumber, sizeof (DdrInfo[Idx].PartNumber));
-        PtrBuf[4] = Buf + Offset;
+        Buf = AllocatePool (sizeof (DdrInfo[Idx].PartNumber));
+        if (Buf == NULL) {
+          FreePool (DdrInfo);
+          FreePool (RegArray);
+          if (PtrBuf[2]) {
+            FreePool ((VOID *) PtrBuf[2]);
+          }
+          if (PtrBuf[3]) {
+            FreePool ((VOID *) PtrBuf[3]);
+          }
+          DEBUG ((
+            EFI_D_ERROR,
+            "%a: failed to allocate memory, Status = %r\n",
+            __func__,
+            EFI_OUT_OF_RESOURCES
+            ));
+          return EFI_OUT_OF_RESOURCES;
+        }
+
+        CopyMem (Buf, DdrInfo[Idx].PartNumber, sizeof (DdrInfo[Idx].PartNumber));
+        PtrBuf[4] = Buf;
       } else {
-        Table17.PartNumber = 0;
+        SmbiosTable17.PartNumber = 0;
       }
 
-      Table17.Attributes = DdrInfo[Idx].Rank;
-      Table17.ConfiguredMemoryClockSpeed = SpdGetConfiguredSpeed (Idx * 2 / DdrAmount);
-      Table17.MinimumVoltage = DdrInfo[Idx].Voltage;
-      Table17.MaximumVoltage = DdrInfo[Idx].Voltage;
-      Table17.ConfiguredVoltage = DdrInfo[Idx].Voltage;
-      Table17.ModuleManufacturerID = DdrInfo[Idx].ManufacturerId;
-      Table17.VolatileSize = DdrInfo[Idx].Size;
+      SmbiosTable17.Attributes = DdrInfo[Idx].Rank;
+      SmbiosTable17.ConfiguredMemoryClockSpeed = SpdGetConfiguredSpeed (Idx * 2 / DdrAmount);
+      SmbiosTable17.MinimumVoltage = DdrInfo[Idx].Voltage;
+      SmbiosTable17.MaximumVoltage = DdrInfo[Idx].Voltage;
+      SmbiosTable17.ConfiguredVoltage = DdrInfo[Idx].Voltage;
+      SmbiosTable17.ModuleManufacturerID = DdrInfo[Idx].ManufacturerId;
+      SmbiosTable17.VolatileSize = DdrInfo[Idx].Size;
 
-      Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &Table17, PtrBuf, ARRAY_SIZE (PtrBuf));
+      Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable17, PtrBuf, ARRAY_SIZE (PtrBuf));
+
+      if (PtrBuf[2]) {
+        FreePool ((VOID *) PtrBuf[2]);
+      }
+
+      if (PtrBuf[3]) {
+        FreePool ((VOID *) PtrBuf[3]);
+      }
+
+      if (PtrBuf[4]) {
+        FreePool ((VOID *) PtrBuf[4]);
+      }
+
       if (EFI_ERROR (Status)) {
         FreePool (DdrInfo);
         FreePool (RegArray);
         return Status;
       }
     } else {
-      CHAR8  *PtrBuf[] = {
-        DeviceLocator,
-        BankLocator
-      };
+      SmbiosTable17.TotalWidth = 0xFFFF;
+      SmbiosTable17.DataWidth = 0xFFFF;
+      SmbiosTable17.Size = 0;
+      SmbiosTable17.Speed = 0;
+      SmbiosTable17.SerialNumber = 0;
+      SmbiosTable17.PartNumber = 0;
+      SmbiosTable17.Attributes = 0;
+      SmbiosTable17.ExtendedSize = 0;
+      SmbiosTable17.ConfiguredMemoryClockSpeed = 0;
+      SmbiosTable17.MinimumVoltage = 0;
+      SmbiosTable17.MaximumVoltage = 0;
+      SmbiosTable17.ConfiguredVoltage = 0;
+      SmbiosTable17.ModuleManufacturerID = 0;
+      SmbiosTable17.ModuleProductID = 0;
+      SmbiosTable17.MemorySubsystemControllerManufacturerID = 0;
+      SmbiosTable17.MemorySubsystemControllerProductID = 0;
+      SmbiosTable17.VolatileSize = 0;
 
-      Table17.TotalWidth = 0xFFFF;
-      Table17.DataWidth = 0xFFFF;
-      Table17.Size = 0;
-      Table17.Speed = 0;
-      Table17.SerialNumber = 0;
-      Table17.PartNumber = 0;
-      Table17.Attributes = 0;
-      Table17.ExtendedSize = 0;
-      Table17.ConfiguredMemoryClockSpeed = 0;
-      Table17.MinimumVoltage = 0;
-      Table17.MaximumVoltage = 0;
-      Table17.ConfiguredVoltage = 0;
-      Table17.ModuleManufacturerID = 0;
-      Table17.ModuleProductID = 0;
-      Table17.MemorySubsystemControllerManufacturerID = 0;
-      Table17.MemorySubsystemControllerProductID = 0;
-      Table17.VolatileSize = 0;
-
-      Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &Table17, PtrBuf, ARRAY_SIZE (PtrBuf));
+      Status = CreateSmbiosTable ((EFI_SMBIOS_TABLE_HEADER *) &SmbiosTable17, PtrBuf, 2);
       if (EFI_ERROR (Status)) {
         FreePool (DdrInfo);
         FreePool (RegArray);
@@ -1839,11 +1591,6 @@ SmbiosPlatformDxeInitialize (
 {
   UINTN       Idx;
   EFI_STATUS  Status;
-
-  Status = SmbiosReadFdtModel (BaikalModel, sizeof (BaikalModel));
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
 
   for (Idx = 0; Idx < ARRAY_SIZE (SmbiosTableInit); ++Idx) {
     Status = (*SmbiosTableInit[Idx]) ();

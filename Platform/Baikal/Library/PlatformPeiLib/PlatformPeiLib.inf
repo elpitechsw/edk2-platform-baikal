@@ -35,8 +35,10 @@
   gArmTokenSpaceGuid.PcdFvSize
   gBaikalTokenSpaceGuid.PcdDeviceTreeAllocationPadding
   gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress
+  gBaikalTokenSpaceGuid.PcdSpdInitialBase
 
 [Guids]
+  gBaikalSpdHobGuid
   gFdtHobGuid
 
 [Depex]

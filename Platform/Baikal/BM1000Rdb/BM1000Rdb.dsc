@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -26,18 +26,35 @@
   GCC:*_*_*_PLATFORM_FLAGS = -march=armv8-a -fno-stack-protector
   GCC:RELEASE_*_*_CC_FLAGS = -DMDEPKG_NDEBUG -DNDEBUG
   GCC:*_*_*_DLINK_FLAGS = -Wl,--no-eh-frame -Wl,--no-eh-frame-hdr
-!if $(BAIKAL_DBM10)
-  *_*_*_CC_FLAGS = -DBAIKAL_DBM10
-  *_*_*_ASLPP_FLAGS = -DBAIKAL_DBM10
-!elseif $(BAIKAL_DBM20)
-  *_*_*_CC_FLAGS = -DBAIKAL_DBM20
-  *_*_*_ASLPP_FLAGS = -DBAIKAL_DBM20
-!elseif $(BAIKAL_MBM10)
-  *_*_*_CC_FLAGS = -DBAIKAL_MBM10
-  *_*_*_ASLPP_FLAGS = -DBAIKAL_MBM10
-!elseif $(BAIKAL_MBM20)
-  *_*_*_CC_FLAGS = -DBAIKAL_MBM20
-  *_*_*_ASLPP_FLAGS = -DBAIKAL_MBM20
+  *_*_*_CC_FLAGS = -D$(BAIKAL_BOARD) -D'BAIKAL_BOARD_NAME="$(BAIKAL_BOARD_NAME)"'
+  *_*_*_ASLPP_FLAGS = -D$(BAIKAL_BOARD) -D'BAIKAL_BOARD_NAME="$(BAIKAL_BOARD_NAME)"'
+
+!if $(USE_EMMC)
+  *_*_*_ASLPP_FLAGS = -DUSE_EMMC
+!endif
+
+!if $(USE_HDA)
+  *_*_*_ASLPP_FLAGS = -DUSE_HDA
+!endif
+
+!if $(USE_I2S)
+  *_*_*_ASLPP_FLAGS = -DUSE_I2S
+!endif
+
+!if $(USE_LVDS)
+  *_*_*_ASLPP_FLAGS = -DUSE_LVDS
+!endif
+
+!if $(USE_SD)
+  *_*_*_ASLPP_FLAGS = -DUSE_SD
+!endif
+
+!if $(USE_KRKX4)
+  *_*_*_ASLPP_FLAGS = -DUSE_KRKX4
+!endif
+
+!if $(ENABLE_CORESIGHT)
+  *_*_*_ASLPP_FLAGS = -DENABLE_CORESIGHT
 !endif
 
 [BuildOptions.common.EDKII.DXE_CORE,BuildOptions.common.EDKII.DXE_DRIVER,BuildOptions.common.EDKII.UEFI_DRIVER,BuildOptions.common.EDKII.UEFI_APPLICATION]
@@ -55,12 +72,14 @@
   ArmGicLib|ArmPkg/Drivers/ArmGic/ArmGicLib.inf
   ArmLib|ArmPkg/Library/ArmLib/ArmBaseLib.inf
   ArmMmuLib|ArmPkg/Library/ArmMmuLib/ArmMmuBaseLib.inf
+  ArmMonitorLib|ArmPkg/Library/ArmMonitorLib/ArmMonitorLib.inf
   ArmPlatformLib|Platform/Baikal/BM1000Rdb/Library/PlatformLib/PlatformLib.inf
   ArmPlatformStackLib|ArmPlatformPkg/Library/ArmPlatformStackLib/ArmPlatformStackLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
   BaikalSmbiosLib|Platform/Baikal/Library/BaikalSmbiosLib/BaikalSmbiosLib.inf
   BaikalSpdLib|Platform/Baikal/BM1000Rdb/Library/BaikalSpdLib/BaikalSpdLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibOptDxe/BaseMemoryLibOptDxe.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
@@ -87,13 +106,16 @@
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   I2cLib|Silicon/Baikal/Library/DwI2cLib/DwI2cLib.inf
+  ImagePropertiesRecordLib|MdeModulePkg/Library/ImagePropertiesRecordLib/ImagePropertiesRecordLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LcdHwLib|Platform/Baikal/Library/BaikalVduLib/BaikalVduHwLib.inf
   LcdPlatformLib|Platform/Baikal/Library/BaikalVduLib/BaikalVduLib.inf
   LzmaDecompressLib|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
-  MemoryInitPeiLib|Platform/Baikal/Library/BaikalMemoryInitPeiLib/BaikalMemoryInitPeiLib.inf
+  MemoryInitPeiLib|Platform/Baikal/Library/MemoryInitPeiLib/MemoryInitPeiLib.inf
   NULL|ArmPkg/Library/CompilerIntrinsicsLib/CompilerIntrinsicsLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   OrderedCollectionLib|MdePkg/Library/BaseOrderedCollectionRedBlackTreeLib/BaseOrderedCollectionRedBlackTreeLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
@@ -105,7 +127,7 @@
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
   PlatformBootManagerLib|Platform/Baikal/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
-  PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
+  PlatformHookLib|Platform/Baikal/Library/BasePlatformHookLib/BasePlatformHookLib.inf
   PlatformPeiLib|Platform/Baikal/Library/PlatformPeiLib/PlatformPeiLib.inf
   PrePiHobListPointerLib|ArmPlatformPkg/Library/PrePiHobListPointerLib/PrePiHobListPointerLib.inf
   PrePiLib|EmbeddedPkg/Library/PrePiLib/PrePiLib.inf
@@ -116,7 +138,8 @@
   RealTimeClockLib|EmbeddedPkg/Library/TemplateRealTimeClockLib/TemplateRealTimeClockLib.inf
 !endif
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
-  ResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
+  ResetSystemLib|ArmPkg/Library/ArmPsciResetSystemLib/ArmPsciResetSystemLib.inf
+  RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   SdLib|Platform/Baikal/Library/SdLib/SdLib.inf
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
@@ -242,10 +265,12 @@
   Platform/Baikal/Drivers/FdtClientDxe/FdtClientDxe.inf
   Platform/Baikal/Drivers/FruClientDxe/FruClientDxe.inf
   Platform/Baikal/Drivers/HighMemDxe/HighMemDxe.inf
+  Platform/Baikal/Drivers/RngDxe/RngDxe.inf
 
   # GPT/MBR partitioning + filesystems
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   FatPkg/EnhancedFatDxe/Fat.inf
   MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
@@ -291,6 +316,7 @@
 
   # Network
 !include NetworkPkg/Network.dsc.inc
+  SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
   Platform/Baikal/BM1000Rdb/Drivers/XGmacDxe/XGmacDxe.inf
   Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
@@ -305,8 +331,9 @@
   # SD
   Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
   Platform/Baikal/Drivers/SdFvbDxe/SdFvbDxe.inf
+  Silicon/Baikal/BM1000/Drivers/NonDiscoverableSdhciDxe/NonDiscoverableSdhciDxe.inf
 
-  # FLASH
+  # Flash
   Platform/Baikal/Drivers/SmcFlashFvbDxe/SmcFlashFvbDxe.inf
   Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
   Platform/Baikal/Drivers/EspiFlashBlockIoDxe/EspiFlashBlockIoDxe.inf
@@ -368,6 +395,16 @@
   gArmTokenSpaceGuid.PcdSystemMemorySize|0x80000000
   gArmTokenSpaceGuid.PcdVFPEnabled|1
   gBaikalTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress|0x80000000
+!if $(BAIKAL_MBM10) || $(BAIKAL_MBM20)
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase|0x240000
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageVarBase|0x2C0000
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageFatBase|0x380000
+!else
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase|0x200000
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageVarBase|0x280000
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageFatBase|0x340000
+!endif
+  gBaikalTokenSpaceGuid.PcdSpdInitialBase|0x8001FA00
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId|{ 0x42, 0x4B, 0x4C, 0x45 }
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|1
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|{ 0x42, 0x41, 0x49, 0x4B, 0x41, 0x4C }
@@ -392,9 +429,9 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|115200
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|7361963
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterAccessWidth|32
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x20230000
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterStride|4
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseHardwareFlowControl|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseMmio|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosDocRev|0x0
   gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0304
@@ -407,6 +444,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdSpinLockTimeout|10000000
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|320
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes|"en-US"
+  gEfiNetworkPkgTokenSpaceGuid.PcdEnforceSecureRngAlgorithms|FALSE
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiACPIMemoryNVS|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiACPIReclaimMemory|0
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiBootServicesCode|300

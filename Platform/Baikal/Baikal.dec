@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -12,6 +12,7 @@
   Include
 
 [Guids.common]
+  gBaikalSpdHobGuid = { 0x3126B054, 0x1095, 0x4DB7, { 0xA3, 0x62, 0x45, 0x5F, 0x7A, 0xEB, 0x58, 0x6E } }
   gBaikalTokenSpaceGuid = { 0x0B6F5CA7, 0x4F53, 0x445A, { 0xB7, 0x6E, 0x2E, 0x36, 0x5B, 0x80, 0x63, 0x66 } }
   gConfigDxeFormSetGuid = { 0x30AA34DC, 0xEB61, 0x48C9, { 0x93, 0xE7, 0x37, 0xD7, 0x85, 0x87, 0x15, 0x15 } }
 
@@ -44,12 +45,17 @@
   #
   # For a list of mode numbers look in Platform/Baikal/Library/BaikalVduLib/BaikalVduPlatform.c
   #
-  gBaikalTokenSpaceGuid.PcdHdmiBase|0x30280000|UINT32|0x00000009
-  gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x0000000B
-  gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000006
-  gBaikalTokenSpaceGuid.PcdVduMaxMode|10|UINT32|0x00000005
+  gBaikalTokenSpaceGuid.PcdHdmiBase|0x30280000|UINT32|0x00000003
+  gBaikalTokenSpaceGuid.PcdHdmiRefFrequency|27000000|UINT32|0x00000004
+  gBaikalTokenSpaceGuid.PcdLvdsRefFrequency|27000000|UINT32|0x00000005
+  gBaikalTokenSpaceGuid.PcdVduMaxMode|10|UINT32|0x00000006
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageFatBase|0x0|UINT32|0x00000007
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase|0x0|UINT32|0x00000008
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageVarBase|0x0|UINT32|0x00000009
+  gBaikalTokenSpaceGuid.PcdSpdInitialBase|0x0|UINT64|0x0000000A
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
-  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x00000011
-  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|0|UINT32|0x00000010
-  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0|UINT32|0x0000000F
+  gBaikalTokenSpaceGuid.PcdAcpiMsiMode|0|UINT32|0x000000B
+  gBaikalTokenSpaceGuid.PcdAcpiPcieMode|0|UINT32|0x000000C
+  gBaikalTokenSpaceGuid.PcdPcieCfg0FilteringWorks|0|UINT32|0x0000000D
+  gBaikalTokenSpaceGuid.PcdDdrChannelsNumber|0|UINT32|0x0000000E

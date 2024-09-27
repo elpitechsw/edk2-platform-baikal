@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -15,11 +15,9 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
-#include <Platform/FlashMap.h>
 #include <Protocol/BlockIo.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 #include <Library/SdLib.h>
-
 
 /*
 Device            Boot     Start       End   Sectors  Size Id Type
@@ -27,8 +25,7 @@ Device            Boot     Start       End   Sectors  Size Id Type
 /dev/mmcblock0p2  *        20480    282623    262144  128M ef EFI (FAT-12/16/32)
 /dev/mmcblock0p3          282624 120791039 120508416 57.5G 83 Linux
 */
-#define SD_VAR_ADR  ((UINT64)((UINT64)2048 * (UINT64)SDHCI_BLOCK_SIZE_DEFAULT) + FLASH_MAP_VAR)
-
+#define SD_VAR_ADR  ((UINT64)((UINT64)2048 * (UINT64)SDHCI_BLOCK_SIZE_DEFAULT) + FixedPcdGet32 (PcdFlashNvStorageVarBase))
 
 typedef struct {
   VENDOR_DEVICE_PATH        Vendor;

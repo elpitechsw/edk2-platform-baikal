@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -20,7 +20,7 @@
 ################################################################################
 
 [FD.BAIKAL_EFI]
-BaseAddress   = 0xA0000000|gArmTokenSpaceGuid.PcdFdBaseAddress
+BaseAddress   = 0xA0000000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM
 Size          = 0x00140000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the FLASH Device
 ErasePolarity = 1
 BlockSize     = 0x00001000
@@ -159,16 +159,20 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+!ifdef $(INCLUDE_SERIAL_DXE)
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+!endif
 
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF Platform/Baikal/BS1000Rdb/Drivers/ArmGicLpiDxe/ArmGicLpiDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
+  INF Platform/Baikal/Drivers/RngDxe/RngDxe.inf
 
   # GPT/MBR partitioning + filesystems
   INF MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   INF MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  INF MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
   INF FatPkg/EnhancedFatDxe/Fat.inf
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
@@ -181,6 +185,13 @@ READ_LOCK_STATUS   = TRUE
   # ACPI support
   INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
   INF Platform/Baikal/BS1000Rdb/Drivers/AcpiPlatformDxe/AcpiPlatformDxe.inf
+
+  # Ram Menu Support
+!if $(BAIKAL_MBS_2S)
+  INF Platform/Baikal/BS1000Rdb/Drivers/RamMenu/RamMenu2s.inf
+!else
+  INF Platform/Baikal/BS1000Rdb/Drivers/RamMenu/RamMenu1s.inf
+!endif
 
   # BDS
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
@@ -202,6 +213,7 @@ READ_LOCK_STATUS   = TRUE
 
   # Network
 !include NetworkPkg/Network.fdf.inc
+  INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
   # PCI
@@ -210,6 +222,9 @@ READ_LOCK_STATUS   = TRUE
   INF Emulator/X86EmulatorDxe/X86EmulatorDxe.inf
   INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
+
+  # ASpeed Graphics Output Protocol
+  INF Drivers/ASpeed/ASpeedGopBinPkg/ASpeedAst2500GopDxe.inf
 
   # NVMe
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf

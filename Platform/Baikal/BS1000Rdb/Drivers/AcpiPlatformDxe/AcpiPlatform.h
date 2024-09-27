@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -27,11 +27,7 @@
   1                                                          \
 }
 
-#define BAIKAL_ACPI_CLUSTER_ID(Id)  (((Id) + 1) << 8)
-
-#ifdef BAIKAL_MBS_2S
-#define BAIKAL_SPI_OFFSET_S1  320
-#endif
+#define BAIKAL_ACPI_CLUSTER_ID(ChipId, ClusterId)  ((1 << 8) + (12 * (ChipId) + (ClusterId)))
 
 #define BAIKAL_ACPI_PCIE_COUNT        14
 
@@ -230,30 +226,50 @@
 // Macros to define ASL Resource Data and set it's fields
 //
 
-#define QWORDMEMORYBUF(Index, Usage, Cacheable, ReadAndWrite)            \
-  QWordMemory (Usage,, MinFixed, MaxFixed, Cacheable, ReadAndWrite, 0x0, \
+#define QWORDMEMORYBUF(Index, Usage, Cacheable, ReadAndWrite)             \
+  QWordMemory (Usage,, MinFixed, MaxFixed, Cacheable, ReadAndWrite, 0x0,  \
     0x0, 0x0, 0x0, 0x1,,, RB ## Index)
 
-#define QWORDIOBUF(Index)                                           \
-  QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0, \
+#define QWORDIOBUF(Index)                                            \
+  QWordIO (ResourceProducer, MinFixed, MaxFixed,, EntireRange, 0x0,  \
     0x0, 0x0, 0x0, 0x1,,, RB ## Index, TypeTranslation)
 
-#define QWORDBUFSET(Index, Address, Translation, Length)  \
-  CreateQWordField (RBUF, RB ## Index._MIN, MI ## Index)  \
-  CreateQWordField (RBUF, RB ## Index._MAX, MA ## Index)  \
-  CreateQWordField (RBUF, RB ## Index._TRA, TR ## Index)  \
-  CreateQWordField (RBUF, RB ## Index._LEN, LE ## Index)  \
-  Store (Length, LE ## Index)                             \
-  Store (Address, MI ## Index)                            \
-  Store (Translation, TR ## Index)                        \
+#define QWORDBUFSET(Index, Address, Translation, Length)    \
+  CreateQWordField (Local0, RB ## Index._MIN, MI ## Index)  \
+  CreateQWordField (Local0, RB ## Index._MAX, MA ## Index)  \
+  CreateQWordField (Local0, RB ## Index._TRA, TR ## Index)  \
+  CreateQWordField (Local0, RB ## Index._LEN, LE ## Index)  \
+  Store (Length, LE ## Index)                               \
+  Store (Address, MI ## Index)                              \
+  Store (Translation, TR ## Index)                          \
   Add (MI ## Index, LE ## Index - 1, MA ## Index)
 
-#define INTERRUPTBUF(Index, EdgeLevel, ActiveLevel)                              \
-  Interrupt (ResourceConsumer, EdgeLevel, ActiveLevel, Exclusive,,, RB ## Index) \
+#define INTERRUPTBUF_(Set, Index, EdgeLevel, ActiveLevel) INTERRUPTBUF__(Set, Index, EdgeLevel, ActiveLevel)
+
+#define INTERRUPTBUF__(Set, Index, EdgeLevel, ActiveLevel) INTERRUPTBUF_##Set(Index, EdgeLevel, ActiveLevel)
+
+#define INTERRUPTBUF_1(Index, EdgeLevel, ActiveLevel)                             \
+  Interrupt (ResourceConsumer, EdgeLevel, ActiveLevel, Exclusive,,, RB ## Index)  \
     { 0 }
 
-#define INTERRUPTSET(Index, Interrupt)                   \
-  CreateDWordField (RBUF, RB ## Index._INT, IN ## Index) \
+#define INTERRUPTBUF_0(Index, EdgeLevel, ActiveLevel)
+
+#define INTERRUPTBUF(Index, EdgeLevel, ActiveLevel)                               \
+  Interrupt (ResourceConsumer, EdgeLevel, ActiveLevel, Exclusive,,, RB ## Index)  \
+    { 0 }
+
+#define INTERRUPTSET_(Set, Index, Interrupt) INTERRUPTSET__(Set, Index, Interrupt)
+
+#define INTERRUPTSET__(Set, Index, Interrupt) INTERRUPTSET_##Set(Index, Interrupt)
+
+#define INTERRUPTSET_1(Index, Interrupt)                    \
+  CreateDWordField (Local0, RB ## Index._INT, IN ## Index)  \
+  Store (Interrupt, IN ## Index)
+
+#define INTERRUPTSET_0(Index, Interrupt)
+
+#define INTERRUPTSET(Index, Interrupt)                      \
+  CreateDWordField (Local0, RB ## Index._INT, IN ## Index)  \
   Store (Interrupt, IN ## Index)
 
 #endif // ACPI_PLATFORM_H_

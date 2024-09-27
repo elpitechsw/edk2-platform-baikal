@@ -1,0 +1,36 @@
+## @file
+#
+#  Copyright (c) 2024, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = RngDxe
+  FILE_GUID                      = 9BC5C510-3322-4EAF-BFD8-08FE5D6EA378
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = RngDxeEntryPoint
+
+[Sources]
+  RngDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  RngLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gEfiRngProtocolGuid              ## PRODUCES
+
+[Guids]
+  gEfiRngAlgorithmRaw
+
+[Depex]
+  TRUE

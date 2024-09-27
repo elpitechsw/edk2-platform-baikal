@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -10,7 +10,7 @@
 #include <Guid/HiiFormMapMethodGuid.h>
 
 #define BAIKALFORMSET_GUID { \
-    0xe8a74663, 0x3b53, 0x6a06, {0x19, 0x25, 0x82, 0x83, 0x70, 0x9e, 0x32, 0x92} \
+    0xE8A74663, 0x3B53, 0x6A06, {0x19, 0x25, 0x82, 0x83, 0x70, 0x9E, 0x32, 0x92} \
 }
 
 #pragma pack(1)

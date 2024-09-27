@@ -156,4 +156,84 @@
     }                                                                      \
   }
 
+#define ACPI_BAIKAL_SMC_CMU_DATA              \
+  OperationRegion (SMCR, FFixedHW, One, 0x28) \
+  Field (SMCR, BufferAcc, NoLock, Preserve)   \
+  {                                           \
+    SMCF, 0x140                               \
+  }                                           \
+  Name (SMCB, Buffer (0x28) {})               \
+  CreateQWordField (SMCB, Zero, ID0)          \
+  CreateQWordField (SMCB, 0x8, ID1)           \
+  CreateQWordField (SMCB, 0x10, ID2)          \
+  CreateQWordField (SMCB, 0x18, ID3)          \
+  CreateQWordField (SMCB, 0x20, ID4)
+
+#define ACPI_BAIKAL_SMC_CMU_CALL(Id1, Id2, Id3, Id4) \
+  ID0 = 0xC2000000                                   \
+  ID1 = Id1                                          \
+  ID2 = Id2                                          \
+  ID3 = Id3                                          \
+  ID4 = Id4                                          \
+  SMCB = (SMCF = SMCB)
+
+#define ACPI_BAIKAL_CMU_PLL_SET_RATE(Cmu, RefFreq, Rate) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 0, Rate, RefFreq)
+
+#define ACPI_BAIKAL_CMU_PLL_GET_RATE(Cmu, RefFreq) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 1, 0, RefFreq)
+
+#define ACPI_BAIKAL_CMU_PLL_ENABLE(Cmu) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 2, 0, 0)
+
+#define ACPI_BAIKAL_CMU_PLL_DISABLE(Cmu)     \
+  If (CSTA)                                  \
+  {                                          \
+    ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 13, 0, 0) \
+  }                                          \
+  ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 3, 0, 0)
+
+#define ACPI_BAIKAL_CMU_PLL_DISABLE2(Cmu)    \
+  ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 3, 0, 0)
+
+#define ACPI_BAIKAL_CMU_PLL_IS_ENABLED(Cmu) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Cmu, 5, 0, 0)
+
+#define ACPI_BAIKAL_CMU_CLKCH_SET_RATE(Cmu, Channel, Rate) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Channel, 6, Rate, Cmu)
+
+#define ACPI_BAIKAL_CMU_CLKCH_GET_RATE(Cmu, Channel) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Channel, 7, 0, Cmu)
+
+#define ACPI_BAIKAL_CMU_CLKCH_ENABLE(Cmu, Channel) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Channel, 8, 0, Cmu)
+
+#define ACPI_BAIKAL_CMU_CLKCH_DISABLE(Cmu, Channel) \
+  If (CSTA)                                         \
+  {                                                 \
+    ACPI_BAIKAL_SMC_CMU_CALL (Channel, 14, 0, Cmu)  \
+  }                                                 \
+  ACPI_BAIKAL_SMC_CMU_CALL (Channel, 9, 0, Cmu)
+
+#define ACPI_BAIKAL_CMU_CLKCH_DISABLE2(Cmu, Channel) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Channel, 9, 0, Cmu)
+
+#define ACPI_BAIKAL_CMU_CLKCH_IS_ENABLED(Cmu, Channel) \
+  ACPI_BAIKAL_SMC_CMU_CALL (Channel, 11, 0, Cmu)
+
+#define ACPI_BAIKAL_PWM_PS_METHODS \
+  Name (PSVL, 3)                   \
+  Method (_PSC)                    \
+  {                                \
+    Return (PSVL)                  \
+  }                                \
+  Method (_PS0)                    \
+  {                                \
+    PSVL = 0                       \
+  }                                \
+  Method (_PS3)                    \
+  {                                \
+    PSVL = 3                       \
+  }
+
 #endif // ACPI_PLATFORM_H_

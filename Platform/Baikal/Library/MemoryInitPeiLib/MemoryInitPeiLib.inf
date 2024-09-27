@@ -10,13 +10,13 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = BaikalMemoryInitPeiLib
-  FILE_GUID                      = 021B6156-3CC8-4E99-85EE-13D8A871EDF2
+  FILE_GUID                      = FD2EEB0B-2CAC-4BEA-81AE-199B09479C52
   MODULE_TYPE                    = SEC
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MemoryInitPeiLib
 
 [Sources]
-  BaikalMemoryInitPeiLib.c
+  MemoryInitPeiLib.c
 
 [Packages]
   ArmPkg/ArmPkg.dec

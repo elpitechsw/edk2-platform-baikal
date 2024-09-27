@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -237,12 +237,12 @@
 
 // Multichip configs support
 
-#ifdef BAIKAL_MBS_2S
-#define PLATFORM_CHIP_COUNT             2
-#define PLATFORM_ADDR_BITS_PER_CHIP     43
-#else
+#if defined(BAIKAL_DBS) || defined(BAIKAL_DBS_OV) || defined(BAIKAL_MBS_1S) || defined(BAIKAL_QEMU_S)
 #define PLATFORM_CHIP_COUNT             1
 #define PLATFORM_ADDR_BITS_PER_CHIP     44
+#elif defined(BAIKAL_MBS_2S)
+#define PLATFORM_CHIP_COUNT             2
+#define PLATFORM_ADDR_BITS_PER_CHIP     43
 #endif
 
 #define PLATFORM_CHIP_MEM_OFFSET(chip)      ((1ULL << PLATFORM_ADDR_BITS_PER_CHIP) * (chip))

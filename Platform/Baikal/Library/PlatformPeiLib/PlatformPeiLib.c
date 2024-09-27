@@ -23,13 +23,13 @@ PlatformPeim (
   VOID
   )
 {
-  VOID               *Base;
-  VOID               *NewBase;
-  UINTN              FdtSize;
-  UINTN              FdtPages;
-  UINT64             *FdtHobData;
+  VOID    *Base;
+  UINTN    FdtSize;
+  UINTN    FdtPages;
+  UINT64  *HobData;
+  VOID    *NewBase;
 
-  Base = (VOID*)(UINTN)FixedPcdGet64 (PcdDeviceTreeInitialBaseAddress);
+  Base = (VOID *) FixedPcdGet64 (PcdDeviceTreeInitialBaseAddress);
   ASSERT (Base != NULL);
   ASSERT (fdt_check_header (Base) == 0);
 
@@ -39,11 +39,22 @@ PlatformPeim (
   ASSERT (NewBase != NULL);
   fdt_open_into (Base, NewBase, EFI_PAGES_TO_SIZE (FdtPages));
 
-  FdtHobData = BuildGuidHob (&gFdtHobGuid, sizeof *FdtHobData);
-  ASSERT (FdtHobData != NULL);
-  *FdtHobData = (UINTN)NewBase;
+  HobData = BuildGuidHob (&gFdtHobGuid, sizeof *HobData);
+  ASSERT (HobData != NULL);
+  *HobData = (UINT64) NewBase;
 
   BuildFvHob (FixedPcdGet64 (PcdFvBaseAddress), FixedPcdGet32 (PcdFvSize));
+
+  Base = (VOID *) FixedPcdGet64 (PcdSpdInitialBase);
+  if (Base) {
+    NewBase = AllocatePages (1);
+    ASSERT (NewBase != NULL);
+    CopyMem (NewBase, Base, 1536);
+
+    HobData = BuildGuidHob (&gBaikalSpdHobGuid, sizeof *HobData);
+    ASSERT (HobData != NULL);
+    *HobData = (UINT64) NewBase;
+  }
 
   return EFI_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -311,8 +311,11 @@ DdrSettingsAppMain (
   Print (L"DdrSettingsApp: unlocking...\n");
   SmcFlashLock (0);
 
-  Err = SmcFlashRead (BAIKAL_STORAGE_ADDR + (BAIKAL_STR_PORT_OFFS * Port),
-                             &FlashBuf, sizeof (DDR_SPD_CONFIG));
+  Err = SmcFlashRead (
+          FixedPcdGet32 (PcdFlashNvStorageDdrCfgBase) + (BAIKAL_STR_PORT_OFFS * Port),
+          &FlashBuf,
+          sizeof (DDR_SPD_CONFIG)
+          );
   if (Err) {
     Print (L"DdrSettingsApp: error %d\n", Err);
     goto ExitLock;
@@ -325,15 +328,21 @@ DdrSettingsAppMain (
   }
 
   Print (L"DdrSettingsApp: erasing...\n");
-  Err = SmcFlashErase (BAIKAL_STORAGE_ADDR + (BAIKAL_STR_PORT_OFFS * Port), 512);
+  Err = SmcFlashErase (
+          FixedPcdGet32 (PcdFlashNvStorageDdrCfgBase) + (BAIKAL_STR_PORT_OFFS * Port),
+          512
+          );
   if (Err) {
     Print (L"DdrSettingsApp: error %d\n", Err);
     goto ExitLock;
   }
 
   Print (L"DdrSettingsApp: writing...\n");
-  Err = SmcFlashWrite (BAIKAL_STORAGE_ADDR + (BAIKAL_STR_PORT_OFFS * Port),
-                              &FlashBuf, sizeof (DDR_SPD_CONFIG));
+  Err = SmcFlashWrite (
+          FixedPcdGet32 (PcdFlashNvStorageDdrCfgBase) + (BAIKAL_STR_PORT_OFFS * Port),
+          &FlashBuf,
+          sizeof (DDR_SPD_CONFIG)
+          );
   if (Err) {
     Print (L"DdrSettingsApp: error %d\n", Err);
     goto ExitLock;

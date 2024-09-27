@@ -1,0 +1,65 @@
+## @file
+#
+#  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001C
+  BASE_NAME                      = RamMenu
+  FILE_GUID                      = E9535DD4-5D99-84A6-C830-0BCB75E62E5C
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 0.25
+  ENTRY_POINT                    = RamMenuEntryPoint
+  UNLOAD_IMAGE                   = RamMenuUnload
+  UEFI_HII_RESOURCE_SECTION      = TRUE
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Platform/Baikal/Baikal.dec
+
+[Sources]
+  RamMenu.c
+  RamMenu.h
+  RamMenu.uni
+  RamMenu1s.vfr
+  RamMenuComponent.c
+  RamMenuComponent.h
+  RamMenuDataStruct1s.h
+  RamMenuHii.c
+  RamMenuHii.h
+  RamStruc.c
+  RamStruc.h
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  HiiLib
+  MemoryAllocationLib
+  SmcFlashLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[FixedPcd]
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageDdrCfgBase
+  gBaikalTokenSpaceGuid.PcdDdrChannelsNumber
+
+[Protocols]
+  gEfiComponentName2ProtocolGuid
+  gEfiComponentNameProtocolGuid
+  gEfiDriverBindingProtocolGuid
+  gEfiDriverSupportedEfiVersionProtocolGuid
+  gEfiFormBrowser2ProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
+  gEfiHiiPackageListProtocolGuid
+  gEfiHiiStringProtocolGuid
+
+[Guids]

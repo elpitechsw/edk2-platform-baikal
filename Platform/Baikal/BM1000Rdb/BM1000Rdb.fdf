@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -20,7 +20,7 @@
 ################################################################################
 
 [FD.BAIKAL_EFI]
-BaseAddress   = 0xA0000000|gArmTokenSpaceGuid.PcdFdBaseAddress
+BaseAddress   = 0xA0000000|gArmTokenSpaceGuid.PcdFdBaseAddress  # UEFI in DRAM
 Size          = 0x00140000|gArmTokenSpaceGuid.PcdFdSize         # The size in bytes of the FLASH Device
 ErasePolarity = 1
 BlockSize     = 0x00001000
@@ -159,13 +159,14 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
-!if ($(TARGET) == DEBUG) || $(BAIKAL_QEMU_M)
+!ifdef $(INCLUDE_SERIAL_DXE)
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 !endif
 
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
+  INF Platform/Baikal/Drivers/RngDxe/RngDxe.inf
 
 !if $(BAIKAL_QEMU_M) == FALSE
   INF ArmPlatformPkg/Drivers/LcdGraphicsOutputDxe/LcdGraphicsOutputDxe.inf
@@ -174,6 +175,7 @@ READ_LOCK_STATUS   = TRUE
   # GPT/MBR partitioning + filesystems
   INF MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   INF MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  INF MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
   INF FatPkg/EnhancedFatDxe/Fat.inf
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
@@ -211,6 +213,7 @@ READ_LOCK_STATUS   = TRUE
 
   # Network
 !include NetworkPkg/Network.fdf.inc
+  INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
   INF Platform/Baikal/BM1000Rdb/Drivers/XGmacDxe/XGmacDxe.inf
   INF Platform/Baikal/Drivers/GmacDxe/GmacDxe.inf
 
@@ -226,14 +229,12 @@ READ_LOCK_STATUS   = TRUE
   # SD
   INF Platform/Baikal/Drivers/SdBlockDxe/SdBlock.inf
 
-  # FLASH
+  # Flash
   INF Platform/Baikal/Drivers/SmcFlashBlockIoDxe/SmcFlashBlockIoDxe.inf
   INF Platform/Baikal/Drivers/EspiFlashBlockIoDxe/EspiFlashBlockIoDxe.inf
 
   # USB
-!if $(BAIKAL_QEMU_M) == FALSE
   INF Silicon/Baikal/BM1000/Drivers/NonDiscoverableXhciDxe/NonDiscoverableXhciDxe.inf
-!endif
   INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf

@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -16,7 +16,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
-#include <Platform/FlashMap.h>
 #include <Protocol/BlockIo.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 
@@ -157,7 +156,7 @@ SmcFlashBlockIoReadBlocks (
     return EFI_INVALID_PARAMETER;
   }
 
-  FlashOffset = Lba * FAT_BLOCK_SIZE + FLASH_MAP_BLOCK;
+  FlashOffset = FixedPcdGet32 (PcdFlashNvStorageFatBase) + Lba * FAT_BLOCK_SIZE;
   SmcFlashRead (FlashOffset, Buffer, BufferSize);
   return EFI_SUCCESS;
 }
@@ -237,7 +236,7 @@ SmcFlashBlockIoWriteBlocks (
     return EFI_INVALID_PARAMETER;
   }
 
-  FlashOffset = Lba * FAT_BLOCK_SIZE + FLASH_MAP_BLOCK;
+  FlashOffset = FixedPcdGet32 (PcdFlashNvStorageFatBase) + Lba * FAT_BLOCK_SIZE;
   Adr = (FlashOffset / SectorSize) * SectorSize;
   Offset = FlashOffset - Adr;
   TotalSize = Offset + BufferSize;
@@ -306,7 +305,7 @@ SmcFlashInstallBlock (
   BlockIo = &PrivateData->BlockIo;
   Media   = &PrivateData->Media;
 
-  PrivateData->Size = SectorSize * SectorCount - FLASH_MAP_BLOCK;
+  PrivateData->Size = SectorSize * SectorCount - FixedPcdGet32 (PcdFlashNvStorageFatBase);
   PrivateData->Signature = SMC_FLASH_PRIVATE_DATA_SIGNATURE;
   if (PrivateData->Size < FAT_BLOCK_SIZE) {
     return EFI_NO_MEDIA;

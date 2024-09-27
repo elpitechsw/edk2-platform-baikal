@@ -1,24 +1,25 @@
 /** @file
-  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/NonDiscoverableDeviceRegistrationLib.h>
 #include <Library/TimerLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/FdtClient.h>
 
-#include <BM1000.h>
+#define SATA_CAP       0x00
+#define SATA_CAP_SSS   BIT27
+#define SATA_CAP_SMPS  BIT28
 
-#define SATA_CAP                  0x00
-#define SATA_CAP_SSS              BIT27
-#define SATA_CAP_SMPS             BIT28
+#define SATA_GHC       0x04
+#define SATA_GHC_HR    BIT0
 
-#define SATA_GHC                  0x04
-#define SATA_GHC_HR               BIT0
-
-#define SATA_PI                   0x0C
+#define SATA_PI        0x0C
 
 STATIC
 EFI_STATUS
@@ -69,34 +70,49 @@ NonDiscoverableAhciEntryPoint (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  UINTN  Idx;
-  CONST  EFI_PHYSICAL_ADDRESS  AhciBases[] = {BM1000_SATA0_BASE, BM1000_SATA1_BASE};
-  CONST  UINTN                 AhciSizes[] = {BM1000_SATA0_SIZE, BM1000_SATA1_SIZE};
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  INT32                 Node = 0;
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  EFI_STATUS            Status;
 
-  STATIC_ASSERT (ARRAY_SIZE (AhciBases) == ARRAY_SIZE (AhciSizes));
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  ASSERT_EFI_ERROR (Status);
 
-  for (Idx = 0; Idx < ARRAY_SIZE (AhciBases); ++Idx) {
-    EFI_STATUS  Status;
-
-    Status = RegisterNonDiscoverableMmioDevice (
-               NonDiscoverableDeviceTypeAhci,
-               NonDiscoverableDeviceDmaTypeCoherent,
-               NonDiscoverableDeviceAhciInitializer,
-               NULL,
-               1,
-               AhciBases[Idx],
-               AhciSizes[Idx]
-               );
-
+  while (TRUE) {
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-ahci", Node, &Node);
     if (EFI_ERROR (Status)) {
-      DEBUG ((
-        EFI_D_ERROR,
-        "%a: unable to register @ 0x%lx, Status: %r\n",
-        __func__,
-        AhciBases[Idx],
-        Status
-        ));
-      return Status;
+      break;
+    }
+
+    if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
+      continue;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 16) {
+      CONST EFI_PHYSICAL_ADDRESS  AhciBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 0));
+      CONST UINTN                 AhciSize = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 1));
+
+      Status = RegisterNonDiscoverableMmioDevice (
+                 NonDiscoverableDeviceTypeAhci,
+                 NonDiscoverableDeviceDmaTypeCoherent,
+                 NonDiscoverableDeviceAhciInitializer,
+                 NULL,
+                 1,
+                 AhciBase,
+                 AhciSize
+                 );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          EFI_D_ERROR,
+          "%a: unable to register @ 0x%lx, Status: %r\n",
+          __func__,
+          AhciBase,
+          Status
+          ));
+      }
     }
   }
 

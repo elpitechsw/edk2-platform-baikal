@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -14,13 +14,13 @@
 #define BAIKAL_FLASH_USE_SPD      0xD182
 #define BAIKAL_FLASH_USE_STR      0xF1A3
 
-#define BAIKAL_DIC_RZQ_DIV_7    	0x0FFF
+#define BAIKAL_DIC_RZQ_DIV_7      0x0FFF
 #define BAIKAL_DIC_RZQ_DIV_5      0x0F0F
 
 #define BAIKAL_RTTWR_DYN_OFF      0x7FFF
 #define BAIKAL_RTTWR_RZQ_DIV_4    0x07FF
 #define BAIKAL_RTTWR_RZQ_DIV_2    0x03FF
-#define BAIKAL_RTTWR_HI_Z	        0x01FF
+#define BAIKAL_RTTWR_HI_Z         0x01FF
 #define BAIKAL_RTTWR_RZQ_DIV_3    0x00FF
 
 #define BAIKAL_RTTNOM_RZQ_DIS     0x7FFF
@@ -43,8 +43,7 @@
 
 #define BAIKAL_FLASH_DUMMY        0x7B7B
 
-#define BAIKAL_STORAGE_ADDR       0x7E000
-#define BAIKAL_STR_PORT_OFFS      4096
+#define BAIKAL_STR_PORT_OFFS      (256 * 1024)
 
 typedef struct {
   UINT16 SpeedBin;

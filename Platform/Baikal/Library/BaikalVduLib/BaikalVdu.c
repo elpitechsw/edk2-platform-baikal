@@ -1,7 +1,7 @@
 /** @file
   This file contains Baikal VDU driver functions
 
-  Copyright (c) 2019 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2019 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
   Parts of this file were based on sources as follows:
@@ -256,7 +256,6 @@ LcdSetTimings (
     return EFI_NOT_FOUND;
   }
 
-  MmioWrite32 (BAIKAL_VDU_PCTR(VduBase), BAIKAL_VDU_PCTR_PCR + BAIKAL_VDU_PCTR_PCI);
   MmioWrite32 (BAIKAL_VDU_MRR(VduBase),
     ((MmioRead32 (BAIKAL_VDU_DBAR(VduBase)) + BufSize - 1) & BAIKAL_VDU_MRR_DEAR_MRR_MASK) | BAIKAL_VDU_MRR_OUTSTND_RQ(4)
     );

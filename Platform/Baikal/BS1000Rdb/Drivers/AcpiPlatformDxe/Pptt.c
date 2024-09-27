@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -176,7 +176,7 @@ PpttInit (
       NodePointer->Node.Length = sizeof (BAIKAL_PPTT_NODE);
       CopyMem (&NodePointer->Node.Flags, &ProcNodeFlags, sizeof (ProcNodeFlags));
       NodePointer->Node.Parent = OFFSET_OF (BAIKAL_ACPI_PPTT, Package[ChipIdx]);
-      NodePointer->Node.AcpiProcessorId = BAIKAL_ACPI_CLUSTER_ID(Num);
+      NodePointer->Node.AcpiProcessorId = BAIKAL_ACPI_CLUSTER_ID(ChipIdx, Num);
       NodePointer->Node.NumberOfPrivateResources = 1;
       NodePointer->Resource = OFFSET_OF (BAIKAL_ACPI_PPTT, CacheL3[Num]);
     }

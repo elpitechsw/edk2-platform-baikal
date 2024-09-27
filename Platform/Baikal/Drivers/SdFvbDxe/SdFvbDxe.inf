@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -32,6 +32,7 @@
   UefiRuntimeLib
 
 [FixedPcd]
+  gBaikalTokenSpaceGuid.PcdFlashNvStorageVarBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize

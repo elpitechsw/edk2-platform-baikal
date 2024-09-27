@@ -1,0 +1,30 @@
+## @file
+#
+#  Copyright (c) 2024, Baikal Electronics, JSC. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = BasePlatformHookLib
+  FILE_GUID                      = A6D83290-BDF7-4F74-87EF-81387568FD44
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PlatformHookLib
+
+[Sources]
+  BasePlatformHookLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  IoLib
+  PcdLib
+
+[FixedPcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterAccessWidth
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterStride

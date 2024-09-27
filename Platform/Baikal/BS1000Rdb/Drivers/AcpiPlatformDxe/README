@@ -1,0 +1,46 @@
+# ACPI guidelines
+
+## Device nodes
+
+1. General devices are described under system bus \_SB scope,
+I2C and SPI devices are described specifically (see [1] and [2])
+
+2. Use full paths when describing or referencing objects to prevent errors
+
+## Properties                              
+
+1. Most properties are set in _DSD objects of corresponding devices (see [3])
+
+2. GPIO properties have own rules (see [4])
+
+3. "compatible" property requires that the device is declared with "PRP0001" _HID (see [5])
+
+4. Not all properties will work out of the box. Unfortunately, most Linux drivers
+use DeviceTree API functions like 'of_property_read_u32' instead of generic one
+('device_property_read_u32') so they need to be patched.
+
+5. Special properties (not full list):
+
+|Device Tree property|ACPI Object|
+|--------------------|-----------|
+|dma-coherent        |_CCA       |
+|dmas                |_CRS       |
+|interrupts          |_CRS       |
+|reg                 |_CRS       |
+|status              |_STA       |
+|clocks, clock-names |not used   |
+|device_type         |not used   |
+|ranges              |not used   |
+|#...                |not used   |
+
+## Examples
+
+See DsdtDbs.asl, DsdtDbsOv.asl, DsdtMbs1s.asl and DsdtMbs2s.asl files.
+
+## Links
+
+[1] https://www.kernel.org/doc/html/latest/firmware-guide/acpi/enumeration.html#i2c-serial-bus-support
+[2] https://www.kernel.org/doc/html/latest/firmware-guide/acpi/enumeration.html#spi-serial-bus-support
+[3] https://uefi.org/sites/default/files/resources/DSD%20IMPLEMENTATION%20GUIDE%20VERSION%202.0%20JAN%202021_EDITED_WEBVERSION.html
+[4] https://docs.kernel.org/firmware-guide/acpi/gpio-properties.html
+[5] https://www.kernel.org/doc/html/latest/firmware-guide/acpi/enumeration.html#device-tree-namespace-link-device-id

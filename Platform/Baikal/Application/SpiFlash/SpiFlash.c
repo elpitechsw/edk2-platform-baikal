@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2021 - 2022, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -45,18 +45,14 @@ SpiFlashMain (
       !StrCmp (ShellParameters->Argv[1], L"-H")) {
     Print (L"Flash a file to SPI Flash.\n");
     Print (L"\n");
-    Print (L"SPIFLASH offset filepath\n");
+    Print (L"SPIFLASH address filepath\n");
     Print (L"\n");
-    Print (L"  offset      - Relative offset in SPI Flash (depends on driver).\n");
+    Print (L"  address     - Address in SPI Flash.\n");
     Print (L"  filepath    - File path.\n");
     Print (L"\n");
-    Print (L"NOTES:\n");
-    Print (L"  1. The application has been successfully tested on FW v4.4 and higher.\n");
-    Print (L"  2. DO NOT USE the application on FW v4.3 and lower!\n");
-    Print (L"\n");
     Print (L"EXAMPLES:\n");
-    Print (L"  * To write the 'board.flash.img' file to SPI Flash:\n");
-    Print (L"    fs0:\\> spiflash 0 board.flash.img\n");
+    Print (L"  * To write the 'board.flash.bin' file to SPI Flash at 0x80000:\n");
+    Print (L"    fs0:\\> spiflash 0x80000 board.flash.bin\n");
     return EFI_SUCCESS;
   }
 

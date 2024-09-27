@@ -1,13 +1,14 @@
 /** @file
-  Copyright (c) 2021 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/NonDiscoverableDeviceRegistrationLib.h>
-
-#include <BS1000.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/FdtClient.h>
 
 EFI_STATUS
 EFIAPI
@@ -16,28 +17,49 @@ NonDiscoverableEhciEntryPoint (
   IN  EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  UINTN       ChipIdx;
-  EFI_STATUS  Status;
+  FDT_CLIENT_PROTOCOL  *FdtClient;
+  INT32                 Node = 0;
+  CONST VOID           *Prop;
+  UINT32                PropSize;
+  EFI_STATUS            Status;
 
-  for (ChipIdx = 0; ChipIdx < PLATFORM_CHIP_COUNT; ++ChipIdx) {
-    Status = RegisterNonDiscoverableMmioDevice (
-               NonDiscoverableDeviceTypeEhci,
-               NonDiscoverableDeviceDmaTypeCoherent,
-               NULL,
-               NULL,
-               1,
-               PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_EHCI_BASE),
-               BS1000_EHCI_SIZE
-               );
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL, (VOID **) &FdtClient);
+  ASSERT_EFI_ERROR (Status);
 
+  while (TRUE) {
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "generic-ehci", Node, &Node);
     if (EFI_ERROR (Status)) {
-      DEBUG ((
-        EFI_D_ERROR,
-        "%a: unable to register 0x%llx, Status: %r\n",
-        __func__,
-        PLATFORM_ADDR_OUT_CHIP(ChipIdx, BS1000_EHCI_BASE),
-        Status
-        ));
+      break;
+    }
+
+    if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
+      continue;
+    }
+
+    if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS &&
+        PropSize == 16) {
+      CONST EFI_PHYSICAL_ADDRESS  EhciBase = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 0));
+      CONST UINTN                 EhciSize = SwapBytes64 (ReadUnaligned64 ((CONST UINT64 *) Prop + 1));
+
+      Status = RegisterNonDiscoverableMmioDevice (
+                 NonDiscoverableDeviceTypeEhci,
+                 NonDiscoverableDeviceDmaTypeCoherent,
+                 NULL,
+                 NULL,
+                 1,
+                 EhciBase,
+                 EhciSize
+                 );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          EFI_D_ERROR,
+          "%a: unable to register 0x%llx, Status: %r\n",
+          __func__,
+          EhciBase,
+          Status
+          ));
+      }
     }
   }
 

@@ -9,8 +9,37 @@
 
 #define BUS_RES WordBusNumber (ResourceProducer, MinFixed, MaxFixed,, 0x0, 0x0, 0xFF, 0x0, 0x100)
 
+#define ACPI_BAIKAL_PWM_PCI_CLK(Channel0, Channel1, Channel2) \
+  ACPI_BAIKAL_SMC_CMU_DATA                                    \
+  PowerResource (PWRR, 0, 0)                                  \
+  {                                                           \
+    Name (PWRV, 1)                                            \
+    Method (_STA)                                             \
+    {                                                         \
+      Return (PWRV)                                           \
+    }                                                         \
+    Method (_ON)                                              \
+    {                                                         \
+      ACPI_BAIKAL_CMU_CLKCH_ENABLE (0x02000000, Channel0)     \
+      ACPI_BAIKAL_CMU_CLKCH_ENABLE (0x02000000, Channel1)     \
+      ACPI_BAIKAL_CMU_CLKCH_ENABLE (0x02000000, Channel2)     \
+      PWRV = 1                                                \
+    }                                                         \
+    Method (_OFF)                                             \
+    {                                                         \
+      ACPI_BAIKAL_CMU_CLKCH_DISABLE (0x02000000, Channel2)    \
+      ACPI_BAIKAL_CMU_CLKCH_DISABLE (0x02000000, Channel1)    \
+      ACPI_BAIKAL_CMU_CLKCH_DISABLE (0x02000000, Channel0)    \
+      PWRV = 0                                                \
+    }                                                         \
+  }                                                           \
+  Name (_PR0, Package () { PWRR })                            \
+  Name (_PR3, Package () { PWRR })                            \
+  ACPI_BAIKAL_PWM_PS_METHODS
+
 DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 {
+  External (\_SB.CSTA, IntObj)
   External (\_SB.CRU0, DeviceObj)
   External (\_SB.GPIO, DeviceObj)
   External (\_SB.GPIO.GPIP, DeviceObj)
@@ -78,6 +107,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       Name (NUML, 4)
       Name (NUMV, 4)
+
+      ACPI_BAIKAL_PWM_PCI_CLK (0, 1, 2)
 
       Device (RES0)
       {
@@ -164,6 +195,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       Name (NUML, 4)
       Name (NUMV, 4)
 
+      ACPI_BAIKAL_PWM_PCI_CLK (3, 4, 5)
+
       Device (RES0)
       {
         Name (_ADR, Zero)
@@ -245,6 +278,8 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
 
       Name (NUML, 8)
       Name (NUMV, 16)
+
+      ACPI_BAIKAL_PWM_PCI_CLK (6, 7, 8)
 
       Device (RES0)
       {

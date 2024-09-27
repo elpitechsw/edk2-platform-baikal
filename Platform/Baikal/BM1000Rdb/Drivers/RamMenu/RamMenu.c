@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -7,7 +7,6 @@
 #include "RamMenuHii.h"
 #include "RamMenuComponent.h"
 #include "RamStruc.h"
-
 
 EFI_GUID  mRamMenuDriverFormSetGuid  =  BAIKALFORMSET_GUID;
 

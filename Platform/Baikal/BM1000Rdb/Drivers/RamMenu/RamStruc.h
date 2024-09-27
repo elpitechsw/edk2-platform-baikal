@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -11,9 +11,7 @@
 #define BAIKAL_FLASH_USE_SPD      0xD182
 #define BAIKAL_FLASH_USE_STR      0xF1A3
 
-#define BAIKAL_STORAGE_ADDR       0x7E000
-#define BAIKAL_BOOT_SPI_SUBSECTOR 4096
-#define BAIKAL_STR_PORT_OFFS      4096
+#define BAIKAL_STR_PORT_OFFS      (256 * 1024)
 
 typedef struct {
   UINT16 SpeedBin;

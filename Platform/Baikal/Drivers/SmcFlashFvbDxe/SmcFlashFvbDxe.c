@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2020 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -16,7 +16,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
-#include <Platform/FlashMap.h>
 #include <Protocol/BlockIo.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 
@@ -253,9 +252,11 @@ SmcFlashFvbRead (
 {
   UINTN  LocalOffset = Lba * mFlashInfo->SectorSize + Offset;
   VOID   *Ram = (VOID *) (LocalOffset + (UINTN) mNvStorageBase);
-  UINTN  Adr = LocalOffset + FLASH_MAP_VAR;
+  UINTN  Adr = FixedPcdGet32 (PcdFlashNvStorageVarBase) + LocalOffset;
+
   SmcFlashRead (Adr, Ram, *NumBytes);
   CopyMem (Buffer, Ram, *NumBytes);
+
   return EFI_SUCCESS;
 }
 
@@ -329,9 +330,11 @@ SmcFlashFvbWrite (
 {
   UINTN  LocalOffset = Lba * mFlashInfo->SectorSize + Offset;
   VOID   *Ram = (VOID *) (LocalOffset + (UINTN) mNvStorageBase);
-  UINTN  Adr = LocalOffset + FLASH_MAP_VAR;
+  UINTN  Adr = FixedPcdGet32 (PcdFlashNvStorageVarBase) + LocalOffset;
+
   CopyMem (Ram, Buffer, *NumBytes);
   SmcFlashWrite (Adr, Ram, *NumBytes);
+
   return EFI_SUCCESS;
 }
 
@@ -404,7 +407,8 @@ SmcFlashFvbErase (
     UINTN   Size = Cnt * mFlashInfo->SectorSize;
     UINTN   Offset = Lba * mFlashInfo->SectorSize;
     VOID   *Ram = (VOID *) (Offset + (UINTN) mNvStorageBase);
-    UINTN   Adr = Offset + FLASH_MAP_VAR;
+    UINTN   Adr = FixedPcdGet32 (PcdFlashNvStorageVarBase) + Offset;
+
     SetMem64 (Ram, Size, ~0UL);
     SmcFlashErase (Adr, Size);
   }
@@ -574,18 +578,34 @@ BaikalFvHeader (
   VOID
   )
 {
-  EFI_STATUS  Status = EFI_SUCCESS;
+  DEBUG ((
+    EFI_D_INFO,
+    "SmcFlashFvbDxe: reading NvStorage: Flash @ 0x%x - 0x%x -> RAM @ 0x%x - 0x%x\n",
+    FixedPcdGet32 (PcdFlashNvStorageVarBase),
+    FixedPcdGet32 (PcdFlashNvStorageVarBase) + mNvStorageSize,
+    mNvStorageBase,
+    mNvStorageBase + mNvStorageSize
+    ));
 
-  DEBUG ((EFI_D_INFO, "Reading headers from flash\n"));
-  SmcFlashRead (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
+  SmcFlashRead (FixedPcdGet32 (PcdFlashNvStorageVarBase), mNvStorageBase, mNvStorageSize);
   if (ValidateFvHeader (mNvStorageBase) != EFI_SUCCESS) {
-    DEBUG ((EFI_D_ERROR, "Writing default headers to flash\n"));
     SetMem64 ((VOID *) mNvStorageBase, mNvStorageSize, ~0UL);
     InitializeFvAndVariableStoreHeaders (mNvStorageBase);
-    SmcFlashErase (FLASH_MAP_VAR, mNvStorageSize);
-    SmcFlashWrite (FLASH_MAP_VAR, mNvStorageBase, mNvStorageSize);
+
+    DEBUG ((
+      EFI_D_INFO,
+      "SmcFlashFvbDxe: writing NvStorage: Flash @ 0x%x - 0x%x <- RAM @ 0x%x - 0x%x\n",
+      FixedPcdGet32 (PcdFlashNvStorageVarBase),
+      FixedPcdGet32 (PcdFlashNvStorageVarBase) + mNvStorageSize,
+      mNvStorageBase,
+      mNvStorageBase + mNvStorageSize
+      ));
+
+    SmcFlashErase (FixedPcdGet32 (PcdFlashNvStorageVarBase), mNvStorageSize);
+    SmcFlashWrite (FixedPcdGet32 (PcdFlashNvStorageVarBase), mNvStorageBase, mNvStorageSize);
   }
-  return Status;
+
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS
@@ -597,7 +617,6 @@ SmcFlashFvbDxeInitialize (
 {
   EFI_STATUS  Status;
 
-  /* base */
   mNvStorageBase = (VOID *) (PcdGet64 (PcdFlashNvStorageVariableBase64) != 0 ?
                              PcdGet64 (PcdFlashNvStorageVariableBase64) :
                              PcdGet32 (PcdFlashNvStorageVariableBase));
@@ -611,8 +630,6 @@ SmcFlashFvbDxeInitialize (
     return EFI_SUCCESS; // EFI_ALREADY_STARTED
   }
 
-
-  /* info */
   Status = gBS->AllocatePool (
                   EfiRuntimeServicesData,
                   sizeof (FLASH_INFO),
@@ -623,13 +640,11 @@ SmcFlashFvbDxeInitialize (
   }
   SmcFlashInfo (&mFlashInfo->SectorSize, &mFlashInfo->SectorCount);
 
-  /* header */
   Status = BaikalFvHeader ();
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  /* event */
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_NOTIFY,
@@ -642,7 +657,6 @@ SmcFlashFvbDxeInitialize (
     return Status;
   }
 
-  /* install */
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mSmcFlashFvbHandle,
                   &gEfiDevicePathProtocolGuid,

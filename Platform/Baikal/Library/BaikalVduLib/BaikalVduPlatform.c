@@ -1,7 +1,7 @@
 /** @file
   This file contains Baikal VDU driver functions
 
-  Copyright (c) 2019 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2019 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   Author: Pavel Parkhomenko <Pavel.Parkhomenko@baikalelectronics.ru>
 
   Parts of this file were based on sources as follows:
@@ -12,13 +12,14 @@
 
 #include <PiDxe.h>
 
+#include <Library/BaikalVduPlatformLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/IoLib.h>
 #include <Library/LcdPlatformLib.h>
-#include <Library/BaikalVduPlatformLib.h>
-#include <Library/UefiLib.h>
-#include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
 
 #include <Protocol/Cpu.h>
 #include <Protocol/EdidDiscovered.h>
@@ -768,7 +769,7 @@ LcdPlatformGetVram (
                     Cpu,
                     *VramBaseAddress,
                     *VramSize,
-                    EFI_MEMORY_WC | EFI_MEMORY_XP
+                    EFI_MEMORY_WT | EFI_MEMORY_XP
                     );
   }
   if (EFI_ERROR (Status)) {
@@ -809,6 +810,10 @@ LcdPlatformSetMode (
     return Status;
   }
 
+  // Activate reset on pixel clock domains
+  MmioWrite32 (BAIKAL_VDU_PCTR(BM1000_HDMI_VDU_BASE), 0);
+  MmioWrite32 (BAIKAL_VDU_PCTR(BM1000_LVDS_VDU_BASE), 0);
+
   // Set the video mode pixel frequency
   BaikalSetVduFrequency (
     BM1000_HDMI_CMU_BASE,
@@ -822,7 +827,11 @@ LcdPlatformSetMode (
     mLvdsDisplayMode.OscFreq * 7
     );
 
-  return Status;
+  // Turn pixel clock domains on
+  MmioWrite32 (BAIKAL_VDU_PCTR(BM1000_HDMI_VDU_BASE), BAIKAL_VDU_PCTR_PCR + BAIKAL_VDU_PCTR_PCI);
+  MmioWrite32 (BAIKAL_VDU_PCTR(BM1000_LVDS_VDU_BASE), BAIKAL_VDU_PCTR_PCR + BAIKAL_VDU_PCTR_PCI);
+
+  return EFI_SUCCESS;
 }
 
 /** Return information for the requested mode number.

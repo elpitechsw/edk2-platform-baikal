@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2023, Baikal Electronics, JSC. All rights reserved.
+  Copyright (c) 2023 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -7,7 +7,7 @@
 #include "RamMenuHii.h"
 #include "RamStruc.h"
 
-extern CHAR16 mIfrVariableName[];
+extern CHAR16    mIfrVariableName[];
 extern EFI_GUID  mRamMenuDriverFormSetGuid;
 
 EFI_STATUS
@@ -27,6 +27,7 @@ RamMenuHiiConfigAccessExtractConfig (
   EFI_STRING                       ConfigRequestHdr;
   UINTN                            Size;
   BOOLEAN                          AllocatedRequest;
+
   if (Progress == NULL || Results == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -46,15 +47,16 @@ RamMenuHiiConfigAccessExtractConfig (
   //
   BufferSize = sizeof (RAM_MENU_STRUC);
   Status = gRT->GetVariable (
-            mIfrVariableName,
-            &mRamMenuDriverFormSetGuid,
-            NULL,
-            &BufferSize,
-            &PrivateData->Configuration
-            );
+                  mIfrVariableName,
+                  &mRamMenuDriverFormSetGuid,
+                  NULL,
+                  &BufferSize,
+                  &PrivateData->Configuration
+                  );
   if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
+
   if (Request == NULL) {
     DEBUG ((DEBUG_INFO, "\n:: Inside of Extract Config and Request == Null "));
   } else {
@@ -64,13 +66,13 @@ RamMenuHiiConfigAccessExtractConfig (
   // Convert buffer data to <ConfigResp> by helper function BlockToConfig()
   //
   Status = HiiConfigRouting->BlockToConfig (
-                                  HiiConfigRouting,
-                                  ConfigRequest,
-                                  (UINT8 *) &PrivateData->Configuration,
-                                  BufferSize,
-                                  Results,
-                                  Progress
-                                  );
+                               HiiConfigRouting,
+                               ConfigRequest,
+                               (UINT8 *) &PrivateData->Configuration,
+                               BufferSize,
+                               Results,
+                               Progress
+                               );
   //
   // Free the allocated config request string.
   //
@@ -85,6 +87,7 @@ RamMenuHiiConfigAccessExtractConfig (
   } else if (StrStr (Request, L"OFFSET") == NULL) {
     *Progress = Request + StrLen (Request);
   }
+
   return Status;
 }
 
@@ -149,7 +152,6 @@ RamMenuHiiConfigAccessRouteConfig (
                   sizeof (RAM_MENU_STRUC),
                   &PrivateData->Configuration
                   );
-        DEBUG ((DEBUG_INFO, "\n:: ROUTE CONFIG Saving the configuration to NVRAM\n"));
 
   Status = RamStrucSaveCurrentSettings (&PrivateData->Configuration); // FIXME
 

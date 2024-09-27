@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2019 - 2023, Baikal Electronics, JSC. All rights reserved.<BR>
+  Copyright (c) 2019 - 2024, Baikal Electronics, JSC. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -28,8 +28,8 @@ GmacDxeDriverEntry (
   EUI_CLIENT_PROTOCOL  *EuiClient;
   FDT_CLIENT_PROTOCOL  *FdtClient;
   EFI_STATUS            FdtStatus;
+  INT32                 GmacNode = 0;
   UINTN                 Idx;
-  INT32                 Node = 0;
   EFI_STATUS            Status;
   CONST VOID           *Prop;
   UINT32                PropSize;
@@ -47,22 +47,23 @@ GmacDxeDriverEntry (
   }
 
   for (;;) {
-    if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-gmac", Node, &Node) != EFI_SUCCESS &&
-        FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bs1000-gmac", Node, &Node) != EFI_SUCCESS) {
+    if (FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-gmac", GmacNode, &GmacNode) != EFI_SUCCESS &&
+        FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bs1000-gmac", GmacNode, &GmacNode) != EFI_SUCCESS) {
       break;
     }
 
-    if (!FdtClient->IsNodeEnabled (FdtClient, Node)) {
+    if (!FdtClient->IsNodeEnabled (FdtClient, GmacNode)) {
       continue;
     }
 
-    FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize);
+    FdtStatus = FdtClient->GetNodeProperty (FdtClient, GmacNode, "reg", &Prop, &PropSize);
     if (FdtStatus == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
-      BOOLEAN                      DmaCoherent;
+      BOOLEAN                      DmaCoherent = FALSE;
       GMAC_ETH_DEVPATH            *EthDevPath;
       volatile GMAC_REGS * CONST   GmacRegs = (VOID *) SwapBytes64 (ReadUnaligned64 (Prop));
       EFI_HANDLE                  *Handle;
       EFI_MAC_ADDRESS              MacAddr;
+      INT32                        Node;
       EFI_PHYSICAL_ADDRESS         ResetGpioBase;
       INTN                         ResetGpioPin;
       INTN                         ResetPolarity;
@@ -80,43 +81,43 @@ GmacDxeDriverEntry (
         return Status;
       }
 
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "dma-coherent", &Prop, &PropSize) == EFI_SUCCESS) {
-        DmaCoherent = TRUE;
-      } else {
-        DmaCoherent = FALSE;
-      }
+      Node = GmacNode;
+      do {
+        if (FdtClient->GetNodeProperty (FdtClient, Node, "dma-coherent", &Prop, &PropSize) == EFI_SUCCESS) {
+          DmaCoherent = TRUE;
+          break;
+        }
+      } while (FdtClient->FindParentNode (FdtClient, Node, &Node) == EFI_SUCCESS);
 
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "clock-names", &Prop, &PropSize) == EFI_SUCCESS) {
+      if (FdtClient->GetNodeProperty (FdtClient, GmacNode, "clock-names", &Prop, &PropSize) == EFI_SUCCESS) {
         UINTN         ClkNameIdx = 0;
         CONST CHAR8  *ClkNamePtr = Prop;
 
         while (ClkNamePtr < (CHAR8 *) Prop + PropSize) {
           if (AsciiStrCmp (ClkNamePtr, "tx2_clk") == 0) {
-            if (FdtClient->GetNodeProperty (FdtClient, Node, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize > 0 && (PropSize % sizeof (UINT32)) == 0) {
+            if (FdtClient->GetNodeProperty (FdtClient, GmacNode, "clocks", &Prop, &PropSize) == EFI_SUCCESS && PropSize > 0 && (PropSize % sizeof (UINT32)) == 0) {
               UINT32        ClkPhandleIdx = 0;
               CONST UINT32 *ClkPhandlePtr = Prop;
 
               for (;;) {
-                INT32  ClkNode;
-
-                if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*ClkPhandlePtr), &ClkNode) == EFI_SUCCESS) {
+                if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*ClkPhandlePtr), &Node) == EFI_SUCCESS) {
                   if (ClkPhandleIdx == ClkNameIdx) {
                     CONST UINT32  Tx2ClkChNum = SwapBytes32 (*(ClkPhandlePtr + 1));
 
-                    if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
+                    if (FdtClient->GetNodeProperty (FdtClient, Node, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
                       if (AsciiStrCmp (Prop, "baikal,bm1000-cmu") == 0) {
-                        if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
+                        if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == 2 * sizeof (UINT64)) {
                           Tx2ClkChCtlAddr = SwapBytes64 (ReadUnaligned64 (Prop)) + 0x20 + Tx2ClkChNum * 0x10;
                         }
                       } else if (AsciiStrCmp (Prop, "baikal,bs1000-cmu") == 0) {
-                        if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+                        if (FdtClient->GetNodeProperty (FdtClient, Node, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
                           Tx2ClkChCtlAddr = SwapBytes32 (*(CONST UINT32 *) Prop) + Tx2ClkChNum * 0x10;
                         }
                       }
                     }
 
                     break;
-                  } else if (FdtClient->GetNodeProperty (FdtClient, ClkNode, "#clock-cells", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+                  } else if (FdtClient->GetNodeProperty (FdtClient, Node, "#clock-cells", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
                     ClkPhandleIdx++;
                     ClkPhandlePtr += 1 + SwapBytes32 (*(CONST UINT32 *) Prop);
                   } else {
@@ -136,7 +137,7 @@ GmacDxeDriverEntry (
         }
       }
 
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
+      if (FdtClient->GetNodeProperty (FdtClient, GmacNode, "compatible", &Prop, &PropSize) == EFI_SUCCESS) {
         CONST CHAR8  *CompatiblePtr = Prop;
         while (CompatiblePtr < (CHAR8 *) Prop + PropSize) {
           if (AsciiStrCmp (CompatiblePtr, "baikal,bs1000-gmac") == 0) {
@@ -148,7 +149,7 @@ GmacDxeDriverEntry (
         }
       }
 
-      FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "mac-address", &Prop, &PropSize);
+      FdtStatus = FdtClient->GetNodeProperty (FdtClient, GmacNode, "mac-address", &Prop, &PropSize);
       if (FdtStatus == EFI_SUCCESS) {
         if (PropSize == 6) {
           for (Idx = 0; Idx < PropSize; ++Idx) {
@@ -162,7 +163,7 @@ GmacDxeDriverEntry (
       }
 
       if (EFI_ERROR (FdtStatus)) {
-        FdtStatus = FdtClient->GetNodeProperty (FdtClient, Node, "local-mac-address", &Prop, &PropSize);
+        FdtStatus = FdtClient->GetNodeProperty (FdtClient, GmacNode, "local-mac-address", &Prop, &PropSize);
         if (FdtStatus == EFI_SUCCESS) {
           if (PropSize == 6) {
             for (Idx = 0; Idx < PropSize; ++Idx) {
@@ -188,7 +189,7 @@ GmacDxeDriverEntry (
         }
 
         EuiClient->GetEui48 ((EFI_PHYSICAL_ADDRESS) GmacRegs, DevIdx, &MacAddr);
-        FdtStatus = FdtClient->SetNodeProperty (FdtClient, Node, "local-mac-address", MacAddr.Addr, 6);
+        FdtStatus = FdtClient->SetNodeProperty (FdtClient, GmacNode, "local-mac-address", MacAddr.Addr, 6);
         if (EFI_ERROR (FdtStatus)) {
           DEBUG ((
             EFI_D_ERROR,
@@ -198,7 +199,7 @@ GmacDxeDriverEntry (
             ));
         }
 
-        FdtStatus = FdtClient->SetNodeProperty (FdtClient, Node, "mac-address", MacAddr.Addr, 6);
+        FdtStatus = FdtClient->SetNodeProperty (FdtClient, GmacNode, "mac-address", MacAddr.Addr, 6);
         if (EFI_ERROR (FdtStatus)) {
           DEBUG ((
             EFI_D_ERROR,
@@ -212,7 +213,7 @@ GmacDxeDriverEntry (
       ResetGpioBase = 0;
       ResetGpioPin  = -1;
       ResetPolarity = -1;
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "snps,reset-gpios", &Prop, &PropSize) == EFI_SUCCESS) {
+      if (FdtClient->GetNodeProperty (FdtClient, GmacNode, "snps,reset-gpios", &Prop, &PropSize) == EFI_SUCCESS) {
         if (PropSize == 12) {
           INT32  ResetGpioNode;
 
@@ -234,7 +235,7 @@ GmacDxeDriverEntry (
         ResetGpioPin  = 0;
       }
 
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "phy-handle", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
+      if (FdtClient->GetNodeProperty (FdtClient, GmacNode, "phy-handle", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
         INT32  PhyNode;
         if (FdtClient->FindNodeByPhandle (FdtClient, SwapBytes32 (*(CONST UINT32 *) Prop), &PhyNode) == EFI_SUCCESS &&
             FdtClient->GetNodeProperty   (FdtClient, PhyNode, "reg", &Prop, &PropSize) == EFI_SUCCESS && PropSize == sizeof (UINT32)) {
@@ -242,7 +243,7 @@ GmacDxeDriverEntry (
         }
       }
 
-      if (FdtClient->GetNodeProperty (FdtClient, Node, "phy-mode", &Prop, &PropSize) == EFI_SUCCESS) {
+      if (FdtClient->GetNodeProperty (FdtClient, GmacNode, "phy-mode", &Prop, &PropSize) == EFI_SUCCESS) {
         if (AsciiStrCmp (Prop, "rgmii-id") == 0) {
           RgmiiRxId = TRUE;
           RgmiiTxId = TRUE;
