@@ -42,7 +42,11 @@ IsMbm (
   VOID
   )
 {
+#ifndef ELPITECH
   return BaikalModel[0] == 'M' ? 1 : 0;
+#else
+  return 1;
+#endif
 }
 
 #define BAIKAL_SMBIOS_STRING(Str)  Str "\0"
