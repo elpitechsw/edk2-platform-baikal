@@ -11,6 +11,8 @@
   #include "DsdtMbm10.asl"
 #elif defined(BAIKAL_MBM20)
   #include "DsdtMbm20.asl"
+#elif defined(ELPITECH)
+  #include "DsdtElp.asl"
 #elif defined(BAIKAL_QEMU_M)
 DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
 {
