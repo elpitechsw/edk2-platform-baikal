@@ -80,7 +80,7 @@ NonDiscoverableAhciEntryPoint (
   ASSERT_EFI_ERROR (Status);
 
   while (TRUE) {
-    Status = FdtClient->FindNextCompatibleNode (FdtClient, "baikal,bm1000-ahci", Node, &Node);
+    Status = FdtClient->FindNextCompatibleNode (FdtClient, "generic-ahci", Node, &Node);
     if (EFI_ERROR (Status)) {
       break;
     }
