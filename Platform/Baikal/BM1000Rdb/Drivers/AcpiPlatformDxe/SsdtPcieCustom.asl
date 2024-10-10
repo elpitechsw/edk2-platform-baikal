@@ -108,7 +108,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      ACPI_BAIKAL_PWM_PCI_CLK (0, 1, 2)
+//      ACPI_BAIKAL_PWM_PCI_CLK (0, 1, 2)
 
       Device (RES0)
       {
@@ -195,7 +195,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       Name (NUML, 4)
       Name (NUMV, 4)
 
-      ACPI_BAIKAL_PWM_PCI_CLK (3, 4, 5)
+//      ACPI_BAIKAL_PWM_PCI_CLK (3, 4, 5)
 
       Device (RES0)
       {
@@ -280,7 +280,7 @@ DefinitionBlock (__FILE__, "SSDT", 2, "BAIKAL", "SSDTPCI0", 1)
       Name (NUML, 8)
       Name (NUMV, 16)
 
-      ACPI_BAIKAL_PWM_PCI_CLK (6, 7, 8)
+//      ACPI_BAIKAL_PWM_PCI_CLK (6, 7, 8)
 
       Device (RES0)
       {

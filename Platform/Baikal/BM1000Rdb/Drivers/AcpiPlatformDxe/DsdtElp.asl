@@ -8,6 +8,37 @@
 DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
 {
 
+#define ACPI_BAIKAL_PWM_LSP_CLK(Channel, Mask)                \
+  ACPI_BAIKAL_SMC_CMU_DATA                                    \
+  PowerResource (PWRR, 0, 0)                                  \
+  {                                                           \
+    Name (PWRV, 1)                                            \
+    Method (_STA)                                             \
+    {                                                         \
+      Return (PWRV)                                           \
+    }                                                         \
+    OperationRegion (RBUF, SystemMemory, 0x20050000, 0x4)     \
+    Field (RBUF, DwordAcc, NoLock, Preserve)                  \
+    {                                                         \
+      RST, 0x20                                               \
+    }                                                         \
+    Method (_ON)                                              \
+    {                                                         \
+      ACPI_BAIKAL_CMU_CLKCH_ENABLE (0x20000000, Channel)      \
+      RST &= ~Mask                                            \
+      PWRV = 1                                                \
+    }                                                         \
+    Method (_OFF)                                             \
+    {                                                         \
+      RST |= Mask                                             \
+      ACPI_BAIKAL_CMU_CLKCH_DISABLE (0x20000000, Channel)     \
+      PWRV = 0                                                \
+    }                                                         \
+  }                                                           \
+  Name (_PR0, Package () { PWRR })                            \
+  Name (_PR3, Package () { PWRR })                            \
+  ACPI_BAIKAL_PWM_PS_METHODS
+
 #define BAIKAL_ACPI_PROCESSOR_LPI                         \
   Name (_LPI, Package ()                                  \
   {                                                       \
@@ -186,6 +217,7 @@ Method (_TTS, 1)
 
 Scope (_SB)
 {
+#if 0
   PowerResource (SATP, 0, 0)
   {
     Name (PWRV, 1)
@@ -252,6 +284,7 @@ Scope (_SB)
       PWRV = 0
     }
   }
+#endif
 
   Method (_OSC, 4)
   {
@@ -818,6 +851,48 @@ Scope (_SB)
     })
   }
 
+  Device (CLK6)
+  {
+    Name (_HID, "BKLE0001")
+    Name (_UID, 8)
+    Name (_CCA, Zero)
+    Method (_STA)
+    {
+      Return (0xF)
+    }
+    /* CMU id, clock name, frequency, is_osc27 */
+    Name (PROP, Package ()
+    {
+      0x30000000, "bm1000-xgbe-cmu0", 1250000000, Zero
+    })
+    /* Device reference, clock name, clock id, con_id */
+    Name (CLKS, Package ()
+    {
+      ^HDMI, "csr50mhz", 0, "iahb",
+#if 0
+      ^XGM0, "104mhz_clk", 1, "pclk",
+      ^XGM0, "phy0_core_refclk", 2, "tx",
+      ^XGM0, "xgbe0_aclk", 3, "stmmaceth",
+      ^XGM0, "xgbe0_ptpclk", 4, "ptp_ref",
+      /* ^XMI0, "104mhz_clk", 1, "pclk", */
+      /* ^XMI0.XPC0, "phy0_core_refclk", 2, "core", */
+      /* ^XGM1, "104mhz_clk", 1, "pclk", */
+      ^XGM1, "phy1_core_refclk", 5, "tx",
+      ^XGM1, "xgbe1_aclk", 6, "stmmaceth",
+      ^XGM1, "xgbe1_ptpclk", 7, "ptp_ref",
+      /* ^XMI1, "104mhz_clk", 1, "pclk", */
+      /* ^XMI1.XPC1, "phy1_core_refclk", 5, "core", */
+#endif
+      ^GMC0, "gmac0_aclk", 8, "stmmaceth",
+      ^GMC0, "gmac0_ptpclk", 9, "ptp_clk",
+      ^GMC0, "gmac0_tx2", 10, "tx",
+      ^GMC1, "gmac1_aclk", 11, "stmmaceth",
+      ^GMC1, "gmac1_ptpclk", 12, "ptp_clk",
+      ^GMC1, "gmac1_tx2", 13, "tx",
+      ^HDMI, "isfr", 17, "isfr",
+    })
+  }
+
   Device (TMR1)
   {
     Name (_HID, "PRP0001")
@@ -837,6 +912,8 @@ Scope (_SB)
         Package () { "clock-frequency", 50000000 }
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (8, 0x40020000)
   }
 
   Device (TMR2)
@@ -858,6 +935,8 @@ Scope (_SB)
         Package () { "clock-frequency", 50000000 }
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (9, 0x40040000)
   }
 
   Device (TMR3)
@@ -879,6 +958,8 @@ Scope (_SB)
         Package () { "clock-frequency", 50000000 }
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (10, 0x40080000)
   }
 
   Device (TMR4)
@@ -900,6 +981,8 @@ Scope (_SB)
         Package () { "clock-frequency", 50000000 }
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (11, 0x40100000)
   }
 
   // CCN
@@ -1073,9 +1156,7 @@ Scope (_SB)
       Return (Local0)
     }
 
-#if defined(BAIKAL_MBM10) || defined(BAIKAL_MBM20)
-    ACPI_BAIKAL_PWM_LSP_CLK (4, 0x04002000)
-#endif
+//    ACPI_BAIKAL_PWM_LSP_CLK (4, 0x04002000)
 
     Method (_DSD)
     {
@@ -1154,6 +1235,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1176,6 +1258,7 @@ Scope (_SB)
     Name (_PR0, Package () { PWRR })
     Name (_PR3, Package () { PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
   }
 
   // UART1
@@ -1237,6 +1320,8 @@ Scope (_SB)
         }}
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (2, 0x02001000)
   }
 
   // I2C1
@@ -1267,6 +1352,8 @@ Scope (_SB)
         }}
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (6, 0x10008000)
   }
 
   // I2C2
@@ -1297,6 +1384,8 @@ Scope (_SB)
         }}
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (7, 0x20010000)
   }
 
   // SMBUS1
@@ -1321,6 +1410,8 @@ Scope (_SB)
         Package () { "smbus-clock-frequency", 50000000 }
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (13, 0x00200000)
   }
 
   // SMBUS2
@@ -1345,6 +1436,8 @@ Scope (_SB)
         Package () { "smbus-clock-frequency", 50000000 }
       }
     })
+
+//    ACPI_BAIKAL_PWM_LSP_CLK (14, 0x00400000)
   }
 
   // PVT3
@@ -1432,6 +1525,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1473,6 +1567,7 @@ Scope (_SB)
     Name (_PR0, Package () { PWRR })
     Name (_PR3, Package () { PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
 
     Device (RHUB)
     {
@@ -1534,6 +1629,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1589,6 +1685,7 @@ Scope (_SB)
     Name (_PR0, Package () { PWRR })
     Name (_PR3, Package () { PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
 
     Device (RHUB)
     {
@@ -1674,10 +1771,11 @@ Scope (_SB)
       ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
       Package ()
       {
-        Package () { "compatible", "snps,dw-ahci" }
+        Package () { "compatible", "generic-ahci" }
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1707,6 +1805,7 @@ Scope (_SB)
     Name (_PR0, Package () { \_SB.SATP, PWRR })
     Name (_PR3, Package () { \_SB.SATP, PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
   }
 
   // SATA1
@@ -1726,10 +1825,11 @@ Scope (_SB)
       ToUUID ("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
       Package ()
       {
-        Package () { "compatible", "snps,dw-ahci" }
+        Package () { "compatible", "generic-ahci" }
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1759,6 +1859,7 @@ Scope (_SB)
     Name (_PR0, Package () { \_SB.SATP, PWRR })
     Name (_PR3, Package () { \_SB.SATP, PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
   }
 
   // GMAC0
@@ -1777,7 +1878,7 @@ Scope (_SB)
 
       If (CondRefOf (\_SB.GMC0.GPIO, Local1))
       {
-        Local0 = ConcatenateResTemplate (Local0, Local1)
+        Local0 = ConcatenateResTemplate (Local0, DerefOf(Local1))
       }
 
       Return (Local0)
@@ -1818,6 +1919,7 @@ Scope (_SB)
       Return (Local0)
     }
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1844,6 +1946,7 @@ Scope (_SB)
     Name (_PR0, Package () { \_SB.XGBP, PWRR })
     Name (_PR3, Package () { \_SB.XGBP, PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
 
     Device (GPHY)
     {
@@ -1867,7 +1970,7 @@ Scope (_SB)
 
       If (CondRefOf (\_SB.GMC1.GPIO, Local1))
       {
-        Local0 = ConcatenateResTemplate (Local0, Local1)
+        Local0 = ConcatenateResTemplate (Local0, DerefOf(Local1))
       }
 
       Return (Local0)
@@ -1908,6 +2011,7 @@ Scope (_SB)
       Return (Local0)
     }
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -1934,6 +2038,7 @@ Scope (_SB)
     Name (_PR0, Package () { \_SB.XGBP, PWRR })
     Name (_PR3, Package () { \_SB.XGBP, PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
 
     Device (GPHY)
     {
@@ -1972,6 +2077,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -2009,6 +2115,7 @@ Scope (_SB)
     Name (_PR0, Package () { PWRR })
     Name (_PR3, Package () { PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
   }
 
   // HDMI
@@ -2032,6 +2139,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -2151,6 +2259,7 @@ Scope (_SB)
     Name (_PR0, Package () { \_SB.XGBP, PWRR })
     Name (_PR3, Package () { \_SB.XGBP, PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
   }
 
   // VDU
@@ -2170,12 +2279,13 @@ Scope (_SB)
 
       If (CondRefOf (\_SB.VDU0.GPIO, Local1))
       {
-        Local0 = ConcatenateResTemplate (Local0, Local1)
+        Local0 = ConcatenateResTemplate (Local0, DerefOf(Local1))
       }
 
       Return (Local0)
     }
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -2333,6 +2443,7 @@ Scope (_SB)
       }
       Return (ID0)
     }
+#endif
 
     Method (_DSD)
     {
@@ -2350,10 +2461,10 @@ Scope (_SB)
         }
       }
 
-      If (CondRefOf (\_SB.VDU0.PNL0, Local1))
+      If (CondRefOf (\_SB.VDU0.PNL0))
       {
         DerefOf (DerefOf (Local0[1])[3])[0] = "baikal,lvds-panel"
-        DerefOf (DerefOf (Local0[1])[3])[1] = Local1
+        DerefOf (DerefOf (Local0[1])[3])[1] = CondRefOf (\_SB.VDU0.PNL0)
       }
 
       If (CondRefOf (\_SB.VDU0.ENGP, Local1))
@@ -2393,6 +2504,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     OperationRegion (RBUF, SystemMemory, 0x20050000, 0xC)
     Field (RBUF, DwordAcc, NoLock, Preserve)
@@ -2418,6 +2530,7 @@ Scope (_SB)
       RST1 |= 0x80000000
       PSVL = 3
     }
+#endif
   }
 
   // HDA
@@ -2444,6 +2557,7 @@ Scope (_SB)
       }
     })
 
+#if 0
     ACPI_BAIKAL_SMC_CMU_DATA
     PowerResource (PWRR, 0, 0)
     {
@@ -2475,6 +2589,7 @@ Scope (_SB)
     Name (_PR0, Package () { PWRR })
     Name (_PR3, Package () { PWRR })
     ACPI_BAIKAL_PWM_PS_METHODS
+#endif
   }
 }
 
