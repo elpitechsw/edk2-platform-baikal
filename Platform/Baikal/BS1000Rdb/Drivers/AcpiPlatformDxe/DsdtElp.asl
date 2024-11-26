@@ -186,14 +186,21 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
       Method (\_SB.ESP0._STA) { Return (\_SB.MX02.STA1) }
     }
 
+#if defined(ELP_6) || defined(ELP_9) || defined(ELP_10) || defined(ELP_13) || defined(ELP_14)
     /* PCIe0 P0 */
     Method (\_SB.PC00._STA) { Return (0xF) }
     Name (\_SB.PC00.NUML, 16)
+#else
+    /* PCIe0 P0 */
+    Method (\_SB.PC00._STA) { Return (0) }
+    Name (\_SB.PC00.NUML, 16)
+#endif
 
     /* PCIe0 P1 */
     Method (\_SB.PC01._STA) { Return (0) }
     Name (\_SB.PC01.NUML, 8)
 
+#if defined(ELP_6) || defined(ELP_10) || defined(ELP_13) || defined(ELP_14)
     /* PCIe1 P0 */
     Method (\_SB.PC02._STA) { Return (0xF) }
     Name (\_SB.PC02.NUML, 16)
@@ -201,7 +208,25 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     /* PCIe1 P1 */
     Method (\_SB.PC03._STA) { Return (0) }
     Name (\_SB.PC03.NUML, 8)
+#elif defined(ELP_9)
+    /* PCIe1 P0 */
+    Method (\_SB.PC02._STA) { Return (0xF) }
+    Name (\_SB.PC02.NUML, 8)
 
+    /* PCIe1 P1 */
+    Method (\_SB.PC03._STA) { Return (0xF) }
+    Name (\_SB.PC03.NUML, 8)
+#else
+    /* PCIe1 P0 */
+    Method (\_SB.PC02._STA) { Return (0) }
+    Name (\_SB.PC02.NUML, 8)
+
+    /* PCIe1 P1 */
+    Method (\_SB.PC03._STA) { Return (0) }
+    Name (\_SB.PC03.NUML, 8)
+#endif
+
+#if defined(ELP_6) || defined(ELP_9) || defined(ELP_10) || defined(ELP_13)
     /* PCIe2 P0 */
     Method (\_SB.PC04._STA) { Return (0xF) }
     Name (\_SB.PC04.NUML, 8)
@@ -209,15 +234,53 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     /* PCIe2 P1 */
     Method (\_SB.PC05._STA) { Return (0xF) }
     Name (\_SB.PC05.NUML, 8)
+#elif defined(ELP_14)
+    /* PCIe2 P0 */
+    Method (\_SB.PC04._STA) { Return (0xF) }
+    Name (\_SB.PC04.NUML, 16)
 
+    /* PCIe2 P1 */
+    Method (\_SB.PC05._STA) { Return (0) }
+    Name (\_SB.PC05.NUML, 8)
+#else
+    /* PCIe2 P0 */
+    Method (\_SB.PC04._STA) { Return (0) }
+    Name (\_SB.PC04.NUML, 16)
+
+    /* PCIe2 P1 */
+    Method (\_SB.PC05._STA) { Return (0) }
+    Name (\_SB.PC05.NUML, 8)
+#endif
+
+#if defined(ELP14)
+    /* PCIe3 P0 */
+    Method (\_SB.PC06._STA) { Return (0xF) }
+    Name (\_SB.PC06.NUML, 16)
+#elif defined(ELP_10)
+    /* PCIe3 P0 */
+    Method (\_SB.PC06._STA) { Return (0xF) }
+    Name (\_SB.PC06.NUML, 8)
+#elif defined(ELP_6)
+    /* PCIe3 P0 */
+    Method (\_SB.PC06._STA) { Return (0xF) }
+    Name (\_SB.PC06.NUML, 4)
+#else
     /* PCIe3 P0 */
     Method (\_SB.PC06._STA) { Return (0) }
     Name (\_SB.PC06.NUML, 4)
+#endif
 
+#if defined(ELP_6) || defined(ELP_9) || defined(ELP_13)
     /* PCIe3 P1 */
     Method (\_SB.PC07._STA) { Return (0xF) }
     Name (\_SB.PC07.NUML, 4)
+#else
+    /* PCIe3 P1 */
+    Method (\_SB.PC07._STA) { Return (0) }
+    Name (\_SB.PC07.NUML, 4)
+#endif
 
+#if defined(ELP_6) || defined(ELP_9) || defined(ELP_10) || defined(ELP_13)
     /* PCIe3 P2 */
     Method (\_SB.PC08._STA) { Return (0xF) }
     Name (\_SB.PC08.NUML, 4)
@@ -225,15 +288,45 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     /* PCIe3 P3 */
     Method (\_SB.PC09._STA) { Return (0xF) }
     Name (\_SB.PC09.NUML, 4)
+#else
+    /* PCIe3 P2 */
+    Method (\_SB.PC08._STA) { Return (0) }
+    Name (\_SB.PC08.NUML, 4)
 
+    /* PCIe3 P3 */
+    Method (\_SB.PC09._STA) { Return (0) }
+    Name (\_SB.PC09.NUML, 4)
+#endif
+
+#if defined(ELP_14)
+    /* PCIe4 P0 */
+    Method (\_SB.PC0A._STA) { Return (0xF) }
+    Name (\_SB.PC0A.NUML, 16)
+#elif defined(ELP_6) || defined(ELP_9) || defined(ELP_13)
     /* PCIe4 P0 */
     Method (\_SB.PC0A._STA) { Return (0xF) }
     Name (\_SB.PC0A.NUML, 8)
+#elif defined(ELP_10)
+    /* PCIe4 P0 */
+    Method (\_SB.PC0A._STA) { Return (0xF) }
+    Name (\_SB.PC0A.NUML, 4)
+#else
+    /* PCIe4 P0 */
+    Method (\_SB.PC0A._STA) { Return (0) }
+    Name (\_SB.PC0A.NUML, 8)
+#endif
 
+#if defined(ELP_10)
+    /* PCIe4 P1 */
+    Method (\_SB.PC0B._STA) { Return (0xF) }
+    Name (\_SB.PC0B.NUML, 4)
+#else
     /* PCIe4 P1 */
     Method (\_SB.PC0B._STA) { Return (0) }
     Name (\_SB.PC0B.NUML, 4)
+#endif
 
+#if defined(ELP_6) || defined(ELP_9) || defined(ELP_10) || defined(ELP_13)
     /* PCIe4 P2 */
     Method (\_SB.PC0C._STA) { Return (0xF) }
     Name (\_SB.PC0C.NUML, 1)
@@ -242,6 +335,15 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     Method (\_SB.PC0D._STA) { Return (0xF) }
     Name (\_SB.PC0D.NUML, 1)
   }
+#else
+    /* PCIe4 P2 */
+    Method (\_SB.PC0C._STA) { Return (0) }
+    Name (\_SB.PC0C.NUML, 1)
+
+    /* PCIe4 P3 */
+    Method (\_SB.PC0D._STA) { Return (0) }
+    Name (\_SB.PC0D.NUML, 1)
+#endif
 
   /* Additional devices */
   Scope (\_SB)
