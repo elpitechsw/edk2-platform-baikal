@@ -334,7 +334,6 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     /* PCIe4 P3 */
     Method (\_SB.PC0D._STA) { Return (0xF) }
     Name (\_SB.PC0D.NUML, 1)
-  }
 #else
     /* PCIe4 P2 */
     Method (\_SB.PC0C._STA) { Return (0) }
@@ -344,6 +343,8 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "BAIKAL", "BKLEDSDT", 1)
     Method (\_SB.PC0D._STA) { Return (0) }
     Name (\_SB.PC0D.NUML, 1)
 #endif
+
+  }
 
   /* Additional devices */
   Scope (\_SB)

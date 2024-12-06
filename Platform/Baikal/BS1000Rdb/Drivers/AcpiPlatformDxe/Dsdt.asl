@@ -10,7 +10,11 @@
 #elif defined(BAIKAL_MBS_1S)
   #include "DsdtMbs1s.asl"
 #elif defined(ELPITECH)
+#if defined(ELP_12)
+  #include "DsdtMbs2s.asl"
+#else
   #include "DsdtElp.asl"
+#endif
 #elif defined(BAIKAL_MBS_2S)
   #include "DsdtMbs2s.asl"
 #elif defined(BAIKAL_QEMU_S)
